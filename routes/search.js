@@ -122,4 +122,52 @@ router.get('/categories', async (req, res) => {
   }
 });
 
+// GET /api/listings/:id - Get listing details by ID
+// US-SEARCH-2: Returns title, description, price, photos, and seller name
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Validate ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(404).json({ error: 'Listing not found' });
+    }
+
+    // Find listing with populated seller information
+    const listing = await Listing.findById(id)
+      .populate('userId', 'name email')
+      .populate('categoryId', 'name');
+
+    // Check if listing exists
+    if (!listing) {
+      return res.status(404).json({ error: 'Listing not found' });
+    }
+
+    // TODO: Check if listing is hidden
+    // Check if listing is hidden (SOLD status) - for non-admins
+    // Note: In a real app, you'd check req.user.role here
+    // For now, we'll assume all users are non-admins and hide SOLD listings
+    if (listing.status === 'SOLD') {
+      return res.status(404).json({ error: 'Listing not found' });
+    }
+
+    // Return the required fields: title, description, price, photos, seller name
+    res.json({
+      _id: listing._id,
+      title: listing.title,
+      description: listing.description,
+      price: listing.price,
+      photos: listing.photos,
+      sellerName: listing.userId.name,
+      category: listing.categoryId.name,
+      createdAt: listing.createdAt,
+      updatedAt: listing.updatedAt
+    });
+
+  } catch (err) {
+    console.error('Listing detail error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
