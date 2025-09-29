@@ -1,14 +1,19 @@
-// models/Listing.js
-const mongoose = require('mongoose');
+import mongoose, { Schema, Document } from 'mongoose';
+import { IListing, IPhoto } from '../types';
 
-const listingSchema = new mongoose.Schema({
+const photoSchema = new Schema<IPhoto>({
+  url: { type: String, required: true },
+  alt: { type: String, default: '' }
+});
+
+const listingSchema = new Schema<IListing>({
   userId: { 
-    type: mongoose.Schema.Types.ObjectId, 
+    type: Schema.Types.ObjectId, 
     ref: 'User', 
     required: true 
   },
   categoryId: { 
-    type: mongoose.Schema.Types.ObjectId, 
+    type: Schema.Types.ObjectId, 
     ref: 'Category', 
     required: true 
   },
@@ -34,10 +39,7 @@ const listingSchema = new mongoose.Schema({
     enum: ['ACTIVE', 'SOLD'], 
     default: 'ACTIVE' 
   },
-  photos: [{
-    url: { type: String, required: true },
-    alt: { type: String, default: '' }
-  }]
+  photos: [photoSchema]
 }, { 
   timestamps: true 
 });
@@ -49,4 +51,4 @@ listingSchema.index({ title: 'text', description: 'text' });
 listingSchema.index({ categoryId: 1, price: 1 });
 listingSchema.index({ status: 1, createdAt: -1 });
 
-module.exports = mongoose.model('Listing', listingSchema);
+export default mongoose.model<IListing>('Listing', listingSchema);

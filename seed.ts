@@ -1,15 +1,13 @@
-const mongoose = require('mongoose');
-const Category = require('./models/Category');
-const Listing = require('./models/Listing');
-const User = require('./models/User');
+import mongoose from 'mongoose';
+import Category from './models/Category';
+import Listing from './models/Listing';
+import User from './models/User';
+import { SeedUser, SeedCategory, SeedListing } from './types';
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost/campus-marketplace', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-});
+mongoose.connect('mongodb://localhost/campus-marketplace');
 
-const users = [
+const users: SeedUser[] = [
   {
     name: 'John Smith',
     email: 'john.smith@university.edu',
@@ -42,7 +40,7 @@ const users = [
   }
 ];
 
-const categories = [
+const categories: SeedCategory[] = [
   { name: 'Books', description: 'Textbooks, novels, and educational materials' },
   { name: 'Electronics', description: 'Laptops, phones, gadgets, and accessories' },
   { name: 'Furniture', description: 'Desks, chairs, and room furniture' },
@@ -53,7 +51,7 @@ const categories = [
   { name: 'Other', description: 'Miscellaneous items' }
 ];
 
-const sampleListings = [
+const sampleListings: SeedListing[] = [
   {
     title: 'MacBook Pro 13" 2020',
     description: 'Excellent condition MacBook Pro, barely used. Perfect for students.',
@@ -152,7 +150,7 @@ const sampleListings = [
   }
 ];
 
-async function seedDatabase() {
+async function seedDatabase(): Promise<void> {
   try {
     // Clear existing data
     await User.deleteMany({});
@@ -175,7 +173,7 @@ async function seedDatabase() {
       return {
         ...listing,
         userId: createdUsers[Math.floor(Math.random() * createdUsers.length)]._id,
-        categoryId: category._id
+        categoryId: category!._id
       };
     });
     
@@ -191,9 +189,9 @@ async function seedDatabase() {
     
     // Show category distribution
     console.log('\nCategory distribution:');
-    const categoryCounts = {};
+    const categoryCounts: { [key: string]: number } = {};
     sampleListingsWithReferences.forEach(listing => {
-      const categoryName = createdCategories.find(cat => cat._id.equals(listing.categoryId)).name;
+      const categoryName = createdCategories.find(cat => cat._id.equals(listing.categoryId))!.name;
       categoryCounts[categoryName] = (categoryCounts[categoryName] || 0) + 1;
     });
     Object.entries(categoryCounts).forEach(([category, count]) => {

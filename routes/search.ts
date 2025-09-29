@@ -1,15 +1,14 @@
-// routes/search.js
-const express = require('express');
-const Listing = require('../models/Listing');
-const Category = require('../models/Category');
-const User = require('../models/User');
-const mongoose = require('mongoose');
+import express, { Request, Response } from 'express';
+import mongoose from 'mongoose';
+import Listing from '../models/Listing';
+import Category from '../models/Category';
+import { SearchQuery, SearchResponse, ErrorResponse, IListing } from '../types';
 
 const router = express.Router();
 
 // GET /api/listings/search - Search and filter listings
 // US-SEARCH-1: Supports query `q`, category, min/max price, pagination, sorting
-router.get('/search', async (req, res) => {
+router.get('/search', async (req: Request<{}, SearchResponse, {}, SearchQuery>, res: Response<SearchResponse | ErrorResponse>): Promise<void> => {
   try {
     const { 
       q, 
@@ -17,12 +16,12 @@ router.get('/search', async (req, res) => {
       minPrice, 
       maxPrice, 
       sort = 'createdAt_desc', 
-      page = 1, 
-      pageSize = 20
+      page = '1', 
+      pageSize = '20'
     } = req.query;
 
     // Build filter object - only show ACTIVE listings (unless admin)
-    const filter = { status: 'ACTIVE' };
+    const filter: any = { status: 'ACTIVE' };
 
     // Text search on title and description
     if (q && q.trim()) {
@@ -43,14 +42,16 @@ router.get('/search', async (req, res) => {
           filter.categoryId = categoryDoc._id;
         } else {
           // If category not found, return empty results
-          return res.json({
+          res.json({
             items: [],
             page: {
               current: Number(page),
               pageSize: Number(pageSize),
-              total: 0
+              total: 0,
+              totalPages: 0
             }
           });
+          return;
         }
       }
     }
@@ -63,7 +64,7 @@ router.get('/search', async (req, res) => {
     }
 
     // Sorting options - createdAt (default desc) or price
-    let sortObj = {};
+    let sortObj: any = {};
     switch (sort) {
       case 'price_asc':
         sortObj.price = 1;
@@ -106,68 +107,54 @@ router.get('/search', async (req, res) => {
       }
     });
 
-  } catch (err) {
+  } catch (err: any) {
     console.error('Search error:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
 // GET /api/listings/categories - Get all categories (needed for category filtering)
-router.get('/categories', async (req, res) => {
+router.get('/categories', async (req: Request, res: Response): Promise<void> => {
   try {
     const categories = await Category.find().select('name description').sort('name');
     res.json(categories);
-  } catch (err) {
+  } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// GET /api/listings/:id - Get listing details by ID
-// US-SEARCH-2: Returns title, description, price, photos, and seller name
-router.get('/:id', async (req, res) => {
+// GET /api/listings/:id - Get a single listing by ID
+router.get('/:id', async (req: Request<{ id: string }>, res: Response<IListing | ErrorResponse>): Promise<void> => {
   try {
     const { id } = req.params;
-    
+
     // Validate ObjectId format
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(404).json({ error: 'Listing not found' });
+      res.status(400).json({ error: 'Invalid listing ID format' });
+      return;
     }
 
-    // Find listing with populated seller information
+    // Find the listing with populated references
     const listing = await Listing.findById(id)
-      .populate('userId', 'name email')
-      .populate('categoryId', 'name');
+      .populate('categoryId', 'name description')
+      .populate('userId', 'name email campusId');
 
-    // Check if listing exists
     if (!listing) {
-      return res.status(404).json({ error: 'Listing not found' });
+      res.status(404).json({ error: 'Listing not found' });
+      return;
     }
 
-    // TODO: Check if listing is hidden
-    // Check if listing is hidden (SOLD status) - for non-admins
-    // Note: In a real app, you'd check req.user.role here
-    // For now, we'll assume all users are non-admins and hide SOLD listings
-    if (listing.status === 'SOLD') {
-      return res.status(404).json({ error: 'Listing not found' });
+    // Only show ACTIVE listings (unless admin - for future implementation)
+    if (listing.status !== 'ACTIVE') {
+      res.status(404).json({ error: 'Listing not found' });
+      return;
     }
 
-    // Return the required fields: title, description, price, photos, seller name
-    res.json({
-      _id: listing._id,
-      title: listing.title,
-      description: listing.description,
-      price: listing.price,
-      photos: listing.photos,
-      sellerName: listing.userId.name,
-      category: listing.categoryId.name,
-      createdAt: listing.createdAt,
-      updatedAt: listing.updatedAt
-    });
-
-  } catch (err) {
-    console.error('Listing detail error:', err);
+    res.json(listing);
+  } catch (err: any) {
+    console.error('Get listing error:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-module.exports = router;
+export default router;

@@ -1,11 +1,16 @@
 {
   "name": "campus-marketplace",
   "version": "1.0.0",
-  "main": "server.js",
+  "main": "server.ts",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
-    "seed": "node seed.js",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "ts-node server.ts",
+    "dev:watch": "nodemon --exec ts-node server.ts",
+    "seed": "ts-node seed.ts",
+    "test:api": "ts-node test-api.ts",
+    "test:search": "ts-node test-search.ts",
+    "test:get-listing": "ts-node test-get-listing.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -23,6 +28,12 @@
     "mongoose": "^8.18.2"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.10",
+    "typescript": "^5.3.0",
+    "@types/node": "^20.10.0",
+    "@types/express": "^4.17.21",
+    "@types/cors": "^2.8.17",
+    "@types/mongoose": "^5.11.97",
+    "ts-node": "^10.9.0"
   }
 }
