@@ -26,6 +26,7 @@ export interface IPhoto {
 
 export interface IListing extends Document {
   _id: Types.ObjectId;
+  listingId: string;
   userId: Types.ObjectId | IUser;
   categoryId: Types.ObjectId | ICategory;
   title: string;

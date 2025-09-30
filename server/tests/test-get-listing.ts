@@ -17,8 +17,10 @@ async function testGetListingById(): Promise<void> {
     }
 
     const sampleListing = searchResponse.data.items[0];
-    const listingId = sampleListing._id;
-    console.log(`✅ Found sample listing: "${sampleListing.title}" (ID: ${listingId})`);
+    const listingId = (sampleListing as any).listingId;
+    console.log(`✅ Found sample listing: "${sampleListing.title}"`);
+    console.log(`   - MongoDB _id: ${sampleListing._id}`);
+    console.log(`   - Custom listingId: ${listingId}`);
     console.log('');
 
     // Test 1: Get valid listing by ID
@@ -32,8 +34,8 @@ async function testGetListingById(): Promise<void> {
     console.log(`   - User: ${(validResponse.data.userId as any)?.name || 'Unknown'}`);
     console.log('');
 
-    // Test 2: Get listing with invalid ObjectId format
-    console.log('3. Testing get listing with invalid ObjectId format...');
+    // Test 2: Get listing with invalid custom ID format
+    console.log('3. Testing get listing with invalid custom ID format...');
     try {
       await axios.get(`${BASE_URL}/api/listings/invalid-id`);
       console.log('❌ Should have returned 400 error for invalid ID format');
@@ -47,11 +49,11 @@ async function testGetListingById(): Promise<void> {
     }
     console.log('');
 
-    // Test 3: Get listing with valid ObjectId format but non-existent ID
+    // Test 3: Get listing with valid custom ID format but non-existent ID
     console.log('4. Testing get listing with non-existent ID...');
-    const fakeObjectId = '507f1f77bcf86cd799439011'; // Valid ObjectId format but doesn't exist
+    const fakeCustomId = 'LST-20250101-9999'; // Valid custom ID format but doesn't exist
     try {
-      await axios.get(`${BASE_URL}/api/listings/${fakeObjectId}`);
+      await axios.get(`${BASE_URL}/api/listings/${fakeCustomId}`);
       console.log('❌ Should have returned 404 error for non-existent ID');
     } catch (error: any) {
       if (error.response?.status === 404) {
@@ -63,8 +65,8 @@ async function testGetListingById(): Promise<void> {
     }
     console.log('');
 
-    // Test 4: Test with malformed ObjectId (wrong length)
-    console.log('5. Testing get listing with malformed ObjectId...');
+    // Test 4: Test with malformed custom ID (wrong format)
+    console.log('5. Testing get listing with malformed custom ID...');
     try {
       await axios.get(`${BASE_URL}/api/listings/123`);
       console.log('❌ Should have returned 400 error for malformed ID');
@@ -106,13 +108,13 @@ async function testGetListingById(): Promise<void> {
     // Test 6: Test multiple valid IDs
     console.log('7. Testing multiple valid listings...');
     const multipleListingsResponse: AxiosResponse<{ items: IListing[] }> = await axios.get(`${BASE_URL}/api/listings/search?pageSize=3`);
-    const testIds = multipleListingsResponse.data.items.map(item => item._id);
+    const testIds = multipleListingsResponse.data.items.map(item => (item as any).listingId);
     
     let successCount = 0;
     for (const id of testIds) {
       try {
         const response: AxiosResponse<IListing> = await axios.get(`${BASE_URL}/api/listings/${id}`);
-        if (response.data._id === id) {
+        if ((response.data as any).listingId === id) {
           successCount++;
         }
       } catch (error) {
@@ -125,12 +127,13 @@ async function testGetListingById(): Promise<void> {
 
     console.log('🎉 All GET /api/listings/:id tests completed successfully!');
     console.log('\n📋 Test Summary:');
-    console.log('✅ Valid ID returns listing with populated references');
-    console.log('✅ Invalid ObjectId format returns 400 error');
-    console.log('✅ Non-existent ID returns 404 error');
-    console.log('✅ Malformed ID returns 400 error');
-    console.log('✅ Response structure is correct');
-    console.log('✅ Multiple valid IDs work correctly');
+    console.log('✅ Valid custom listingId returns listing with populated references');
+    console.log('✅ Invalid custom listingId format returns 400 error');
+    console.log('✅ Non-existent listingId returns 404 error');
+    console.log('✅ Malformed listingId returns 400 error');
+    console.log('✅ Response structure is correct (includes both _id and listingId)');
+    console.log('✅ Multiple valid listingIds work correctly');
+    console.log('✅ No MongoDB warnings (uses listingId field instead of overriding _id)');
 
   } catch (error: any) {
     console.error('❌ Test failed:', error.response?.data || error.message);

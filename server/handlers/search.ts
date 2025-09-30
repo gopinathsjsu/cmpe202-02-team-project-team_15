@@ -126,14 +126,14 @@ export const getListingById = async (req: Request<{ id: string }>, res: Response
   try {
     const { id } = req.params;
 
-    // Validate ObjectId format
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      res.status(400).json({ error: 'Invalid listing ID format' });
+    // Validate custom ID format (LST-YYYYMMDD-XXXX)
+    if (!id || !id.match(/^LST-\d{8}-\d{4}$/)) {
+      res.status(400).json({ error: 'Invalid listing ID format. Expected format: LST-YYYYMMDD-XXXX' });
       return;
     }
 
-    // Find the listing with populated references
-    const listing = await Listing.findById(id)
+    // Find the listing with populated references using custom listingId
+    const listing = await Listing.findOne({ listingId: id })
       .populate('categoryId', 'name description')
       .populate('userId', 'name email campusId');
 
