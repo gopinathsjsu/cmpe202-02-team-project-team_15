@@ -1,14 +1,12 @@
-import express, { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import Listing from '../models/Listing';
 import Category from '../models/Category';
 import { SearchQuery, SearchResponse, ErrorResponse, IListing } from '../types';
 
-const router = express.Router();
-
 // GET /api/listings/search - Search and filter listings
 // US-SEARCH-1: Supports query `q`, category, min/max price, pagination, sorting
-router.get('/search', async (req: Request<{}, SearchResponse, {}, SearchQuery>, res: Response<SearchResponse | ErrorResponse>): Promise<void> => {
+export const searchListings = async (req: Request<{}, SearchResponse, {}, SearchQuery>, res: Response<SearchResponse | ErrorResponse>): Promise<void> => {
   try {
     const { 
       q, 
@@ -111,20 +109,20 @@ router.get('/search', async (req: Request<{}, SearchResponse, {}, SearchQuery>, 
     console.error('Search error:', err);
     res.status(500).json({ error: err.message });
   }
-});
+};
 
 // GET /api/listings/categories - Get all categories (needed for category filtering)
-router.get('/categories', async (req: Request, res: Response): Promise<void> => {
+export const getCategories = async (req: Request, res: Response): Promise<void> => {
   try {
     const categories = await Category.find().select('name description').sort('name');
     res.json(categories);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
-});
+};
 
 // GET /api/listings/:id - Get a single listing by ID
-router.get('/:id', async (req: Request<{ id: string }>, res: Response<IListing | ErrorResponse>): Promise<void> => {
+export const getListingById = async (req: Request<{ id: string }>, res: Response<IListing | ErrorResponse>): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -155,6 +153,4 @@ router.get('/:id', async (req: Request<{ id: string }>, res: Response<IListing |
     console.error('Get listing error:', err);
     res.status(500).json({ error: err.message });
   }
-});
-
-export default router;
+};

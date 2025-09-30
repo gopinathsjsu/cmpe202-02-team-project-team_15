@@ -1,5 +1,5 @@
 import axios, { AxiosResponse } from 'axios';
-import { IListing, ErrorResponse } from './types';
+import { IListing, ErrorResponse } from '../types';
 
 const BASE_URL = 'http://localhost:5000';
 

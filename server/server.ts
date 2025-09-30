@@ -8,7 +8,7 @@ import './models/Category';
 import './models/Listing';
 
 // Import routes
-import searchRoutes from './routes/search';
+import searchRoutes from './routes/searchRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 5000;

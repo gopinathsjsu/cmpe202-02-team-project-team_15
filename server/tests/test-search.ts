@@ -1,5 +1,5 @@
 import axios, { AxiosResponse } from 'axios';
-import { SearchResponse, CategoryResponse } from './types';
+import { SearchResponse, CategoryResponse } from '../types';
 
 const BASE_URL = 'http://localhost:5000';
 
