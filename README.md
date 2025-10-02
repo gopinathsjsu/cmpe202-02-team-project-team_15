@@ -1,9 +1,18 @@
-# Campus Marketplace - TypeScript Version
+# Campus Marketplace - Full Stack Application
 
-A campus marketplace application built with MERN stack, featuring a custom ID system and clean architecture with TypeScript for better type safety and developer experience.
+A modern campus marketplace application built with React TypeScript frontend and Node.js backend, featuring a beautiful UI based on the provided design mockup and a robust API with custom ID system.
 
 ## Features
 
+### Frontend (React TypeScript)
+- **Modern UI Design**: Beautiful, responsive interface matching the provided Shop.png mockup
+- **Search & Filter**: Real-time search with category dropdown and price range slider
+- **Sorting Options**: Sort by newest, price ascending, or price descending
+- **Pagination**: Navigate through multiple pages of results
+- **Responsive Design**: Works perfectly on desktop, tablet, and mobile devices
+- **Loading States**: Smooth skeleton animations for better user experience
+
+### Backend (Node.js TypeScript)
 - **Search and Filter Listings**: Full-text search with category and price filtering
 - **Custom ID System**: Human-readable listing IDs (LST-YYYYMMDD-XXXX format)
 - **User Management**: Student and admin roles
@@ -18,44 +27,80 @@ A campus marketplace application built with MERN stack, featuring a custom ID sy
 - MongoDB
 - npm or yarn
 
-## Installation
+## Quick Start
 
-1. **Clone the repository and navigate to the server directory:**
+### Option 1: Run Everything at Once (Recommended)
+
+1. **Install all dependencies:**
 ```bash
-cd server
+npm run install-all
 ```
 
-2. **Install dependencies:**
-```bash
-npm install
-```
+2. **Start MongoDB** (make sure it's running on `mongodb://localhost/campus-marketplace`)
 
-3. **Start MongoDB** (make sure it's running on `mongodb://localhost/campus-marketplace`)
-
-4. **Seed the database with sample data:**
+3. **Seed the database with sample data:**
 ```bash
 npm run seed
 ```
 
-## Development
-
-### Running the Application
-
-- **Development mode** (with hot reload):
+4. **Start both frontend and backend:**
 ```bash
 npm run dev
 ```
 
-- **Development mode with file watching:**
+This will start:
+- Backend API server on `http://localhost:5000`
+- Frontend React app on `http://localhost:3000`
+
+### Option 2: Run Separately
+
+#### Backend Setup
+1. **Navigate to server directory and install dependencies:**
 ```bash
-npm run dev:watch
+cd server
+npm install
 ```
 
-- **Production build:**
+2. **Start MongoDB** and **seed the database:**
 ```bash
-npm run build
+npm run seed
+```
+
+3. **Start the backend:**
+```bash
+npm run dev
+```
+
+#### Frontend Setup
+1. **Navigate to frontend directory and install dependencies:**
+```bash
+cd frontend
+npm install
+```
+
+2. **Start the frontend:**
+```bash
 npm start
 ```
+
+## Development
+
+### Available Scripts (Root Level)
+
+- `npm run dev` - Start both frontend and backend concurrently
+- `npm run server` - Start only the backend server
+- `npm run client` - Start only the frontend
+- `npm run install-all` - Install dependencies for root, server, and frontend
+- `npm run seed` - Seed the database with sample data
+- `npm run build` - Build frontend for production
+
+### Backend Scripts (server/)
+
+- `npm run dev` - Start backend in development mode with hot reload
+- `npm run dev:watch` - Start backend with file watching
+- `npm run build` - Build TypeScript to JavaScript
+- `npm start` - Start production server
+- `npm run seed` - Seed database with sample data
 
 ### Testing
 
@@ -136,26 +181,45 @@ npx ts-node tests/test-get-listing.ts
 ## Project Structure
 
 ```
-server/
-├── handlers/           # Business logic handlers
-│   └── search.ts      # Search, categories, and listing handlers
-├── routes/            # Express route definitions
-│   └── searchRoutes.ts # Route configurations
-├── models/            # Mongoose models (TypeScript)
-│   ├── User.ts
-│   ├── Category.ts
-│   └── Listing.ts
-├── types/             # TypeScript type definitions
-│   └── index.ts
-├── tests/             # API testing scripts
-│   ├── test-api.ts
-│   ├── test-search.ts
-│   └── test-get-listing.ts
-├── dist/              # Compiled JavaScript output
-├── server.ts          # Main application entry point
-├── seed.ts            # Database seeding script
-├── tsconfig.json      # TypeScript configuration
-└── package.json       # Dependencies and scripts
+campus-marketplace-app/
+├── frontend/                    # React TypeScript Frontend
+│   ├── public/
+│   │   └── placeholder-image.svg # Placeholder for missing product images
+│   ├── src/
+│   │   ├── components/          # React components
+│   │   │   ├── SearchBar.tsx    # Search input and sorting options
+│   │   │   ├── CategoryFilter.tsx # Category dropdown filter
+│   │   │   ├── PriceRangeFilter.tsx # Price range slider
+│   │   │   ├── ProductGrid.tsx  # Grid layout for products
+│   │   │   ├── ProductCard.tsx  # Individual product card
+│   │   │   └── Pagination.tsx   # Pagination controls
+│   │   ├── services/
+│   │   │   └── api.ts           # API client service
+│   │   ├── App.tsx              # Main application component
+│   │   ├── App.css              # Application styles
+│   │   └── index.tsx            # Application entry point
+│   └── package.json
+├── server/                      # Node.js TypeScript Backend
+│   ├── handlers/                # Business logic handlers
+│   │   └── search.ts           # Search, categories, and listing handlers
+│   ├── routes/                 # Express route definitions
+│   │   └── searchRoutes.ts     # Route configurations
+│   ├── models/                 # Mongoose models (TypeScript)
+│   │   ├── User.ts
+│   │   ├── Category.ts
+│   │   └── Listing.ts
+│   ├── types/                  # TypeScript type definitions
+│   │   └── index.ts
+│   ├── tests/                  # API testing scripts
+│   │   ├── test-api.ts
+│   │   ├── test-search.ts
+│   │   └── test-get-listing.ts
+│   ├── dist/                   # Compiled JavaScript output
+│   ├── server.ts               # Main application entry point
+│   ├── seed.ts                 # Database seeding script
+│   ├── tsconfig.json           # TypeScript configuration
+│   └── package.json            # Dependencies and scripts
+└── package.json                 # Root package.json with convenience scripts
 ```
 
 ## Database Schema
@@ -281,12 +345,50 @@ The test suite covers:
 - Sorting options
 - MongoDB compatibility (no warnings)
 
+## Frontend Design Implementation
+
+The React frontend closely follows the provided Shop.png mockup with modern enhancements:
+
+### Layout & Structure
+- **Sidebar**: Left-aligned filters (Category dropdown, Price range slider)
+- **Main Content**: Search bar with sorting options, product grid, pagination
+- **Responsive Design**: Sidebar moves below content on mobile devices
+
+### Visual Design
+- **Color Scheme**: Modern blue accent (#007bff) with clean grays and whites
+- **Typography**: Clean, readable fonts with proper hierarchy
+- **Cards**: Elevated product cards with hover effects and shadows
+- **Buttons**: Consistent button styling with hover states
+
+### User Experience
+- **Loading States**: Skeleton animations while data loads
+- **Error Handling**: User-friendly error messages
+- **Interactive Elements**: Hover effects, smooth transitions
+- **Accessibility**: Proper ARIA labels and keyboard navigation
+
+### Components Matching Design
+- **SearchBar**: Matches the centered search with sorting buttons
+- **CategoryFilter**: Dropdown with "Value" placeholder as shown
+- **PriceRangeFilter**: Dual-range slider with $0-9999 display
+- **ProductGrid**: 3-column responsive grid matching the layout
+- **ProductCard**: Clean cards with image, title, and price
+- **Pagination**: Bottom pagination with Previous/Next and page numbers
+
 ## Getting Started
 
-1. Install dependencies: `npm install`
+### Quick Setup (Recommended)
+1. **Install all dependencies:** `npm run install-all`
+2. **Start MongoDB** (ensure it's running on default port)
+3. **Seed the database:** `npm run seed`
+4. **Start both frontend and backend:** `npm run dev`
+
+Your application will be running at:
+- **Frontend**: `http://localhost:3000` (React app)
+- **Backend API**: `http://localhost:5000` (Node.js server)
+
+### Manual Setup
+1. Install dependencies: `npm install` (root), then `cd server && npm install`, then `cd ../frontend && npm install`
 2. Start MongoDB
 3. Seed the database: `npm run seed`
-4. Start development server: `npm run dev`
-5. Test the API: `npm run test:api`
-
-Your campus marketplace API will be running on `http://localhost:5000`!
+4. Start development servers: `npm run dev`
+5. Test the API: `cd server && npm run test:api`

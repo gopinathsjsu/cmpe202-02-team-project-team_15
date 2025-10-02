@@ -1,0 +1,26 @@
+{
+  "name": "campus-marketplace-app",
+  "version": "1.0.0",
+  "description": "A campus marketplace application with React frontend and Node.js backend",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && npm run dev",
+    "client": "cd frontend && npm start",
+    "build": "cd frontend && npm run build",
+    "install-all": "npm install && cd server && npm install && cd ../frontend && npm install",
+    "seed": "cd server && npm run seed"
+  },
+  "devDependencies": {
+    "concurrently": "^7.6.0"
+  },
+  "keywords": [
+    "marketplace",
+    "campus",
+    "react",
+    "typescript",
+    "node.js",
+    "mongodb"
+  ],
+  "author": "",
+  "license": "MIT"
+}
