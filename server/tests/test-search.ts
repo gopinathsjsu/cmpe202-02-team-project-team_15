@@ -23,11 +23,15 @@ async function testSearchRequirements(): Promise<void> {
     }
     console.log('');
 
-    // Test 2: Query parameter (q)
-    console.log('2. Testing query parameter (q)...');
+    // Test 2: Query parameter (q) - partial matching
+    console.log('2. Testing query parameter (q) - partial matching...');
     const queryResponse: AxiosResponse<SearchResponse> = await axios.get(`${BASE_URL}/api/listings/search?q=MacBook`);
     console.log('✅ Query search works');
     console.log(`   - Search results for "MacBook": ${queryResponse.data.page.total}`);
+    
+    // Test partial matching
+    const partialResponse: AxiosResponse<SearchResponse> = await axios.get(`${BASE_URL}/api/listings/search?q=Mac`);
+    console.log(`   - Partial search results for "Mac": ${partialResponse.data.page.total}`);
     console.log('');
 
     // Test 3: Category filter

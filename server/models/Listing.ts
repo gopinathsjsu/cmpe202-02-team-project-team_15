@@ -56,8 +56,9 @@ const listingSchema = new Schema<IListing>({
   timestamps: true 
 });
 
-// Text index for search functionality - US-SEARCH-1 requirement
-listingSchema.index({ title: 'text', description: 'text' });
+// Regular indexes for partial text search functionality - US-SEARCH-1 requirement
+listingSchema.index({ title: 1 });
+listingSchema.index({ description: 1 });
 
 // Compound indexes for filtering
 listingSchema.index({ categoryId: 1, price: 1 });

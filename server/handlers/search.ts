@@ -21,9 +21,13 @@ export const searchListings = async (req: Request<{}, SearchResponse, {}, Search
     // Build filter object - only show ACTIVE listings (unless admin)
     const filter: any = { status: 'ACTIVE' };
 
-    // Text search on title and description
+    // Text search on title and description - partial matching
     if (q && q.trim()) {
-      filter.$text = { $search: q.trim() };
+      const searchRegex = new RegExp(q.trim(), 'i'); // Case-insensitive partial matching
+      filter.$or = [
+        { title: { $regex: searchRegex } },
+        { description: { $regex: searchRegex } }
+      ];
     }
 
     // Category filter
