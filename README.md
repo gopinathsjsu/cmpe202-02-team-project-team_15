@@ -1,6 +1,6 @@
 # Campus Marketplace - Full Stack Application
 
-A modern campus marketplace application built with React TypeScript frontend and Node.js backend, featuring a beautiful UI based on the provided design mockup and a robust API with custom ID system.
+A modern campus marketplace application built with React TypeScript frontend and Node.js backend.
 
 ## Features
 
