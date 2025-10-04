@@ -5,7 +5,6 @@ A modern campus marketplace application built with React TypeScript frontend and
 ## Features
 
 ### Frontend (React TypeScript)
-- **Modern UI Design**: Beautiful, responsive interface matching the provided Shop.png mockup
 - **Search & Filter**: Real-time search with category dropdown and price range slider
 - **Sorting Options**: Sort by newest, price ascending, or price descending
 - **Pagination**: Navigate through multiple pages of results
