@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ['pending_verification', 'active', 'suspended', 'deleted'],
-    default: 'pending_verification'
+    default: 'active'
   },
   email_verified_at: {
     type: Date,
