@@ -1,6 +1,7 @@
 {
-  "name": "campus-marketplace",
+  "name": "campus-marketplace-server",
   "version": "1.0.0",
+  "description": "Backend Node.js server for campus marketplace",
   "main": "server.ts",
   "scripts": {
     "build": "tsc",

@@ -1,6 +1,7 @@
 {
-  "name": "frontend",
-  "version": "0.1.0",
+  "name": "campus-marketplace-frontend",
+  "version": "1.0.0",
+  "description": "Frontend React application for campus marketplace",
   "private": true,
   "dependencies": {
     "@testing-library/dom": "^10.4.1",
