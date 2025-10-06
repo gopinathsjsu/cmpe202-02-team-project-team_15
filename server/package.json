@@ -1,17 +1,12 @@
 {
-  "name": "campus-marketplace-server",
+  "name": "server",
   "version": "1.0.0",
-  "description": "Backend Node.js server for campus marketplace",
-  "main": "server.ts",
+  "main": "index.js",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/server.js",
-    "dev": "ts-node server.ts",
-    "dev:watch": "nodemon --exec ts-node server.ts",
-    "seed": "ts-node seed.ts",
-    "test:api": "ts-node test-api.ts",
-    "test:search": "ts-node test-search.ts",
-    "test:get-listing": "ts-node test-get-listing.ts",
+    "dev": "tsx watch index.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -29,12 +24,11 @@
     "mongoose": "^8.18.2"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10",
+    "tsx": "^4.7.0",
     "typescript": "^5.3.0",
     "@types/node": "^20.10.0",
     "@types/express": "^4.17.21",
     "@types/cors": "^2.8.17",
-    "@types/mongoose": "^5.11.97",
-    "ts-node": "^10.9.0"
+    "@types/mongoose": "^5.11.97"
   }
 }
