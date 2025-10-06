@@ -1,0 +1,188 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Enhanced UI Styles for Campus Market */
+
+/* Input field focus animations */
+.input-enhanced {
+    transition: all 0.3s ease-in-out;
+    border: 2px solid #e5e7eb;
+    transform: translateY(0);
+}
+
+.input-enhanced:focus {
+    border-color: #6b7280;
+    box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.1);
+    transform: translateY(-1px);
+    background: white !important;
+}
+
+/* Enhanced tab transitions */
+.tab-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: center;
+}
+
+.tab-smooth:hover {
+    transform: scale(1.02);
+}
+
+.tab-smooth:active {
+    transform: scale(0.98);
+}
+
+/* Tab animations */
+.tab-container {
+    position: relative;
+    background: #f3f4f6;
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+}
+
+.tab-button {
+    position: relative;
+    z-index: 1;
+    transition: all 0.2s ease-in-out;
+}
+
+.tab-button.active {
+    background: white;
+    color: #111827;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.tab-button.inactive {
+    color: #6b7280;
+}
+
+.tab-button.inactive:hover {
+    color: #374151;
+    background: #f9fafb;
+}
+
+/* Button hover effects */
+.btn-enhanced {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-enhanced:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-enhanced:active {
+    transform: translateY(0);
+}
+
+/* Form validation styles */
+.input-error {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.input-success {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* Loading states */
+.btn-loading {
+    position: relative;
+    color: transparent;
+}
+
+.btn-loading::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid transparent;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Message animations */
+.message-enter {
+    animation: slideIn 0.3s ease-out;
+}
+
+.message-exit {
+    animation: slideOut 0.3s ease-in;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+
+/* Card hover effect */
+.card-enhanced {
+    transition: all 0.2s ease-in-out;
+}
+
+.card-enhanced:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Focus ring improvements */
+.focus-ring:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: #6b7280;
+    ring-offset: 2px;
+}
+
+/* Select dropdown styling */
+.select-enhanced {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+}
