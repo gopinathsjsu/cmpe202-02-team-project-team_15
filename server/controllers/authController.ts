@@ -59,12 +59,14 @@ export class AuthController {
         return;
       }
 
-      // Create user
+      // Create user with active status and verified email
       const user = new User({
         email,
         password_hash: password, // Will be hashed by pre-save middleware
         first_name,
-        last_name
+        last_name,
+        status: 'active',
+        email_verified_at: new Date()
       });
 
       await user.save();
@@ -78,18 +80,7 @@ export class AuthController {
         });
       }
 
-      // Generate email verification token
-      const verificationToken = crypto.randomBytes(32).toString('hex');
-      const tokenHash = crypto.createHash('sha256').update(verificationToken).digest('hex');
-      
-      await EmailVerification.create({
-        user_id: user._id,
-        token_hash: tokenHash,
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
-      });
-
-      // Send verification email
-      await sendVerificationEmail(user, verificationToken);
+      // User is automatically verified, no email verification needed
 
       // Log audit event
       await AuditLog.create({
@@ -100,14 +91,15 @@ export class AuthController {
 
       res.status(201).json({
         success: true,
-        message: 'User registered successfully. Please check your email for verification.',
+        message: 'User registered successfully. Your account is now active and ready to use.',
         data: {
           user: {
             id: user._id,
             email: user.email,
             first_name: user.first_name,
             last_name: user.last_name,
-            status: user.status
+            status: user.status,
+            email_verified_at: user.email_verified_at
           }
         }
       });
