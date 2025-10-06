@@ -1,391 +1,175 @@
-# CMPE 202 Team Project - Authentication & User Management API
+# Campus Market - Full Stack Application
 
-A comprehensive MERN stack application providing authentication and user management functionality with role-based access control, campus-based user registration, and comprehensive audit logging.
+A modern campus marketplace application built with Node.js, Express, MongoDB, and vanilla HTML/CSS/JavaScript with Tailwind CSS.
 
-## 🚀 Features
+## 📁 Project Structure
 
-### Authentication & Security
-- **User Registration** with email domain validation
-- **Email Verification** system
-- **JWT-based Authentication** with refresh tokens
-- **Password Reset** functionality
-- **Rate Limiting** for login attempts
-- **Session Management** with device tracking
-- **Comprehensive Audit Logging**
+```
+campus-market/
+├── server/                 # Backend API Server
+│   ├── config/            # Database configuration
+│   ├── controllers/       # Business logic controllers
+│   ├── middleware/        # Express middleware
+│   ├── models/           # MongoDB models
+│   ├── routes/           # API routes
+│   ├── scripts/          # Database scripts
+│   ├── types/            # TypeScript type definitions
+│   ├── server.ts         # Main server file
+│   ├── tsconfig.json     # TypeScript configuration
+│   └── package.json      # Server dependencies
+├── frontend/              # Frontend Application
+│   ├── public/           # Static HTML files
+│   │   ├── login.html    # Login page
+│   │   ├── signup.html   # Sign up page
+│   │   ├── dashboard.html # Dashboard page
+│   │   └── css/          # CSS files
+│   ├── src/              # Source files (if needed)
+│   ├── tailwind.config.js # Tailwind configuration
+│   ├── tsconfig.json     # TypeScript configuration
+│   └── package.json      # Frontend dependencies
+├── package.json          # Root package.json with scripts
+└── README.md            # This file
+```
 
-### User Management
-- **Role-based Access Control** (Buyer, Seller, Admin)
-- **Campus-based Registration** with domain validation
-- **User Status Management** (Pending, Active, Suspended, Deleted)
-- **Profile Management**
-
-### Admin Features
-- **User Management Dashboard**
-- **Campus Management**
-- **Audit Log Monitoring**
-- **Session Management**
-- **Login Attempt Tracking**
-- **System Statistics**
-
-## 📋 Database Schema
-
-The application implements the following entities based on the provided schema:
-
-- **Users** - Core user information with campus association
-- **Campuses** - Educational institutions with email domains
-- **Roles** - User roles (buyer, seller, admin)
-- **UserRoles** - Many-to-many relationship between users and roles
-- **Sessions** - JWT refresh token management
-- **EmailVerifications** - Email verification tokens
-- **PasswordResets** - Password reset tokens
-- **LoginAttempts** - Login attempt logging for security
-- **AuditLog** - Comprehensive activity logging
-- **UserStatus** - User account status tracking
-
-## 🛠️ Installation & Setup
+## 🚀 Quick Start
 
 ### Prerequisites
 - Node.js (v14 or higher)
-- MongoDB (v4.4 or higher)
 - npm or yarn
+- MongoDB (running locally or MongoDB Atlas)
 
-### 1. Clone the Repository
-```bash
-git clone https://github.com/gopinathsjsu/cmpe202-02-team-project-team_15.git
-cd cmpe202-02-team-project-team_15
-```
+### Installation
 
-### 2. Install Dependencies
-```bash
-npm install
-```
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd campus-market
+   ```
 
-### 3. Environment Configuration
-Create a `.env` file in the root directory:
-```env
-PORT=5000
-MONGODB_URI=mongodb://localhost:27017/cmpe202_project
-JWT_SECRET=your_super_secret_jwt_key_here
-JWT_EXPIRE=7d
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_app_password
-NODE_ENV=development
-CLIENT_URL=http://localhost:3000
-```
+2. **Install all dependencies**
+   ```bash
+   npm run install:all
+   ```
 
-### 4. Start MongoDB
-Make sure MongoDB is running on your system:
-```bash
-# macOS with Homebrew
-brew services start mongodb-community
+3. **Set up environment variables**
+   Create a `.env` file in the `server/` directory:
+   ```env
+   NODE_ENV=development
+   PORT=5000
+   MONGODB_URI=mongodb://localhost:27017/campus-market
+   JWT_SECRET=your_jwt_secret_key_here
+   CLIENT_URL=http://localhost:3000
+   ```
 
-# Linux
-sudo systemctl start mongod
+4. **Start the development servers**
+   ```bash
+   npm run dev
+   ```
 
-# Windows
-net start MongoDB
-```
+   This will start:
+   - Backend server on http://localhost:5000
+   - Frontend server on http://localhost:3000
 
-### 5. Seed the Database
-Initialize the database with default roles and sample campuses:
-```bash
-npm run seed
-```
+## 🛠️ Development
 
-### 6. Start the Server
-```bash
-# Development mode with auto-restart
-npm run dev
+### Available Scripts
 
-# Production mode
-npm start
-```
+#### Root Level Scripts
+- `npm run install:all` - Install dependencies for both server and frontend
+- `npm run dev` - Start both server and frontend in development mode
+- `npm run dev:server` - Start only the backend server
+- `npm run dev:frontend` - Start only the frontend server
+- `npm run build` - Build both server and frontend
+- `npm run start` - Start the production server
 
-The server will start on `http://localhost:5000`
+#### Server Scripts (in `server/` directory)
+- `npm run dev` - Start server with hot reload
+- `npm run build` - Compile TypeScript
+- `npm run seed` - Seed the database with sample data
 
-## 📚 API Documentation
+#### Frontend Scripts (in `frontend/` directory)
+- `npm run dev` - Start frontend development server
+- `npm run build:css` - Build Tailwind CSS
+- `npm run build:css:watch` - Watch and build CSS
 
-### Base URL
-```
-http://localhost:5000/api
-```
+### API Endpoints
 
-### Authentication Endpoints
+The backend provides the following API endpoints:
 
-#### Register User
-```http
-POST /auth/register
-Content-Type: application/json
+#### Authentication
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `POST /api/auth/logout` - User logout
+- `POST /api/auth/verify-email` - Email verification
+- `POST /api/auth/forgot-password` - Password reset request
+- `POST /api/auth/reset-password` - Password reset
 
-{
-  "email": "student@sjsu.edu",
-  "password": "SecurePass123!",
-  "first_name": "John",
-  "last_name": "Doe",
-  "campus_id": "campus_object_id"
-}
-```
+#### Other Endpoints
+- `GET /health` - Health check
+- `GET /` - API information
 
-#### Verify Email
-```http
-POST /auth/verify-email
-Content-Type: application/json
+### Frontend Pages
 
-{
-  "token": "verification_token_from_email"
-}
-```
+- **Login**: http://localhost:3000/login.html
+- **Sign Up**: http://localhost:3000/signup.html
+- **Dashboard**: http://localhost:3000/dashboard.html
 
-#### Login
-```http
-POST /auth/login
-Content-Type: application/json
+## 🎨 Frontend Features
 
-{
-  "email": "student@sjsu.edu",
-  "password": "SecurePass123!"
-}
-```
+- **Modern Design**: Clean, responsive UI built with Tailwind CSS
+- **Authentication Flow**: Complete login/signup with validation
+- **Form Validation**: Client-side and server-side validation
+- **Responsive Design**: Works on all screen sizes
+- **TypeScript Support**: Type-safe development
 
-#### Refresh Token
-```http
-POST /auth/refresh
-Content-Type: application/json
+## 🔧 Backend Features
 
-{
-  "refreshToken": "refresh_token_here"
-}
-```
+- **RESTful API**: Well-structured API endpoints
+- **Authentication**: JWT-based authentication with refresh tokens
+- **Database**: MongoDB with Mongoose ODM
+- **Validation**: Input validation and sanitization
+- **Security**: Rate limiting, CORS, and secure headers
+- **TypeScript**: Full TypeScript support for better development experience
 
-#### Logout
-```http
-POST /auth/logout
-Authorization: Bearer <access_token>
-Content-Type: application/json
+## 🗄️ Database
 
-{
-  "refreshToken": "refresh_token_here"
-}
-```
-
-#### Forgot Password
-```http
-POST /auth/forgot-password
-Content-Type: application/json
-
-{
-  "email": "student@sjsu.edu"
-}
-```
-
-#### Reset Password
-```http
-POST /auth/reset-password
-Content-Type: application/json
-
-{
-  "token": "reset_token_from_email",
-  "password": "NewSecurePass123!"
-}
-```
-
-### User Endpoints
-
-#### Get Profile
-```http
-GET /users/profile
-Authorization: Bearer <access_token>
-```
-
-#### Update Profile
-```http
-PUT /users/profile
-Authorization: Bearer <access_token>
-Content-Type: application/json
-
-{
-  "first_name": "Jane",
-  "last_name": "Smith"
-}
-```
-
-#### Get All Users (Admin Only)
-```http
-GET /users?page=1&limit=10&status=active&search=john
-Authorization: Bearer <access_token>
-```
-
-#### Assign Role (Admin Only)
-```http
-POST /users/:userId/roles
-Authorization: Bearer <access_token>
-Content-Type: application/json
-
-{
-  "role_id": "role_object_id"
-}
-```
-
-### Campus Endpoints
-
-#### Get All Campuses
-```http
-GET /campus
-```
-
-#### Create Campus (Admin Only)
-```http
-POST /campus
-Authorization: Bearer <access_token>
-Content-Type: application/json
-
-{
-  "name": "University of California, Davis",
-  "email_domain": "ucdavis.edu"
-}
-```
-
-### Admin Endpoints
-
-#### Dashboard Statistics
-```http
-GET /admin/dashboard
-Authorization: Bearer <access_token>
-```
-
-#### Audit Logs
-```http
-GET /admin/audit-logs?page=1&limit=50&action=LOGIN
-Authorization: Bearer <access_token>
-```
-
-#### Login Attempts
-```http
-GET /admin/login-attempts?page=1&limit=50&success=false
-Authorization: Bearer <access_token>
-```
-
-#### Active Sessions
-```http
-GET /admin/sessions?page=1&limit=50
-Authorization: Bearer <access_token>
-```
+The application uses MongoDB with the following main collections:
+- Users
+- Campus
+- Roles
+- Sessions
+- Email Verifications
+- Password Resets
+- Audit Logs
 
 ## 🔒 Security Features
 
-### Rate Limiting
-- **5 failed attempts per email** in 5 minutes
-- **20 failed attempts per IP** in 1 hour
+- JWT token authentication
+- Password hashing with bcrypt
+- Rate limiting on login attempts
+- CORS configuration
+- Input validation and sanitization
+- Secure session management
 
-### Password Requirements
-- Minimum 8 characters
-- At least one uppercase letter
-- At least one lowercase letter
-- At least one number
-- At least one special character
+## 📱 Browser Support
 
-### Token Security
-- **Access tokens**: 15-minute expiry
-- **Refresh tokens**: 7-day expiry
-- **Email verification**: 24-hour expiry
-- **Password reset**: 1-hour expiry
-
-### Audit Logging
-All significant actions are logged including:
-- User registration and verification
-- Login/logout events
-- Role assignments
-- Password changes
-- Administrative actions
-
-## 🏗️ Project Structure
-
-```
-├── config/
-│   └── database.js          # MongoDB connection
-├── middleware/
-│   ├── auth.js              # Authentication middleware
-│   ├── validation.js        # Input validation
-│   └── rateLimiting.js      # Rate limiting logic
-├── models/
-│   ├── User.js              # User model
-│   ├── Campus.js            # Campus model
-│   ├── Role.js              # Role model
-│   ├── UserRole.js          # User-Role relationship
-│   ├── Session.js           # Session management
-│   ├── EmailVerification.js # Email verification tokens
-│   ├── PasswordReset.js     # Password reset tokens
-│   ├── LoginAttempt.js      # Login attempt logging
-│   ├── AuditLog.js          # Audit logging
-│   ├── UserStatus.js        # User status tracking
-│   └── index.js             # Model exports
-├── routes/
-│   ├── auth.js              # Authentication routes
-│   ├── users.js             # User management routes
-│   ├── campus.js            # Campus management routes
-│   └── admin.js             # Admin routes
-├── scripts/
-│   └── seed.js              # Database seeding
-├── server.js                # Main server file
-├── package.json             # Dependencies and scripts
-└── README.md                # This file
-```
-
-## 🧪 Testing
-
-### Health Check
-```bash
-curl http://localhost:5000/health
-```
-
-### Test Registration Flow
-1. Get available campuses: `GET /api/campus`
-2. Register user: `POST /api/auth/register`
-3. Verify email: `POST /api/auth/verify-email`
-4. Login: `POST /api/auth/login`
-5. Access protected routes with JWT token
-
-## 🚀 Deployment
-
-### Environment Variables for Production
-```env
-NODE_ENV=production
-PORT=5000
-MONGODB_URI=mongodb://your-production-db-url
-JWT_SECRET=your-super-secure-production-secret
-CLIENT_URL=https://your-frontend-domain.com
-```
-
-### Docker Deployment (Optional)
-```dockerfile
-FROM node:16-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY . .
-EXPOSE 5000
-CMD ["npm", "start"]
-```
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/new-feature`
-3. Commit changes: `git commit -am 'Add new feature'`
-4. Push to branch: `git push origin feature/new-feature`
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
 5. Submit a pull request
 
-## 📝 License
+## 📄 License
 
 This project is licensed under the ISC License.
 
-## 👥 Team
+## 🆘 Support
 
-CMPE 202 - Team 15
-San Jose State University
-
----
-
-For questions or support, please contact the development team.
+For support, please open an issue in the GitHub repository or contact the development team.
