@@ -256,3 +256,34 @@ storybook-static/
 # Temporary files
 *.tmp
 *.temp
+
+# React-specific patterns
+/.pnp
+.pnp.js
+
+# Frontend build directories (more specific paths)
+/frontend/build
+/frontend/dist
+/frontend/coverage
+
+# Frontend environment files
+/frontend/.env.local
+/frontend/.env.development.local
+/frontend/.env.test.local
+/frontend/.env.production.local
+
+# Frontend node_modules
+/frontend/node_modules
+
+# Server-specific patterns
+/server/dist
+/server/build
+/server/coverage
+/server/node_modules
+
+# Server environment files
+/server/.env
+/server/.env.local
+/server/.env.development.local
+/server/.env.test.local
+/server/.env.production.local
