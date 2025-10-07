@@ -13,7 +13,9 @@ const Pagination: React.FC<PaginationProps> = ({
 }) => {
   const getVisiblePages = () => {
     const pages: (number | string)[] = [];
-    const maxVisible = 7;
+    // Show 3 pages on mobile, 5 pages on desktop (excluding arrows)
+    const isMobile = window.innerWidth <= 480;
+    const maxVisible = isMobile ? 3 : 5;
 
     if (totalPages <= maxVisible) {
       // Show all pages if total is small
@@ -21,28 +23,38 @@ const Pagination: React.FC<PaginationProps> = ({
         pages.push(i);
       }
     } else {
-      // Always show first page
-      pages.push(1);
-
-      if (currentPage > 3) {
-        pages.push('...');
+      // Calculate the range of pages to show around current page
+      let start, end;
+      
+      if (isMobile) {
+        // Mobile: show 3 pages around current page
+        if (currentPage <= 2) {
+          start = 1;
+          end = 3;
+        } else if (currentPage >= totalPages - 1) {
+          start = totalPages - 2;
+          end = totalPages;
+        } else {
+          start = currentPage - 1;
+          end = currentPage + 1;
+        }
+      } else {
+        // Desktop: show 5 pages around current page
+        if (currentPage <= 3) {
+          start = 1;
+          end = 5;
+        } else if (currentPage >= totalPages - 2) {
+          start = totalPages - 4;
+          end = totalPages;
+        } else {
+          start = currentPage - 2;
+          end = currentPage + 2;
+        }
       }
 
-      // Show pages around current page
-      const start = Math.max(2, currentPage - 1);
-      const end = Math.min(totalPages - 1, currentPage + 1);
-
+      // Add pages in the calculated range
       for (let i = start; i <= end; i++) {
         pages.push(i);
-      }
-
-      if (currentPage < totalPages - 2) {
-        pages.push('...');
-      }
-
-      // Always show last page
-      if (totalPages > 1) {
-        pages.push(totalPages);
       }
     }
 
@@ -56,11 +68,21 @@ const Pagination: React.FC<PaginationProps> = ({
   return (
     <div className="pagination">
       <button
+        className="pagination-button first"
+        onClick={() => onPageChange(1)}
+        disabled={currentPage === 1}
+        title="First page"
+      >
+        ««
+      </button>
+
+      <button
         className="pagination-button prev"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
+        title="Previous page"
       >
-        ← Previous
+        «
       </button>
 
       <div className="pagination-pages">
@@ -82,8 +104,18 @@ const Pagination: React.FC<PaginationProps> = ({
         className="pagination-button next"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
+        title="Next page"
       >
-        Next →
+        »
+      </button>
+
+      <button
+        className="pagination-button last"
+        onClick={() => onPageChange(totalPages)}
+        disabled={currentPage === totalPages}
+        title="Last page"
+      >
+        »»
       </button>
     </div>
   );

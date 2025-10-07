@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface SearchBarProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  onSearch: () => void;
+  onSearch: (query?: string) => void;
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
@@ -11,10 +11,31 @@ const SearchBar: React.FC<SearchBarProps> = ({
   onSearchChange,
   onSearch
 }) => {
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  // Local state for the input value
+  const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
+
+  // Update local state when prop changes (e.g., from URL params or reset)
+  useEffect(() => {
+    setLocalSearchQuery(searchQuery);
+  }, [searchQuery]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalSearchQuery(e.target.value);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      onSearch();
+      handleSearch();
     }
+  };
+
+  const handleBlur = () => {
+    handleSearch();
+  };
+
+  const handleSearch = () => {
+    onSearchChange(localSearchQuery);
+    onSearch(localSearchQuery);
   };
 
   return (
@@ -23,12 +44,13 @@ const SearchBar: React.FC<SearchBarProps> = ({
         <input
           type="text"
           placeholder="Search"
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          onKeyPress={handleKeyPress}
+          value={localSearchQuery}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
           className="search-input"
         />
-        <button onClick={onSearch} className="search-button">
+        <button onClick={handleSearch} className="search-button">
           🔍
         </button>
       </div>
