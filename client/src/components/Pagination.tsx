@@ -1,5 +1,4 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface PaginationProps {
   currentPage: number;
@@ -61,8 +60,7 @@ const Pagination: React.FC<PaginationProps> = ({
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
       >
-        <ChevronLeft size={16} />
-        Previous
+        ← Previous
       </button>
 
       <div className="pagination-pages">
@@ -85,8 +83,7 @@ const Pagination: React.FC<PaginationProps> = ({
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
       >
-        Next
-        <ChevronRight size={16} />
+        Next →
       </button>
     </div>
   );

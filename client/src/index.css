@@ -1,3 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global styles */
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -10,4 +15,174 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Search Bar Styles */
+.search-bar {
+  @apply mb-6;
+}
+
+.search-input-container {
+  @apply relative flex items-center;
+}
+
+.search-input {
+  @apply w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+}
+
+.search-button {
+  @apply absolute right-2 p-2 text-gray-500 hover:text-gray-700 focus:outline-none;
+}
+
+/* Filter Menu Styles */
+.filter-menu {
+  @apply space-y-6;
+}
+
+.filter-section {
+  @apply space-y-2;
+}
+
+.filter-label {
+  @apply block text-sm font-medium text-gray-700;
+}
+
+.select-container {
+  @apply relative;
+}
+
+.filter-select {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white;
+}
+
+.select-icon {
+  @apply absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none;
+}
+
+.price-inputs {
+  @apply flex items-center space-x-2;
+}
+
+.price-input-group {
+  @apply flex-1;
+}
+
+.price-input-label {
+  @apply block text-xs text-gray-500 mb-1;
+}
+
+.price-input {
+  @apply w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500;
+}
+
+.price-input-separator {
+  @apply text-gray-400 font-medium;
+}
+
+/* Product Grid Styles */
+.product-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+}
+
+.product-grid.loading {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+}
+
+.product-card {
+  @apply bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform hover:scale-105 hover:shadow-lg;
+}
+
+.product-card.skeleton {
+  @apply animate-pulse;
+}
+
+.product-image-container {
+  @apply relative w-full h-48 bg-gray-200;
+}
+
+.product-image-container.skeleton-image {
+  @apply bg-gray-300;
+}
+
+.product-image {
+  @apply w-full h-full object-cover;
+}
+
+.product-info {
+  @apply p-4;
+}
+
+.product-title {
+  @apply text-lg font-semibold text-gray-900 mb-2 line-clamp-2;
+}
+
+.product-price {
+  @apply text-xl font-bold text-green-600;
+}
+
+.skeleton-text {
+  @apply bg-gray-300 rounded h-4 mb-2;
+}
+
+.skeleton-title {
+  @apply h-5 w-3/4;
+}
+
+.skeleton-price {
+  @apply h-6 w-1/2;
+}
+
+.no-results {
+  @apply text-center py-12 text-gray-500;
+}
+
+/* Pagination Styles */
+.pagination {
+  @apply flex items-center justify-center space-x-2 mt-8;
+}
+
+.pagination-button {
+  @apply px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1;
+}
+
+.pagination-button.prev {
+  @apply flex-row;
+}
+
+.pagination-button.next {
+  @apply flex-row-reverse;
+}
+
+.pagination-pages {
+  @apply flex items-center space-x-1;
+}
+
+.pagination-page {
+  @apply px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.pagination-page.active {
+  @apply bg-blue-600 text-white border-blue-600;
+}
+
+.pagination-page.ellipsis {
+  @apply cursor-default hover:bg-white;
 }

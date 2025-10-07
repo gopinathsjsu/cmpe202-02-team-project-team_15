@@ -1,5 +1,4 @@
 import React from 'react';
-import { Search } from 'lucide-react';
 
 interface SearchBarProps {
   searchQuery: string;
@@ -30,7 +29,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           className="search-input"
         />
         <button onClick={onSearch} className="search-button">
-          <Search size={20} />
+          🔍
         </button>
       </div>
     </div>
