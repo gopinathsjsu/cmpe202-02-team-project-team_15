@@ -1,8 +1,29 @@
 import mongoose from 'mongoose';
 import Category from './models/Category';
-import Listing from './models/Listing';
+import Listing, { IPhoto } from './models/Listing';
 import User from './models/User';
-import { SeedUser, SeedCategory, SeedListing } from './types';
+
+// Seed data types for database seeding
+export interface SeedUser {
+  name: string;
+  email: string;
+  role: 'student' | 'admin';
+  campusId: string;
+}
+
+export interface SeedCategory {
+  name: string;
+  description: string;
+}
+
+export interface SeedListing {
+  title: string;
+  description: string;
+  price: number;
+  status: 'ACTIVE' | 'SOLD';
+  photos: IPhoto[];
+  categoryName: string;
+}
 
 // Connect to MongoDB
 mongoose.connect('mongodb://localhost/campus-marketplace');

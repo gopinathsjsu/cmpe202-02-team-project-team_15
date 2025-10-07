@@ -1,5 +1,15 @@
-import mongoose, { Schema, Document } from 'mongoose';
-import { IUser } from '../types';
+import mongoose, { Schema, Document, Types } from 'mongoose';
+
+// User interface for database documents
+export interface IUser extends Document {
+  _id: Types.ObjectId;
+  name: string;
+  email: string;
+  role: 'student' | 'admin';
+  campusId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 const userSchema = new Schema<IUser>({
   name: {
