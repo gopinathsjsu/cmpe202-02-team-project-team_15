@@ -1,5 +1,13 @@
-import mongoose, { Schema, Document } from 'mongoose';
-import { ICategory } from '../types';
+import mongoose, { Schema, Document, Types } from 'mongoose';
+
+// Category interface for database documents
+export interface ICategory extends Document {
+  _id: Types.ObjectId;
+  name: string;
+  description?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 const categorySchema = new Schema<ICategory>({
   name: { 

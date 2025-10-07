@@ -1,8 +1,49 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import Listing from '../models/Listing';
+import Listing, { IListing } from '../models/Listing';
 import Category from '../models/Category';
-import { SearchQuery, SearchResponse, ErrorResponse, IListing } from '../types';
+
+// API Request/Response types for search functionality
+export interface SearchQuery {
+  q?: string;
+  category?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  sort?: 'createdAt_desc' | 'createdAt_asc' | 'price_desc' | 'price_asc';
+  page?: string;
+  pageSize?: string;
+}
+
+export interface PaginationInfo {
+  current: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface SearchResponse {
+  items: IListing[];
+  page: PaginationInfo;
+}
+
+export interface ErrorResponse {
+  error: string;
+}
+
+// Utility function to resolve category ID from name or ObjectId
+const resolveCategoryId = async (category: string): Promise<string | null> => {
+  // If category is an ObjectId, use it directly
+  if (mongoose.Types.ObjectId.isValid(category)) {
+    return category;
+  }
+  
+  // If category is a name, find the category first
+  const categoryDoc = await Category.findOne({ 
+    name: { $regex: category, $options: 'i' } 
+  });
+  
+  return categoryDoc ? categoryDoc._id.toString() : null;
+};
 
 // GET /api/listings/search - Search and filter listings
 // US-SEARCH-1: Supports query `q`, category, min/max price, pagination, sorting
@@ -32,21 +73,13 @@ export const searchListings = async (req: Request<{}, SearchResponse, {}, Search
 
     // Category filter
     if (category) {
-      // If category is an ObjectId, use it directly
-      if (mongoose.Types.ObjectId.isValid(category)) {
-        filter.categoryId = category;
+      const categoryId = await resolveCategoryId(category);
+      if (categoryId) {
+        filter.categoryId = categoryId;
       } else {
-        // If category is a name, find the category first
-        const categoryDoc = await Category.findOne({ 
-          name: { $regex: category, $options: 'i' } 
-        });
-        if (categoryDoc) {
-          filter.categoryId = categoryDoc._id;
-        } else {
-          // If category not found, return error
-          res.status(400).json({ error: 'Category not found' });
-          return;
-        }
+        // If category not found, return error
+        res.status(400).json({ error: 'Category not found' });
+        return;
       }
     }
 

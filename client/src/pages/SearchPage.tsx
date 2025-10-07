@@ -204,82 +204,72 @@ const SearchPage: React.FC = () => {
     });
   };
 
-  // Handle sort change
-  const handleSortChange = useCallback((sort: string) => {
-    setSortBy(sort);
+  // Toggle mobile filter menu
+  const toggleFilterMenu = () => {
+    setIsFilterMenuOpen(!isFilterMenuOpen);
+  };
+
+  // Close filter menu (for mobile)
+  const closeFilterMenu = () => {
+    setIsFilterMenuOpen(false);
+  };
+
+  // Utility function to handle filter changes with common pattern
+  const handleFilterChange = useCallback((
+    updates: {
+      searchQuery?: string;
+      selectedCategory?: string;
+      minPrice?: number | null;
+      maxPrice?: number | null;
+      sortBy?: string;
+      pageSize?: number;
+    },
+    debounceMs: number = 0
+  ) => {
+    // Update state
+    if (updates.searchQuery !== undefined) setSearchQuery(updates.searchQuery);
+    if (updates.selectedCategory !== undefined) setSelectedCategory(updates.selectedCategory);
+    if (updates.minPrice !== undefined) setMinPrice(updates.minPrice);
+    if (updates.maxPrice !== undefined) setMaxPrice(updates.maxPrice);
+    if (updates.sortBy !== undefined) setSortBy(updates.sortBy);
+    if (updates.pageSize !== undefined) setPageSize(updates.pageSize);
+    
     setCurrentPage(1);
-    closeFilterMenu(); // Close mobile filter menu
+    closeFilterMenu();
+    
     // Trigger search and URL update
     setTimeout(() => {
       performSearch(1);
       updateURL({
-        q: searchQuery,
-        category: selectedCategory,
-        minPrice,
-        maxPrice,
-        sort: sort,
+        q: updates.searchQuery !== undefined ? updates.searchQuery : searchQuery,
+        category: updates.selectedCategory !== undefined ? updates.selectedCategory : selectedCategory,
+        minPrice: updates.minPrice !== undefined ? updates.minPrice : minPrice,
+        maxPrice: updates.maxPrice !== undefined ? updates.maxPrice : maxPrice,
+        sort: updates.sortBy !== undefined ? updates.sortBy : sortBy,
         page: 1,
-        pageSize
+        pageSize: updates.pageSize !== undefined ? updates.pageSize : pageSize
       });
-    }, 0);
-  }, [searchQuery, selectedCategory, minPrice, maxPrice, pageSize, performSearch, updateURL]);
+    }, debounceMs);
+  }, [searchQuery, selectedCategory, minPrice, maxPrice, sortBy, pageSize, performSearch, updateURL]);
+
+  // Handle sort change
+  const handleSortChange = useCallback((sort: string) => {
+    handleFilterChange({ sortBy: sort });
+  }, [handleFilterChange]);
 
   // Handle category change
   const handleCategoryChange = useCallback((category: string) => {
-    setSelectedCategory(category);
-    setCurrentPage(1);
-    closeFilterMenu(); // Close mobile filter menu
-    // Trigger search and URL update
-    setTimeout(() => {
-      performSearch(1);
-      updateURL({
-        q: searchQuery,
-        category: category,
-        minPrice,
-        maxPrice,
-        sort: sortBy,
-        page: 1,
-        pageSize
-      });
-    }, 0);
-  }, [searchQuery, minPrice, maxPrice, sortBy, pageSize, performSearch, updateURL]);
+    handleFilterChange({ selectedCategory: category });
+  }, [handleFilterChange]);
 
   // Handle price range changes
   const handleMinPriceChange = useCallback((price: number | null) => {
-    setMinPrice(price);
-    setCurrentPage(1);
-    // Trigger search and URL update
-    setTimeout(() => {
-      performSearch(1);
-      updateURL({
-        q: searchQuery,
-        category: selectedCategory,
-        minPrice: price,
-        maxPrice,
-        sort: sortBy,
-        page: 1,
-        pageSize
-      });
-    }, 300); // Debounce price changes
-  }, [searchQuery, selectedCategory, maxPrice, sortBy, pageSize, performSearch, updateURL]);
+    handleFilterChange({ minPrice: price }, 300); // Debounce price changes
+  }, [handleFilterChange]);
 
   const handleMaxPriceChange = useCallback((price: number | null) => {
-    setMaxPrice(price);
-    setCurrentPage(1);
-    // Trigger search and URL update
-    setTimeout(() => {
-      performSearch(1);
-      updateURL({
-        q: searchQuery,
-        category: selectedCategory,
-        minPrice,
-        maxPrice: price,
-        sort: sortBy,
-        page: 1,
-        pageSize
-      });
-    }, 300); // Debounce price changes
-  }, [searchQuery, selectedCategory, minPrice, sortBy, pageSize, performSearch, updateURL]);
+    handleFilterChange({ maxPrice: price }, 300); // Debounce price changes
+  }, [handleFilterChange]);
 
   // Handle product click
   const handleProductClick = (listing: IListing) => {
@@ -289,58 +279,35 @@ const SearchPage: React.FC = () => {
 
   // Handle page size change for testing
   const handlePageSizeChange = (newPageSize: number) => {
-    setPageSize(newPageSize);
-    setCurrentPage(1); // Reset to first page when changing page size
-    closeFilterMenu(); // Close mobile filter menu
-    // Trigger search and URL update
-    setTimeout(() => {
-      performSearch(1);
-      updateURL({
-        q: searchQuery,
-        category: selectedCategory,
-        minPrice,
-        maxPrice,
-        sort: sortBy,
-        page: 1,
-        pageSize: newPageSize
-      });
-    }, 0);
+    handleFilterChange({ pageSize: newPageSize });
   };
 
   // Handle reset all filters
   const handleResetFilters = () => {
-    setSearchQuery('');
-    setSelectedCategory('');
-    setMinPrice(null);
-    setMaxPrice(null);
-    setSortBy('createdAt_desc');
-    setPageSize(6);
-    setCurrentPage(1);
-    closeFilterMenu(); // Close mobile filter menu
-    
-    // Trigger search and URL update
-    setTimeout(() => {
-      performSearch(1);
-      updateURL({
-        q: '',
-        category: '',
-        minPrice: null,
-        maxPrice: null,
-        sort: 'createdAt_desc',
-        page: 1,
-        pageSize: 6
-      });
-    }, 0);
+    handleFilterChange({
+      searchQuery: '',
+      selectedCategory: '',
+      minPrice: null,
+      maxPrice: null,
+      sortBy: 'createdAt_desc',
+      pageSize: 6
+    });
   };
 
-  // Toggle mobile filter menu
-  const toggleFilterMenu = () => {
-    setIsFilterMenuOpen(!isFilterMenuOpen);
-  };
-
-  // Close filter menu (for mobile)
-  const closeFilterMenu = () => {
-    setIsFilterMenuOpen(false);
+  // FilterMenu props object to avoid duplication
+  const filterMenuProps = {
+    categories,
+    selectedCategory,
+    onCategoryChange: handleCategoryChange,
+    minPrice,
+    maxPrice,
+    onMinPriceChange: handleMinPriceChange,
+    onMaxPriceChange: handleMaxPriceChange,
+    sortBy,
+    onSortChange: handleSortChange,
+    pageSize,
+    onPageSizeChange: handlePageSizeChange,
+    onReset: handleResetFilters
   };
 
   return (
@@ -365,27 +332,10 @@ const SearchPage: React.FC = () => {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-          {/* Sidebar - Hidden on mobile, shown on desktop */}
-          <aside className={`hidden lg:block w-72 flex-shrink-0 bg-white rounded-xl p-6 h-fit shadow-lg`}>
-            <FilterMenu
-              categories={categories}
-              selectedCategory={selectedCategory}
-              onCategoryChange={handleCategoryChange}
-              minPrice={minPrice}
-              maxPrice={maxPrice}
-              onMinPriceChange={handleMinPriceChange}
-              onMaxPriceChange={handleMaxPriceChange}
-              sortBy={sortBy}
-              onSortChange={handleSortChange}
-              pageSize={pageSize}
-              onPageSizeChange={handlePageSizeChange}
-              onReset={handleResetFilters}
-            />
-          </aside>
-
-          {/* Mobile Filter Menu - Collapsible */}
-          {isFilterMenuOpen && (
-            <div className="lg:hidden bg-white rounded-xl p-6 shadow-lg">
+          {/* Filter Menu - Single Component with Conditional Styling */}
+          <div className={`${isFilterMenuOpen ? 'block lg:hidden' : 'hidden lg:block'} w-full lg:w-72 flex-shrink-0 bg-white rounded-xl p-6 h-fit shadow-lg`}>
+            {/* Mobile Header - Only shown on mobile when menu is open */}
+            {isFilterMenuOpen && (
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
                 <button
@@ -397,22 +347,9 @@ const SearchPage: React.FC = () => {
                   </svg>
                 </button>
               </div>
-              <FilterMenu
-                categories={categories}
-                selectedCategory={selectedCategory}
-                onCategoryChange={handleCategoryChange}
-                minPrice={minPrice}
-                maxPrice={maxPrice}
-                onMinPriceChange={handleMinPriceChange}
-                onMaxPriceChange={handleMaxPriceChange}
-                sortBy={sortBy}
-                onSortChange={handleSortChange}
-                pageSize={pageSize}
-                onPageSizeChange={handlePageSizeChange}
-                onReset={handleResetFilters}
-              />
-            </div>
-          )}
+            )}
+            <FilterMenu {...filterMenuProps} />
+          </div>
 
           {/* Main content */}
           <main className="flex-1 flex flex-col gap-5">

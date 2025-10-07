@@ -1,5 +1,25 @@
-import mongoose, { Schema, Document } from 'mongoose';
-import { IListing, IPhoto } from '../types';
+import mongoose, { Schema, Document, Types } from 'mongoose';
+
+// Photo interface for listing photos
+export interface IPhoto {
+  url: string;
+  alt: string;
+}
+
+// Listing interface for database documents
+export interface IListing extends Document {
+  _id: Types.ObjectId;
+  listingId: string;
+  userId: Types.ObjectId | import('./User').IUser;
+  categoryId: Types.ObjectId | import('./Category').ICategory;
+  title: string;
+  description: string;
+  price: number;
+  status: 'ACTIVE' | 'SOLD';
+  photos: IPhoto[];
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 const photoSchema = new Schema<IPhoto>({
   url: { type: String, required: true },
