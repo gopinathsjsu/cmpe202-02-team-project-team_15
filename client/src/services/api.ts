@@ -54,27 +54,27 @@ export interface SearchResponse {
 }
 
 class ApiService {
-  private api = axios.create({
+  private readonly api = axios.create({
     baseURL: API_BASE_URL,
     timeout: 10000,
   });
 
   // Search listings with filters
   async searchListings(params: SearchParams = {}): Promise<SearchResponse> {
-    const response = await this.api.get<SearchResponse>('/api/listings/search', { params });
-    return response.data;
+    const { data } = await this.api.get<SearchResponse>('/api/listings/search', { params });
+    return data;
   }
 
   // Get all categories
   async getCategories(): Promise<ICategory[]> {
-    const response = await this.api.get<ICategory[]>('/api/listings/categories');
-    return response.data;
+    const { data } = await this.api.get<{ categories: ICategory[] }>('/api/listings/categories');
+    return data.categories;
   }
 
   // Get single listing by ID
   async getListingById(id: string): Promise<IListing> {
-    const response = await this.api.get<IListing>(`/api/listings/${id}`);
-    return response.data;
+    const { data } = await this.api.get<IListing>(`/api/listings/${id}`);
+    return data;
   }
 }
 

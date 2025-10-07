@@ -8,13 +8,16 @@ dotenv.config();
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost/campus-marketplace')
-  .then(() => {
+const connectDatabase = async () => {
+  try {
+    await mongoose.connect('mongodb://localhost/campus-marketplace');
     console.log('Database is connected!');
-  })
-  .catch((err) => {
+  } catch (err) {
     console.error('Database connection error:', err);
-  });
+  }
+};
+
+connectDatabase();
 
 // Start server
 app.listen(PORT, () => {

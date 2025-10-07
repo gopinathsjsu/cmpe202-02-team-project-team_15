@@ -52,28 +52,21 @@ export const searchListings = async (req: Request<{}, SearchResponse, {}, Search
 
     // Price range filter
     if (minPrice || maxPrice) {
-      filter.price = {};
-      if (minPrice) filter.price.$gte = Number(minPrice);
-      if (maxPrice) filter.price.$lte = Number(maxPrice);
+      filter.price = {
+        ...(minPrice && { $gte: Number(minPrice) }),
+        ...(maxPrice && { $lte: Number(maxPrice) })
+      };
     }
 
     // Sorting options - createdAt (default desc) or price
-    let sortObj: any = {};
-    switch (sort) {
-      case 'price_asc':
-        sortObj.price = 1;
-        break;
-      case 'price_desc':
-        sortObj.price = -1;
-        break;
-      case 'createdAt_asc':
-        sortObj.createdAt = 1;
-        break;
-      case 'createdAt_desc':
-      default:
-        sortObj.createdAt = -1;
-        break;
-    }
+    const sortMap = {
+      'price_asc': { price: 1 },
+      'price_desc': { price: -1 },
+      'createdAt_asc': { createdAt: 1 },
+      'createdAt_desc': { createdAt: -1 }
+    } as const;
+    
+    const sortObj = sortMap[sort as keyof typeof sortMap] || sortMap.createdAt_desc;
 
     // Pagination with page/pageSize
     const skip = (Number(page) - 1) * Number(pageSize);
