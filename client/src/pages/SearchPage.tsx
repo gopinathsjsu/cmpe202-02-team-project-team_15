@@ -258,10 +258,10 @@ const SearchPage: React.FC = () => {
   };
 
   return (
-    <div className="app">
-      <div className="app-container">
+    <div className="min-h-screen bg-gray-50">
+      <div className="flex max-w-7xl mx-auto p-5 gap-6">
         {/* Sidebar */}
-        <aside className="sidebar">
+        <aside className="w-72 min-w-72 flex-shrink-0 bg-white rounded-xl p-6 h-fit shadow-lg">
           <FilterMenu
             categories={categories}
             selectedCategory={selectedCategory}
@@ -278,7 +278,7 @@ const SearchPage: React.FC = () => {
         </aside>
 
         {/* Main content */}
-        <main className="main-content">
+        <main className="flex-1 flex flex-col gap-5">
           <SearchBar
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
@@ -286,12 +286,12 @@ const SearchPage: React.FC = () => {
           />
 
           {error && (
-            <div className="error-message">
+            <div className="bg-red-100 text-red-800 px-4 py-3 rounded-lg border border-red-200">
               {error}
             </div>
           )}
 
-          <div className="results-info">
+          <div className="text-gray-600 text-sm">
             {!loading && (
               <p>{totalItems} products found</p>
             )}

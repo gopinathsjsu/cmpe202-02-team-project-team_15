@@ -1,5 +1,4 @@
 import React, { memo } from 'react';
-import { ChevronDown } from 'lucide-react';
 import { ICategory } from '../services/api';
 
 interface FilterMenuProps {
@@ -44,20 +43,6 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
   };
 
 
-  const getSortDisplayName = (sortValue: string) => {
-    switch (sortValue) {
-      case 'createdAt_desc':
-        return 'Newest First';
-      case 'createdAt_asc':
-        return 'Oldest First';
-      case 'price_asc':
-        return 'Price: Low to High';
-      case 'price_desc':
-        return 'Price: High to Low';
-      default:
-        return 'Newest First';
-    }
-  };
 
   return (
     <div className="filter-menu">
@@ -77,7 +62,7 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
               </option>
             ))}
           </select>
-          <ChevronDown className="select-icon" size={16} />
+          <span className="select-icon">▼</span>
         </div>
       </div>
 
@@ -130,7 +115,7 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
             <option value="price_asc">Price: Low to High</option>
             <option value="price_desc">Price: High to Low</option>
           </select>
-          <ChevronDown className="select-icon" size={16} />
+          <span className="select-icon">▼</span>
         </div>
       </div>
 
@@ -148,7 +133,7 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
             <option value={24}>24 items</option>
             <option value={48}>48 items</option>
           </select>
-          <ChevronDown className="select-icon" size={16} />
+          <span className="select-icon">▼</span>
         </div>
       </div>
     </div>

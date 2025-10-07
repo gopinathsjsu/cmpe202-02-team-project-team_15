@@ -1,7 +1,7 @@
-<svg width="280" height="200" viewBox="0 0 280 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="280" height="200" fill="#F8F9FA"/>
-<rect x="105" y="75" width="70" height="50" rx="4" fill="#E9ECEF"/>
-<circle cx="120" cy="90" r="8" fill="#DEE2E6"/>
-<path d="M115 105L125 95L145 115H115V105Z" fill="#DEE2E6"/>
-<text x="140" y="135" font-family="Arial, sans-serif" font-size="14" fill="#6C757D">Image</text>
+<svg width="300" height="200" viewBox="0 0 300 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="300" height="200" fill="#F3F4F6"/>
+  <rect x="50" y="50" width="200" height="100" fill="#E5E7EB" rx="8"/>
+  <circle cx="120" cy="80" r="15" fill="#D1D5DB"/>
+  <path d="M100 120L120 100L140 120L160 100L180 120" stroke="#9CA3AF" stroke-width="2" fill="none"/>
+  <text x="150" y="160" text-anchor="middle" fill="#6B7280" font-family="Arial, sans-serif" font-size="14">No Image</text>
 </svg>
