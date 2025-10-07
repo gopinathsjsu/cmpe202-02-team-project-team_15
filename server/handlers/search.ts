@@ -43,16 +43,8 @@ export const searchListings = async (req: Request<{}, SearchResponse, {}, Search
         if (categoryDoc) {
           filter.categoryId = categoryDoc._id;
         } else {
-          // If category not found, return empty results
-          res.json({
-            items: [],
-            page: {
-              current: Number(page),
-              pageSize: Number(pageSize),
-              total: 0,
-              totalPages: 0
-            }
-          });
+          // If category not found, return error
+          res.status(400).json({ error: 'Category not found' });
           return;
         }
       }
@@ -119,7 +111,7 @@ export const searchListings = async (req: Request<{}, SearchResponse, {}, Search
 export const getCategories = async (req: Request, res: Response): Promise<void> => {
   try {
     const categories = await Category.find().select('name description').sort('name');
-    res.json(categories);
+    res.json({ categories });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
