@@ -1,33 +1,22 @@
-import express, { Request, Response } from 'express';
+import * as dotenv from 'dotenv';
 import mongoose from 'mongoose';
-import cors from 'cors';
+import { app } from './app';
 
-// Import models to ensure they're registered with Mongoose
-import './models/User';
-import './models/Category';
-import './models/Listing';
+// Load environment variables
+dotenv.config();
 
-// Import routes
-import searchRoutes from './routes/searchRoutes';
-
-const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost/campus-marketplace');
+mongoose.connect('mongodb://localhost/campus-marketplace')
+  .then(() => {
+    console.log('Database is connected!');
+  })
+  .catch((err) => {
+    console.error('Database connection error:', err);
+  });
 
-// Routes
-app.use('/api/listings', searchRoutes);
-
-// Basic route
-app.get('/', (req: Request, res: Response) => {
-  res.json({ message: 'Campus Marketplace API' });
-});
-
+// Start server
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Campus Marketplace up on ${PORT}`);
 });
