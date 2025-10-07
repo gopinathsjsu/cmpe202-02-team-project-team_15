@@ -97,6 +97,45 @@ code {
   @apply text-gray-400 font-medium;
 }
 
+/* Reset Button Styles */
+.reset-button {
+  @apply w-full px-3 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white font-medium rounded-lg shadow-md hover:from-red-600 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 flex items-center justify-center;
+}
+
+.reset-button:hover {
+  @apply transform -translate-y-0.5 shadow-lg;
+}
+
+/* Mobile Filter Toggle Button */
+.mobile-filter-toggle {
+  @apply w-full px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm flex items-center justify-between hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors;
+}
+
+.mobile-filter-toggle-icon {
+  @apply w-5 h-5 text-gray-500 transition-transform;
+}
+
+.mobile-filter-toggle-icon.open {
+  @apply rotate-180;
+}
+
+/* Mobile Filter Menu */
+.mobile-filter-menu {
+  @apply lg:hidden bg-white rounded-xl p-6 shadow-lg;
+}
+
+.mobile-filter-header {
+  @apply flex items-center justify-between mb-4;
+}
+
+.mobile-filter-title {
+  @apply text-lg font-semibold text-gray-900;
+}
+
+.mobile-filter-close {
+  @apply p-2 text-gray-400 hover:text-gray-600 focus:outline-none transition-colors;
+}
+
 /* Product Grid Styles */
 .product-grid {
   @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
@@ -156,11 +195,45 @@ code {
 
 /* Pagination Styles */
 .pagination {
-  @apply flex items-center justify-center space-x-2 mt-8;
+  @apply flex items-center justify-center mt-8;
+}
+
+/* Mobile pagination - keep horizontal layout but with smaller elements */
+@media (max-width: 480px) {
+  .pagination {
+    @apply flex-row space-x-1;
+  }
+  
+  .pagination-pages {
+    @apply flex-wrap justify-center gap-1;
+  }
+  
+  .pagination-page {
+    @apply px-2 py-1 text-xs;
+  }
+  
+  .pagination-button {
+    @apply px-2 py-1 text-xs;
+  }
+}
+
+/* Tablet and desktop pagination */
+@media (min-width: 481px) {
+  .pagination {
+    @apply flex-row space-x-2;
+  }
+  
+  .pagination-pages {
+    @apply flex items-center space-x-1;
+  }
 }
 
 .pagination-button {
   @apply px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1;
+}
+
+.pagination-button.first {
+  @apply flex-row;
 }
 
 .pagination-button.prev {
@@ -171,8 +244,12 @@ code {
   @apply flex-row-reverse;
 }
 
+.pagination-button.last {
+  @apply flex-row-reverse;
+}
+
 .pagination-pages {
-  @apply flex items-center space-x-1;
+  @apply flex items-center;
 }
 
 .pagination-page {

@@ -1,18 +1,19 @@
-import React, { memo } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import { ICategory } from '../services/api';
 
 interface FilterMenuProps {
   categories: ICategory[];
   selectedCategory: string;
   onCategoryChange: (category: string) => void;
-  minPrice: number;
-  maxPrice: number;
-  onMinPriceChange: (price: number) => void;
-  onMaxPriceChange: (price: number) => void;
+  minPrice: number | null;
+  maxPrice: number | null;
+  onMinPriceChange: (price: number | null) => void;
+  onMaxPriceChange: (price: number | null) => void;
   sortBy: string;
   onSortChange: (sort: string) => void;
   pageSize: number;
   onPageSizeChange: (pageSize: number) => void;
+  onReset: () => void;
 }
 
 const FilterMenu: React.FC<FilterMenuProps> = ({
@@ -26,20 +27,78 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
   sortBy,
   onSortChange,
   pageSize,
-  onPageSizeChange
+  onPageSizeChange,
+  onReset
 }) => {
-  const handleMinPriceInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Math.max(0, parseInt(e.target.value) || 0);
-    if (value <= maxPrice) {
-      onMinPriceChange(value);
+  // Local state for price inputs
+  const [localMinPrice, setLocalMinPrice] = useState<string>('');
+  const [localMaxPrice, setLocalMaxPrice] = useState<string>('');
+
+  // Update local state when props change (e.g., from URL params)
+  useEffect(() => {
+    setLocalMinPrice(minPrice !== null ? minPrice.toString() : '');
+  }, [minPrice]);
+
+  useEffect(() => {
+    setLocalMaxPrice(maxPrice !== null ? maxPrice.toString() : '');
+  }, [maxPrice]);
+
+  const handleMinPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalMinPrice(e.target.value);
+  };
+
+  const handleMaxPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalMaxPrice(e.target.value);
+  };
+
+  const handleMinPriceBlur = () => {
+    const value = localMinPrice.trim();
+    if (value === '') {
+      onMinPriceChange(null);
+    } else {
+      const numValue = Math.max(0, parseInt(value) || 0);
+      
+      // Check if we need to swap with max price
+      if (maxPrice !== null && numValue > maxPrice) {
+        // Swap: new min becomes the old max, new max becomes the entered value
+        onMinPriceChange(maxPrice);
+        onMaxPriceChange(numValue);
+        // Update local state to reflect the swap
+        setLocalMinPrice(maxPrice.toString());
+        setLocalMaxPrice(numValue.toString());
+      } else {
+        onMinPriceChange(numValue);
+      }
     }
   };
 
-  const handleMaxPriceInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Math.max(0, parseInt(e.target.value) || 9999);
-    if (value >= minPrice) {
-      onMaxPriceChange(value);
+  const handleMaxPriceBlur = () => {
+    const value = localMaxPrice.trim();
+    if (value === '') {
+      onMaxPriceChange(null);
+    } else {
+      const numValue = Math.max(0, parseInt(value) || 0);
+      
+      // Check if we need to swap with min price
+      if (minPrice !== null && numValue < minPrice) {
+        // Swap: new max becomes the old min, new min becomes the entered value
+        onMaxPriceChange(minPrice);
+        onMinPriceChange(numValue);
+        // Update local state to reflect the swap
+        setLocalMaxPrice(minPrice.toString());
+        setLocalMinPrice(numValue.toString());
+      } else {
+        onMaxPriceChange(numValue);
+      }
     }
+  };
+
+  const handleReset = () => {
+    // Clear local state
+    setLocalMinPrice('');
+    setLocalMaxPrice('');
+    // Call parent reset handler
+    onReset();
   };
 
 
@@ -77,11 +136,11 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
             <input
               type="number"
               min="0"
-              max="9999"
-              value={minPrice}
-              onChange={handleMinPriceInput}
+              value={localMinPrice}
+              onChange={handleMinPriceChange}
+              onBlur={handleMinPriceBlur}
               className="price-input"
-              placeholder="0"
+              placeholder="Min"
             />
           </div>
           <div className="price-input-separator">-</div>
@@ -90,11 +149,11 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
             <input
               type="number"
               min="0"
-              max="9999"
-              value={maxPrice}
-              onChange={handleMaxPriceInput}
+              value={localMaxPrice}
+              onChange={handleMaxPriceChange}
+              onBlur={handleMaxPriceBlur}
               className="price-input"
-              placeholder="9999"
+              placeholder="Max"
             />
           </div>
         </div>
@@ -135,6 +194,16 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
           </select>
           <span className="select-icon">▼</span>
         </div>
+      </div>
+
+      {/* Reset Button */}
+      <div className="filter-section">
+        <button
+          onClick={handleReset}
+          className="reset-button"
+        >
+          Reset Filters
+        </button>
       </div>
     </div>
   );
