@@ -261,19 +261,19 @@ storybook-static/
 /.pnp
 .pnp.js
 
-# Frontend build directories (more specific paths)
-/frontend/build
-/frontend/dist
-/frontend/coverage
+# Client build directories (more specific paths)
+/client/build
+/client/dist
+/client/coverage
 
-# Frontend environment files
-/frontend/.env.local
-/frontend/.env.development.local
-/frontend/.env.test.local
-/frontend/.env.production.local
+# Client environment files
+/client/.env.local
+/client/.env.development.local
+/client/.env.test.local
+/client/.env.production.local
 
-# Frontend node_modules
-/frontend/node_modules
+# Client node_modules
+/client/node_modules
 
 # Server-specific patterns
 /server/dist
