@@ -1,7 +1,18 @@
-const express = require('express');
-const { Campus, User } = require('../models');
-const { authenticateToken, requireRole } = require('../middleware/auth');
-const { validateCampusCreation } = require('../middleware/validation');
+import express from 'express';
+
+// Get models dynamically to avoid ES module issues
+let models: any = null;
+
+const getModels = async () => {
+  if (!models) {
+    const { getModels: getModelsFunc } = await import('../models/index.ts');
+    models = await getModelsFunc();
+  }
+  return models;
+};
+
+import { authenticateToken, requireRole } from '../middleware/auth.js';
+import { validateCampusCreation } from '../middleware/validation.js';
 
 const router = express.Router();
 
@@ -10,6 +21,7 @@ const router = express.Router();
 // @access  Public
 router.get('/', async (req, res) => {
   try {
+    const { Campus } = await getModels();
     const campuses = await Campus.find().sort({ name: 1 });
 
     res.json({
@@ -32,6 +44,7 @@ router.get('/', async (req, res) => {
 // @access  Public
 router.get('/:id', async (req, res) => {
   try {
+    const { Campus } = await getModels();
     const campus = await Campus.findById(req.params.id);
 
     if (!campus) {
@@ -62,6 +75,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', authenticateToken, requireRole(['admin']), validateCampusCreation, async (req, res) => {
   try {
     const { name, email_domain } = req.body;
+    const { Campus } = await getModels();
 
     // Check if campus with same name or email domain already exists
     const existingCampus = await Campus.findOne({
@@ -107,6 +121,7 @@ router.post('/', authenticateToken, requireRole(['admin']), validateCampusCreati
 router.put('/:id', authenticateToken, requireRole(['admin']), async (req, res) => {
   try {
     const { name, email_domain } = req.body;
+    const { Campus } = await getModels();
 
     const campus = await Campus.findById(req.params.id);
     if (!campus) {
@@ -163,6 +178,7 @@ router.put('/:id', authenticateToken, requireRole(['admin']), async (req, res) =
 // @access  Private (Admin)
 router.delete('/:id', authenticateToken, requireRole(['admin']), async (req, res) => {
   try {
+    const { Campus } = await getModels();
     const campus = await Campus.findById(req.params.id);
     if (!campus) {
       return res.status(404).json({
@@ -196,6 +212,7 @@ router.delete('/:id', authenticateToken, requireRole(['admin']), async (req, res
 router.get('/:id/users', authenticateToken, requireRole(['admin']), async (req, res) => {
   try {
     const { page = 1, limit = 10, status } = req.query;
+    const { Campus, User } = await getModels();
     
     const campus = await Campus.findById(req.params.id);
     if (!campus) {
@@ -207,7 +224,7 @@ router.get('/:id/users', authenticateToken, requireRole(['admin']), async (req, 
 
     // Note: Since we removed campus_id from users, this endpoint is no longer relevant
     // Return empty result or consider removing this endpoint entirely
-    const query = {};
+    const query: any = {};
     if (status) query.status = status;
 
     const users = await User.find(query)
@@ -242,4 +259,5 @@ router.get('/:id/users', authenticateToken, requireRole(['admin']), async (req, 
   }
 });
 
-module.exports = router;
+export default router;
+

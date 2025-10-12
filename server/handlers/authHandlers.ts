@@ -1,8 +1,17 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
-import { User, Session, EmailVerification, PasswordReset, AuditLog, UserRole, Role } from '../models';
+// Import models dynamically to avoid ES module issues
+let models: any = null;
+
+const getModels = async () => {
+  if (!models) {
+    const { getModels: getModelsFunc } = await import('../models/index.ts');
+    models = await getModelsFunc();
+  }
+  return models;
+};
 
 // Helper function to generate tokens
 const generateTokens = (userId: string) => {
@@ -31,7 +40,7 @@ const sendPasswordResetEmail = async (user: any, token: string): Promise<boolean
   return true;
 };
 
-export class AuthController {
+export class AuthHandlers {
   // @route   POST /api/auth/register
   // @desc    Register a new user
   // @access  Public
@@ -40,6 +49,7 @@ export class AuthController {
       const { email, password, first_name, last_name } = req.body;
 
       // Check if user already exists
+      const { User } = await getModels();
       const existingUser = await User.findOne({ email });
       if (existingUser) {
         res.status(400).json({
@@ -72,6 +82,7 @@ export class AuthController {
       await user.save();
 
       // Assign default buyer role
+      const { Role, UserRole } = await getModels();
       const buyerRole = await Role.findOne({ name: 'buyer' });
       if (buyerRole) {
         await UserRole.create({
@@ -83,6 +94,7 @@ export class AuthController {
       // User is automatically verified, no email verification needed
 
       // Log audit event
+      const { AuditLog } = await getModels();
       await AuditLog.create({
         user_id: user._id,
         action: 'SIGN_UP',
@@ -122,6 +134,7 @@ export class AuthController {
       const { token } = req.body;
       
       const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      const { EmailVerification } = await getModels();
       
       const verification = await EmailVerification.findOne({
         token_hash: tokenHash
@@ -136,6 +149,7 @@ export class AuthController {
       }
 
       // Update user status
+      const { User } = await getModels();
       await User.findByIdAndUpdate(verification.user_id._id, {
         status: 'active',
         email_verified_at: new Date()
@@ -179,6 +193,7 @@ export class AuthController {
       console.log('[AuthController.login] Starting login for:', email);
 
       // Find user
+      const { User } = await getModels();
       const user = await User.findOne({ email });
       if (!user) {
         console.log('[AuthController.login] User not found');
@@ -215,6 +230,7 @@ export class AuthController {
 
       // Generate tokens
       const { accessToken, refreshToken } = generateTokens(user._id);
+      const { Session, UserRole, AuditLog } = await getModels();
 
       // Create session
       await Session.create({
@@ -274,6 +290,7 @@ export class AuthController {
 
       // Generate new access token
       const { accessToken } = generateTokens(user._id);
+      const { AuditLog } = await getModels();
 
       // Log audit event
       await AuditLog.create({
@@ -309,6 +326,7 @@ export class AuthController {
 
       if (refreshToken) {
         // Revoke the specific session
+        const { Session } = await getModels();
         await Session.findOneAndUpdate(
           { refresh_token: refreshToken },
           { revoked_at: new Date() }
@@ -316,6 +334,7 @@ export class AuthController {
       }
 
       // Log audit event
+      const { AuditLog } = await getModels();
       await AuditLog.create({
         user_id: (req as any).user._id,
         action: 'LOGOUT',
@@ -344,6 +363,7 @@ export class AuthController {
     try {
       const { email } = req.body;
 
+      const { User } = await getModels();
       const user = await User.findOne({ email });
       if (!user) {
         // Don't reveal if user exists or not
@@ -357,6 +377,7 @@ export class AuthController {
       // Generate reset token
       const resetToken = crypto.randomBytes(32).toString('hex');
       const tokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+      const { PasswordReset } = await getModels();
 
       await PasswordReset.create({
         user_id: user._id,
@@ -390,6 +411,7 @@ export class AuthController {
       const { token, password } = req.body;
 
       const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      const { PasswordReset, Session, AuditLog } = await getModels();
 
       const resetRequest = await PasswordReset.findOne({
         token_hash: tokenHash

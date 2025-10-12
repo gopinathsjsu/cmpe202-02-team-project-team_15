@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const userRoleSchema = new mongoose.Schema({
   user_id: {
@@ -18,4 +18,5 @@ const userRoleSchema = new mongoose.Schema({
 // Compound index to ensure unique user-role combinations
 userRoleSchema.index({ user_id: 1, role_id: 1 }, { unique: true });
 
-module.exports = mongoose.model('UserRole', userRoleSchema);
+export default mongoose.model('UserRole', userRoleSchema);
+

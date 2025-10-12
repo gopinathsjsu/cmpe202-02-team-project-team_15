@@ -1,7 +1,17 @@
-const express = require('express');
-const { User, UserRole, Role, AuditLog, Campus } = require('../models');
-const { authenticateToken, requireRole } = require('../middleware/auth');
-const { validateRoleAssignment } = require('../middleware/validation');
+import express from 'express';
+// Get models dynamically to avoid ES module issues
+let models: any = null;
+
+const getModels = async () => {
+  if (!models) {
+    const { getModels: getModelsFunc } = await import('../models/index.ts');
+    models = await getModelsFunc();
+  }
+  return models;
+};
+
+import { authenticateToken, requireRole } from '../middleware/auth.js';
+import { validateRoleAssignment } from '../middleware/validation.js';
 
 const router = express.Router();
 
@@ -10,6 +20,7 @@ const router = express.Router();
 // @access  Private
 router.get('/profile', authenticateToken, async (req, res) => {
   try {
+    const { User, UserRole } = await getModels();
     const user = await User.findById(req.user._id)
       .select('-password_hash');
 
@@ -51,8 +62,9 @@ router.get('/profile', authenticateToken, async (req, res) => {
 router.put('/profile', authenticateToken, async (req, res) => {
   try {
     const { first_name, last_name } = req.body;
+    const { User } = await getModels();
     
-    const updateData = {};
+    const updateData: any = {};
     if (first_name) updateData.first_name = first_name.trim();
     if (last_name) updateData.last_name = last_name.trim();
 
@@ -84,8 +96,9 @@ router.put('/profile', authenticateToken, async (req, res) => {
 router.get('/', authenticateToken, requireRole(['admin']), async (req, res) => {
   try {
     const { page = 1, limit = 10, status, search } = req.query;
+    const { User, UserRole } = await getModels();
     
-    const query = {};
+    const query: any = {};
     
     if (status) query.status = status;
     if (search) {
@@ -144,6 +157,7 @@ router.get('/', authenticateToken, requireRole(['admin']), async (req, res) => {
 // @access  Private (Admin)
 router.get('/:id', authenticateToken, requireRole(['admin']), async (req, res) => {
   try {
+    const { User, UserRole } = await getModels();
     const user = await User.findById(req.params.id)
       .select('-password_hash');
 
@@ -184,6 +198,7 @@ router.get('/:id', authenticateToken, requireRole(['admin']), async (req, res) =
 router.put('/:id/status', authenticateToken, requireRole(['admin']), async (req, res) => {
   try {
     const { status } = req.body;
+    const { User, AuditLog } = await getModels();
     
     if (!['pending_verification', 'active', 'suspended', 'deleted'].includes(status)) {
       return res.status(400).json({
@@ -240,6 +255,7 @@ router.post('/:id/roles', authenticateToken, requireRole(['admin']), validateRol
   try {
     const { role_id } = req.body;
     const user_id = req.params.id;
+    const { User, Role, UserRole, AuditLog } = await getModels();
 
     // Check if user exists
     const user = await User.findById(user_id);
@@ -303,6 +319,7 @@ router.post('/:id/roles', authenticateToken, requireRole(['admin']), validateRol
 router.delete('/:id/roles/:roleId', authenticateToken, requireRole(['admin']), async (req, res) => {
   try {
     const { id: user_id, roleId: role_id } = req.params;
+    const { User, Role, UserRole, AuditLog } = await getModels();
 
     // Check if user exists
     const user = await User.findById(user_id);
@@ -357,4 +374,5 @@ router.delete('/:id/roles/:roleId', authenticateToken, requireRole(['admin']), a
   }
 });
 
-module.exports = router;
+export default router;
+

@@ -1,4 +1,4 @@
-const { body, validationResult } = require('express-validator');
+import { body, validationResult } from 'express-validator';
 
 // Middleware to handle validation errors
 const handleValidationErrors = (req, res, next) => {
@@ -101,7 +101,7 @@ const validateEmailVerification = [
   handleValidationErrors
 ];
 
-module.exports = {
+export {
   validateUserRegistration,
   validateUserLogin,
   validatePasswordResetRequest,
@@ -111,3 +111,4 @@ module.exports = {
   validateEmailVerification,
   handleValidationErrors
 };
+

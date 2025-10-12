@@ -1,5 +1,15 @@
-const jwt = require('jsonwebtoken');
-const { User, Session } = require('../models');
+import jwt from 'jsonwebtoken';
+
+// Get models dynamically to avoid ES module issues
+let models: any = null;
+
+const getModels = async () => {
+  if (!models) {
+    const { getModels: getModelsFunc } = await import('../models/index.ts');
+    models = await getModelsFunc();
+  }
+  return models;
+};
 
 // Middleware to verify JWT token
 const authenticateToken = async (req, res, next) => {
@@ -17,6 +27,7 @@ const authenticateToken = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret_key_here');
     
     // Check if user exists and is active
+    const { User } = await getModels();
     const user = await User.findById(decoded.userId);
     if (!user || user.status !== 'active') {
       return res.status(401).json({ 
@@ -60,9 +71,9 @@ const requireRole = (roles) => {
         });
       }
 
-      const { UserRole, Role } = require('../models');
       
       // Get user roles
+      const { UserRole } = await getModels();
       const userRoles = await UserRole.find({ user_id: req.user._id })
         .populate('role_id');
       
@@ -102,6 +113,7 @@ const verifyRefreshToken = async (req, res, next) => {
       });
     }
 
+    const { Session } = await getModels();
     const session = await Session.findOne({ 
       refresh_token: refreshToken 
     }).populate('user_id');
@@ -125,8 +137,9 @@ const verifyRefreshToken = async (req, res, next) => {
   }
 };
 
-module.exports = {
+export {
   authenticateToken,
   requireRole,
   verifyRefreshToken
 };
+

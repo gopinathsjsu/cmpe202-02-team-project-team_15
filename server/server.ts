@@ -1,16 +1,18 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
-import connectDB from './config/database';
+import connectDB from './config/database.js';
+import { swaggerUi, specs } from './config/swagger.js';
 
 // Load environment variables
-require('dotenv').config();
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Import routes
-import authRoutes from './routes/auth';
-import userRoutes from './routes/users';
-import campusRoutes from './routes/campus';
-import adminRoutes from './routes/admin';
+import authRoutes from './routes/auth.js';
+import userRoutes from './routes/users.js';
+import campusRoutes from './routes/campus.js';
+import adminRoutes from './routes/admin.js';
 
 // Initialize Express app
 const app = express();
@@ -36,7 +38,41 @@ app.use(express.urlencoded({ extended: true }));
 // Trust proxy for accurate IP addresses
 app.set('trust proxy', 1);
 
-// Health check endpoint
+// Swagger API Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
+  explorer: true,
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'CMPE 202 Team Project API'
+}));
+
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Health check endpoint
+ *     description: Returns the current status of the server
+ *     tags: [System]
+ *     responses:
+ *       200:
+ *         description: Server is running
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Server is running"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                 environment:
+ *                   type: string
+ *                   example: "development"
+ */
 app.get('/health', (req, res) => {
   res.json({
     success: true,
@@ -52,7 +88,8 @@ app.post('/debug-login', async (req, res) => {
     const { email, password } = req.body;
     console.log('Debug login called with:', { email, password: password ? '***' : 'undefined' });
     
-    const { User } = await import('./models');
+    const { getModels } = await import('./models/index.js');
+    const { User } = await getModels();
     const user = await User.findOne({ email });
     
     if (!user) {
@@ -85,8 +122,8 @@ app.post('/debug-login', async (req, res) => {
 app.post('/debug-auth-controller', async (req, res) => {
   try {
     console.log('Debug auth controller called');
-    const { AuthController } = await import('./controllers/authController');
-    await AuthController.login(req, res);
+    const { AuthHandlers } = await import('./handlers/authHandlers.ts');
+    await AuthHandlers.login(req, res);
   } catch (error) {
     console.error('Debug auth controller error:', error);
     res.json({ success: false, message: 'Error: ' + error.message });
@@ -99,7 +136,49 @@ app.use('/api/users', userRoutes);
 app.use('/api/campus', campusRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Root endpoint
+/**
+ * @swagger
+ * /:
+ *   get:
+ *     summary: API information
+ *     description: Returns basic information about the API and available endpoints
+ *     tags: [System]
+ *     responses:
+ *       200:
+ *         description: API information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "CMPE 202 Team Project API"
+ *                 version:
+ *                   type: string
+ *                   example: "1.0.0"
+ *                 endpoints:
+ *                   type: object
+ *                   properties:
+ *                     auth:
+ *                       type: string
+ *                       example: "/api/auth"
+ *                     users:
+ *                       type: string
+ *                       example: "/api/users"
+ *                     campus:
+ *                       type: string
+ *                       example: "/api/campus"
+ *                     admin:
+ *                       type: string
+ *                       example: "/api/admin"
+ *                     health:
+ *                       type: string
+ *                       example: "/health"
+ */
 app.get('/', (req, res) => {
   res.json({
     success: true,
@@ -110,7 +189,8 @@ app.get('/', (req, res) => {
       users: '/api/users',
       campus: '/api/campus',
       admin: '/api/admin',
-      health: '/health'
+      health: '/health',
+      docs: '/api-docs'
     }
   });
 });
