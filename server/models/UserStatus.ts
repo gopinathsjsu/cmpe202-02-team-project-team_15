@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const userStatusSchema = new mongoose.Schema({
   pending_verification: {
@@ -21,4 +21,5 @@ const userStatusSchema = new mongoose.Schema({
   timestamps: false
 });
 
-module.exports = mongoose.model('UserStatus', userStatusSchema);
+export default mongoose.model('UserStatus', userStatusSchema);
+

@@ -1,4 +1,13 @@
-const { LoginAttempt } = require('../models');
+// Get models dynamically to avoid ES module issues
+let models: any = null;
+
+const getModels = async () => {
+  if (!models) {
+    const { getModels: getModelsFunc } = await import('../models/index.ts');
+    models = await getModelsFunc();
+  }
+  return models;
+};
 
 // Rate limiting for login attempts
 const loginRateLimit = async (req, res, next) => {
@@ -11,6 +20,7 @@ const loginRateLimit = async (req, res, next) => {
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 
     // Check failed attempts in last 5 minutes
+    const { LoginAttempt } = await getModels();
     const recentFailedAttempts = await LoginAttempt.countDocuments({
       email: email,
       success: false,
@@ -61,6 +71,7 @@ const logLoginAttempt = async (req, res, next) => {
         const clientIP = req.ip || req.connection.remoteAddress;
         const success = res.statusCode === 200;
 
+        const { LoginAttempt } = await getModels();
         await LoginAttempt.create({
           email: email,
           ip_address: clientIP,
@@ -77,7 +88,8 @@ const logLoginAttempt = async (req, res, next) => {
   next();
 };
 
-module.exports = {
+export {
   loginRateLimit,
   logLoginAttempt
 };
+

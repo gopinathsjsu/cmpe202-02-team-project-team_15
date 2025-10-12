@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const sessionSchema = new mongoose.Schema({
   user_id: {
@@ -40,4 +40,5 @@ sessionSchema.methods.isValid = function() {
   return !this.revoked_at && this.expires_at > new Date();
 };
 
-module.exports = mongoose.model('Session', sessionSchema);
+export default mongoose.model('Session', sessionSchema);
+

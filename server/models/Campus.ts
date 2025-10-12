@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const campusSchema = new mongoose.Schema({
   name: {
@@ -17,4 +17,5 @@ const campusSchema = new mongoose.Schema({
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });
 
-module.exports = mongoose.model('Campus', campusSchema);
+export default mongoose.model('Campus', campusSchema);
+

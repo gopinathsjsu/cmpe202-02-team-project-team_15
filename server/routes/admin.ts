@@ -1,6 +1,17 @@
-const express = require('express');
-const { AuditLog, LoginAttempt, Session, User, Campus, Role } = require('../models');
-const { authenticateToken, requireRole } = require('../middleware/auth');
+import express from 'express';
+
+// Get models dynamically to avoid ES module issues
+let models: any = null;
+
+const getModels = async () => {
+  if (!models) {
+    const { getModels: getModelsFunc } = await import('../models/index.ts');
+    models = await getModelsFunc();
+  }
+  return models;
+};
+
+import { authenticateToken, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -18,7 +29,7 @@ router.get('/audit-logs', authenticateToken, requireRole(['admin']), async (req,
       end_date 
     } = req.query;
 
-    const query = {};
+    const query: any = {};
     
     if (user_id) query.user_id = user_id;
     if (action) query.action = action;
@@ -29,6 +40,7 @@ router.get('/audit-logs', authenticateToken, requireRole(['admin']), async (req,
       if (end_date) query.created_at.$lte = new Date(end_date);
     }
 
+    const { AuditLog } = await getModels();
     const auditLogs = await AuditLog.find(query)
       .populate('user_id', 'email first_name last_name')
       .limit(limit * 1)
@@ -75,7 +87,7 @@ router.get('/login-attempts', authenticateToken, requireRole(['admin']), async (
       end_date 
     } = req.query;
 
-    const query = {};
+    const query: any = {};
     
     if (email) query.email = { $regex: email, $options: 'i' };
     if (ip_address) query.ip_address = ip_address;
@@ -87,6 +99,7 @@ router.get('/login-attempts', authenticateToken, requireRole(['admin']), async (
       if (end_date) query.created_at.$lte = new Date(end_date);
     }
 
+    const { LoginAttempt } = await getModels();
     const loginAttempts = await LoginAttempt.find(query)
       .limit(limit * 1)
       .skip((page - 1) * limit)
@@ -123,8 +136,9 @@ router.get('/login-attempts', authenticateToken, requireRole(['admin']), async (
 router.get('/sessions', authenticateToken, requireRole(['admin']), async (req, res) => {
   try {
     const { page = 1, limit = 50, user_id } = req.query;
+    const { Session } = await getModels();
 
-    const query = { 
+    const query: any = { 
       revoked_at: null,
       expires_at: { $gt: new Date() }
     };
@@ -167,6 +181,7 @@ router.get('/sessions', authenticateToken, requireRole(['admin']), async (req, r
 // @access  Private (Admin)
 router.delete('/sessions/:id', authenticateToken, requireRole(['admin']), async (req, res) => {
   try {
+    const { Session } = await getModels();
     const session = await Session.findById(req.params.id);
     
     if (!session) {
@@ -203,6 +218,7 @@ router.get('/dashboard', authenticateToken, requireRole(['admin']), async (req, 
     const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const { User, Campus, Session, LoginAttempt } = await getModels();
 
     // User statistics
     const totalUsers = await User.countDocuments();
@@ -237,6 +253,7 @@ router.get('/dashboard', authenticateToken, requireRole(['admin']), async (req, 
     const failedLogins24h = loginAttempts24h - successfulLogins24h;
 
     // Recent audit activities
+    const { AuditLog } = await getModels();
     const recentAuditLogs = await AuditLog.find()
       .populate('user_id', 'email first_name last_name')
       .limit(10)
@@ -309,6 +326,7 @@ router.get('/dashboard', authenticateToken, requireRole(['admin']), async (req, 
 router.post('/cleanup', authenticateToken, requireRole(['admin']), async (req, res) => {
   try {
     const now = new Date();
+    const { Session, EmailVerification, PasswordReset, LoginAttempt } = await getModels();
 
     // Clean up expired sessions
     const expiredSessions = await Session.deleteMany({
@@ -316,13 +334,11 @@ router.post('/cleanup', authenticateToken, requireRole(['admin']), async (req, r
     });
 
     // Clean up expired email verification tokens
-    const { EmailVerification } = require('../models');
     const expiredEmailTokens = await EmailVerification.deleteMany({
       expires_at: { $lt: now }
     });
 
     // Clean up expired password reset tokens
-    const { PasswordReset } = require('../models');
     const expiredPasswordTokens = await PasswordReset.deleteMany({
       expires_at: { $lt: now }
     });
@@ -354,4 +370,5 @@ router.post('/cleanup', authenticateToken, requireRole(['admin']), async (req, r
   }
 });
 
-module.exports = router;
+export default router;
+

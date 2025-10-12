@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const loginAttemptSchema = new mongoose.Schema({
   email: {
@@ -24,4 +24,5 @@ const loginAttemptSchema = new mongoose.Schema({
 loginAttemptSchema.index({ email: 1, created_at: -1 });
 loginAttemptSchema.index({ ip_address: 1, created_at: -1 });
 
-module.exports = mongoose.model('LoginAttempt', loginAttemptSchema);
+export default mongoose.model('LoginAttempt', loginAttemptSchema);
+

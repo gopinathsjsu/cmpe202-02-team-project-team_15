@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "commonjs",
-    "lib": ["ES2020"],
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM"],
     "outDir": "./dist",
     "rootDir": "./",
     "strict": false,
@@ -21,10 +21,13 @@
     "noImplicitReturns": false,
     "noFallthroughCasesInSwitch": false,
     "moduleResolution": "node",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "types": ["node"],
     "baseUrl": "./",
     "paths": {
       "@/*": ["src/*"],
-      "@/controllers/*": ["controllers/*"],
+      "@/handlers/*": ["handlers/*"],
       "@/models/*": ["models/*"],
       "@/middleware/*": ["middleware/*"],
       "@/routes/*": ["routes/*"],
