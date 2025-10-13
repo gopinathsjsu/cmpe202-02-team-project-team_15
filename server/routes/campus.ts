@@ -1,18 +1,18 @@
-import express from 'express';
+const express = require('express');
 
 // Get models dynamically to avoid ES module issues
 let models: any = null;
 
 const getModels = async () => {
   if (!models) {
-    const { getModels: getModelsFunc } = await import('../models/index.ts');
+    const { getModels: getModelsFunc } = require('../models/index');
     models = await getModelsFunc();
   }
   return models;
 };
 
-import { authenticateToken, requireRole } from '../middleware/auth.js';
-import { validateCampusCreation } from '../middleware/validation.js';
+const { authenticateToken, requireRole } = require('../middleware/auth');
+const { validateCampusCreation } = require('../middleware/validation');
 
 const router = express.Router();
 
@@ -147,7 +147,7 @@ router.put('/:id', authenticateToken, requireRole(['admin']), async (req, res) =
       });
     }
 
-    const updateData = {};
+    const updateData: any = {};
     if (name) updateData.name = name.trim();
     if (email_domain) updateData.email_domain = email_domain.toLowerCase().trim();
 
@@ -259,5 +259,7 @@ router.get('/:id/users', authenticateToken, requireRole(['admin']), async (req, 
   }
 });
 
-export default router;
+module.exports = router;
+
+export {};
 

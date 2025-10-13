@@ -2,9 +2,9 @@
 const connectDB = async () => {
   try {
     // Use dynamic import to avoid ES module compatibility issues
-    const mongoose = await import('mongoose');
+    const mongoose = require('mongoose');
     
-    const conn = await mongoose.default.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/cmpe202_project');
+    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/cmpe202_project');
 
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
     return conn;
@@ -19,4 +19,6 @@ const connectDB = async () => {
   }
 };
 
-export default connectDB;
+module.exports = connectDB;
+
+export {};

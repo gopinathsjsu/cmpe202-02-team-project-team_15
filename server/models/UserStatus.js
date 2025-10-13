@@ -22,6 +22,3 @@ const userStatusSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model('UserStatus', userStatusSchema);
-
-export {};
-

@@ -1,14 +1,14 @@
-import express from 'express';
-import { AuthHandlers } from '../handlers/authHandlers.js';
-import { 
+const express = require('express');
+const { AuthHandlers } = require('../handlers/authHandlers');
+const { 
   validateUserRegistration, 
   validateUserLogin, 
   validatePasswordResetRequest,
   validatePasswordReset,
   validateEmailVerification 
-} from '../middleware/validation.js';
-import { loginRateLimit, logLoginAttempt } from '../middleware/rateLimiting.js';
-import { authenticateToken, verifyRefreshToken } from '../middleware/auth.js';
+} = require('../middleware/validation');
+const { loginRateLimit, logLoginAttempt } = require('../middleware/rateLimiting');
+const { authenticateToken, verifyRefreshToken } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -47,5 +47,7 @@ router.post('/forgot-password', validatePasswordResetRequest, AuthHandlers.forgo
 // @access  Public
 router.post('/reset-password', validatePasswordReset, AuthHandlers.resetPassword);
 
-export default router;
+module.exports = router;
+
+export {};
 

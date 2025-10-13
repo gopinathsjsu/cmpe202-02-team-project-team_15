@@ -1,18 +1,18 @@
-import express from 'express';
-import cors from 'cors';
-import path from 'path';
-import connectDB from './config/database.js';
-import { swaggerUi, specs } from './config/swagger.js';
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+const connectDB = require('./config/database');
+const { swaggerUi, specs } = require('./config/swagger');
 
 // Load environment variables
-import dotenv from 'dotenv';
+const dotenv = require('dotenv');
 dotenv.config();
 
 // Import routes
-import authRoutes from './routes/auth.js';
-import userRoutes from './routes/users.js';
-import campusRoutes from './routes/campus.js';
-import adminRoutes from './routes/admin.js';
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
+const campusRoutes = require('./routes/campus');
+const adminRoutes = require('./routes/admin');
 
 // Initialize Express app
 const app = express();
@@ -88,7 +88,7 @@ app.post('/debug-login', async (req, res) => {
     const { email, password } = req.body;
     console.log('Debug login called with:', { email, password: password ? '***' : 'undefined' });
     
-    const { getModels } = await import('./models/index.js');
+    const { getModels } = require('./models/index');
     const { User } = await getModels();
     const user = await User.findOne({ email });
     
@@ -122,7 +122,7 @@ app.post('/debug-login', async (req, res) => {
 app.post('/debug-auth-controller', async (req, res) => {
   try {
     console.log('Debug auth controller called');
-    const { AuthHandlers } = await import('./handlers/authHandlers.ts');
+    const { AuthHandlers } = require('./handlers/authHandlers');
     await AuthHandlers.login(req, res);
   } catch (error) {
     console.error('Debug auth controller error:', error);
@@ -205,7 +205,7 @@ app.use((req, res) => {
 });
 
 // Global error handler
-app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((error: any, req: any, res: any, next: any) => {
   console.error('Global error handler:', error);
   
   // Mongoose validation error
@@ -272,4 +272,6 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
-export default app;
+module.exports = app;
+
+export {};

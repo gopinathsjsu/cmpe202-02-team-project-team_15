@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const emailVerificationSchema = new mongoose.Schema({
+const passwordResetSchema = new mongoose.Schema({
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -24,15 +24,12 @@ const emailVerificationSchema = new mongoose.Schema({
 });
 
 // Index for cleanup of expired tokens
-emailVerificationSchema.index({ expires_at: 1 });
-emailVerificationSchema.index({ user_id: 1 });
+passwordResetSchema.index({ expires_at: 1 });
+passwordResetSchema.index({ user_id: 1 });
 
 // Method to check if token is valid
-emailVerificationSchema.methods.isValid = function() {
+passwordResetSchema.methods.isValid = function() {
   return !this.used_at && this.expires_at > new Date();
 };
 
-module.exports = mongoose.model('EmailVerification', emailVerificationSchema);
-
-export {};
-
+module.exports = mongoose.model('PasswordReset', passwordResetSchema);

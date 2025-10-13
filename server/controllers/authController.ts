@@ -1,16 +1,7 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
-// Import models dynamically to avoid ES module issues
-let models: any = null;
-
-const getModels = async () => {
-  if (!models) {
-    const { getModels: getModelsFunc } = require('../models/index');
-    models = await getModelsFunc();
-  }
-  return models;
-};
+const { User, Session, EmailVerification, PasswordReset, AuditLog, UserRole, Role } = require('../models');
 
 // Helper function to generate tokens
 const generateTokens = (userId: string) => {
@@ -39,7 +30,7 @@ const sendPasswordResetEmail = async (user: any, token: string): Promise<boolean
   return true;
 };
 
-class AuthHandlers {
+class AuthController {
   // @route   POST /api/auth/register
   // @desc    Register a new user
   // @access  Public
@@ -48,7 +39,6 @@ class AuthHandlers {
       const { email, password, first_name, last_name } = req.body;
 
       // Check if user already exists
-      const { User } = await getModels();
       const existingUser = await User.findOne({ email });
       if (existingUser) {
         res.status(400).json({
@@ -81,7 +71,6 @@ class AuthHandlers {
       await user.save();
 
       // Assign default buyer role
-      const { Role, UserRole } = await getModels();
       const buyerRole = await Role.findOne({ name: 'buyer' });
       if (buyerRole) {
         await UserRole.create({
@@ -93,7 +82,6 @@ class AuthHandlers {
       // User is automatically verified, no email verification needed
 
       // Log audit event
-      const { AuditLog } = await getModels();
       await AuditLog.create({
         user_id: user._id,
         action: 'SIGN_UP',
@@ -133,7 +121,6 @@ class AuthHandlers {
       const { token } = req.body;
       
       const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-      const { EmailVerification } = await getModels();
       
       const verification = await EmailVerification.findOne({
         token_hash: tokenHash
@@ -148,7 +135,6 @@ class AuthHandlers {
       }
 
       // Update user status
-      const { User } = await getModels();
       await User.findByIdAndUpdate(verification.user_id._id, {
         status: 'active',
         email_verified_at: new Date()
@@ -159,7 +145,6 @@ class AuthHandlers {
       await verification.save();
 
       // Log audit event
-      const { AuditLog } = await getModels();
       await AuditLog.create({
         user_id: verification.user_id._id,
         action: 'VERIFY_EMAIL',
@@ -193,7 +178,6 @@ class AuthHandlers {
       console.log('[AuthController.login] Starting login for:', email);
 
       // Find user
-      const { User } = await getModels();
       const user = await User.findOne({ email });
       if (!user) {
         console.log('[AuthController.login] User not found');
@@ -230,7 +214,6 @@ class AuthHandlers {
 
       // Generate tokens
       const { accessToken, refreshToken } = generateTokens(user._id);
-      const { Session, UserRole, AuditLog } = await getModels();
 
       // Create session
       await Session.create({
@@ -290,7 +273,6 @@ class AuthHandlers {
 
       // Generate new access token
       const { accessToken } = generateTokens(user._id);
-      const { AuditLog } = await getModels();
 
       // Log audit event
       await AuditLog.create({
@@ -326,7 +308,6 @@ class AuthHandlers {
 
       if (refreshToken) {
         // Revoke the specific session
-        const { Session } = await getModels();
         await Session.findOneAndUpdate(
           { refresh_token: refreshToken },
           { revoked_at: new Date() }
@@ -334,7 +315,6 @@ class AuthHandlers {
       }
 
       // Log audit event
-      const { AuditLog } = await getModels();
       await AuditLog.create({
         user_id: (req as any).user._id,
         action: 'LOGOUT',
@@ -363,7 +343,6 @@ class AuthHandlers {
     try {
       const { email } = req.body;
 
-      const { User } = await getModels();
       const user = await User.findOne({ email });
       if (!user) {
         // Don't reveal if user exists or not
@@ -377,7 +356,6 @@ class AuthHandlers {
       // Generate reset token
       const resetToken = crypto.randomBytes(32).toString('hex');
       const tokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
-      const { PasswordReset } = await getModels();
 
       await PasswordReset.create({
         user_id: user._id,
@@ -411,7 +389,6 @@ class AuthHandlers {
       const { token, password } = req.body;
 
       const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-      const { PasswordReset, Session, AuditLog } = await getModels();
 
       const resetRequest = await PasswordReset.findOne({
         token_hash: tokenHash
@@ -463,6 +440,6 @@ class AuthHandlers {
   }
 }
 
-module.exports = { AuthHandlers };
+module.exports = { AuthController };
 
 export {};

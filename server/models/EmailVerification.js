@@ -33,6 +33,3 @@ emailVerificationSchema.methods.isValid = function() {
 };
 
 module.exports = mongoose.model('EmailVerification', emailVerificationSchema);
-
-export {};
-
