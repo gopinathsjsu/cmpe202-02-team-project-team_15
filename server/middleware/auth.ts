@@ -1,11 +1,11 @@
-import jwt from 'jsonwebtoken';
+const jwt = require('jsonwebtoken');
 
 // Get models dynamically to avoid ES module issues
 let models: any = null;
 
 const getModels = async () => {
   if (!models) {
-    const { getModels: getModelsFunc } = await import('../models/index.ts');
+    const { getModels: getModelsFunc } = require('../models/index');
     models = await getModelsFunc();
   }
   return models;
@@ -137,9 +137,11 @@ const verifyRefreshToken = async (req, res, next) => {
   }
 };
 
-export {
+module.exports = {
   authenticateToken,
   requireRole,
   verifyRefreshToken
 };
+
+export {};
 

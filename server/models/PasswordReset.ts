@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const passwordResetSchema = new mongoose.Schema({
   user_id: {
@@ -32,5 +32,7 @@ passwordResetSchema.methods.isValid = function() {
   return !this.used_at && this.expires_at > new Date();
 };
 
-export default mongoose.model('PasswordReset', passwordResetSchema);
+module.exports = mongoose.model('PasswordReset', passwordResetSchema);
+
+export {};
 

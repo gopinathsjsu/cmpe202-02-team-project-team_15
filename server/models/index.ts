@@ -1,15 +1,15 @@
 // Export all models using dynamic imports to avoid ES module issues
-export const getModels = async () => {
-  const User = (await import('./User.ts')).default;
-  const Campus = (await import('./Campus.ts')).default;
-  const Role = (await import('./Role.ts')).default;
-  const UserRole = (await import('./UserRole.ts')).default;
-  const Session = (await import('./Session.ts')).default;
-  const EmailVerification = (await import('./EmailVerification.ts')).default;
-  const PasswordReset = (await import('./PasswordReset.ts')).default;
-  const LoginAttempt = (await import('./LoginAttempt.ts')).default;
-  const AuditLog = (await import('./AuditLog.ts')).default;
-  const UserStatus = (await import('./UserStatus.ts')).default;
+const getModels = async () => {
+  const User = require('./User');
+  const Campus = require('./Campus');
+  const Role = require('./Role');
+  const UserRole = require('./UserRole');
+  const Session = require('./Session');
+  const EmailVerification = require('./EmailVerification');
+  const PasswordReset = require('./PasswordReset');
+  const LoginAttempt = require('./LoginAttempt');
+  const AuditLog = require('./AuditLog');
+  const UserStatus = require('./UserStatus');
 
   return {
     User,
@@ -26,5 +26,8 @@ export const getModels = async () => {
 };
 
 // For backward compatibility, export a function that returns models
-export default getModels;
+module.exports = { getModels };
+module.exports.default = getModels;
+
+export {};
 

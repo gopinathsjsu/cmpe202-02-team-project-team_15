@@ -1,17 +1,17 @@
-import express from 'express';
+const express = require('express');
 
 // Get models dynamically to avoid ES module issues
 let models: any = null;
 
 const getModels = async () => {
   if (!models) {
-    const { getModels: getModelsFunc } = await import('../models/index.ts');
+    const { getModels: getModelsFunc } = require('../models/index');
     models = await getModelsFunc();
   }
   return models;
 };
 
-import { authenticateToken, requireRole } from '../middleware/auth.js';
+const { authenticateToken, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -370,5 +370,7 @@ router.post('/cleanup', authenticateToken, requireRole(['admin']), async (req, r
   }
 });
 
-export default router;
+module.exports = router;
+
+export {};
 

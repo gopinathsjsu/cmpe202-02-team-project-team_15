@@ -25,6 +25,3 @@ loginAttemptSchema.index({ email: 1, created_at: -1 });
 loginAttemptSchema.index({ ip_address: 1, created_at: -1 });
 
 module.exports = mongoose.model('LoginAttempt', loginAttemptSchema);
-
-export {};
-

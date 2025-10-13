@@ -18,6 +18,3 @@ const campusSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model('Campus', campusSchema);
-
-export {};
-

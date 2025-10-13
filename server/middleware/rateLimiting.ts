@@ -3,7 +3,7 @@ let models: any = null;
 
 const getModels = async () => {
   if (!models) {
-    const { getModels: getModelsFunc } = await import('../models/index.ts');
+    const { getModels: getModelsFunc } = require('../models/index');
     models = await getModelsFunc();
   }
   return models;
@@ -88,8 +88,10 @@ const logLoginAttempt = async (req, res, next) => {
   next();
 };
 
-export {
+module.exports = {
   loginRateLimit,
   logLoginAttempt
 };
+
+export {};
 
