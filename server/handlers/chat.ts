@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { AuthedRequest } from "../middleware/auth";
+import { AuthedRequest } from "../middleware/authMock";
 import { Conversation } from "../models/Conversation";
 import { Message } from "../models/Message";
 import { Product } from "../models/Product";
