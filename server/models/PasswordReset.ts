@@ -1,6 +1,16 @@
-const mongoose = require('mongoose');
+import mongoose, { Schema, Document } from 'mongoose';
 
-const passwordResetSchema = new mongoose.Schema({
+export interface IPasswordReset extends Document {
+  user_id: mongoose.Types.ObjectId;
+  token_hash: string;
+  expires_at: Date;
+  used_at: Date | null;
+  sent_at: Date;
+  updated_at: Date;
+  isValid(): boolean;
+}
+
+const passwordResetSchema = new Schema<IPasswordReset>({
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -32,7 +42,5 @@ passwordResetSchema.methods.isValid = function() {
   return !this.used_at && this.expires_at > new Date();
 };
 
-module.exports = mongoose.model('PasswordReset', passwordResetSchema);
-
-export {};
+export const PasswordReset = mongoose.model<IPasswordReset>('PasswordReset', passwordResetSchema);
 

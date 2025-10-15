@@ -1,10 +1,12 @@
-const mongoose = require('mongoose');
-const { Role, Campus } = require('../models');
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import { Role } from '../models/Role';
+import { Campus } from '../models/Campus';
 
 // Load environment variables
-require('dotenv').config();
+dotenv.config();
 
-const seedDatabase = async () => {
+const seedDatabase = async (): Promise<void> => {
   try {
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/cmpe202_project', {

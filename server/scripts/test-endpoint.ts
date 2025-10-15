@@ -1,6 +1,10 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const { User } = require('../models');
+import express from 'express';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import { User } from '../models/User';
+
+// Load environment variables
+dotenv.config();
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/campus-market');
@@ -9,7 +13,7 @@ const app = express();
 app.use(express.json());
 
 // Test endpoint
-app.post('/test-login', async (req, res) => {
+app.post('/test-login', async (req: express.Request, res: express.Response) => {
   try {
     const { email, password } = req.body;
     

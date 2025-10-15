@@ -1,6 +1,16 @@
-const mongoose = require('mongoose');
+import mongoose, { Schema, Document } from 'mongoose';
 
-const emailVerificationSchema = new mongoose.Schema({
+export interface IEmailVerification extends Document {
+  user_id: mongoose.Types.ObjectId;
+  token_hash: string;
+  expires_at: Date;
+  used_at: Date | null;
+  sent_at: Date;
+  updated_at: Date;
+  isValid(): boolean;
+}
+
+const emailVerificationSchema = new Schema<IEmailVerification>({
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -32,7 +42,5 @@ emailVerificationSchema.methods.isValid = function() {
   return !this.used_at && this.expires_at > new Date();
 };
 
-module.exports = mongoose.model('EmailVerification', emailVerificationSchema);
-
-export {};
+export const EmailVerification = mongoose.model<IEmailVerification>('EmailVerification', emailVerificationSchema);
 

@@ -1,6 +1,10 @@
-const mongoose = require('mongoose');
+import mongoose, { Schema, Document } from 'mongoose';
 
-const roleSchema = new mongoose.Schema({
+export interface IRole extends Document {
+  name: 'buyer' | 'seller' | 'admin';
+}
+
+const roleSchema = new Schema<IRole>({
   name: {
     type: String,
     required: true,
@@ -12,7 +16,5 @@ const roleSchema = new mongoose.Schema({
   timestamps: false
 });
 
-module.exports = mongoose.model('Role', roleSchema);
-
-export {};
+export const Role = mongoose.model<IRole>('Role', roleSchema);
 

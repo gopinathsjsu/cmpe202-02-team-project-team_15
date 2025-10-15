@@ -1,18 +1,18 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-const connectDB = require('./config/database');
-const { swaggerUi, specs } = require('./config/swagger');
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import dotenv from 'dotenv';
+import { connectDB } from './config/database';
+import { swaggerUi, specs } from './config/swagger';
 
 // Load environment variables
-const dotenv = require('dotenv');
 dotenv.config();
 
 // Import routes
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/users');
-const campusRoutes = require('./routes/campus');
-const adminRoutes = require('./routes/admin');
+import authRoutes from './routes/auth';
+import userRoutes from './routes/users';
+import campusRoutes from './routes/campus';
+import adminRoutes from './routes/admin';
 
 // Initialize Express app
 const app = express();
@@ -33,7 +33,7 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Note: Frontend is served separately from the frontend folder
+// Note: Client is served separately from the client folder
 
 // Trust proxy for accurate IP addresses
 app.set('trust proxy', 1);
@@ -73,7 +73,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
  *                   type: string
  *                   example: "development"
  */
-app.get('/health', (req, res) => {
+app.get('/health', (req: express.Request, res: express.Response) => {
   res.json({
     success: true,
     message: 'Server is running',
@@ -83,13 +83,12 @@ app.get('/health', (req, res) => {
 });
 
 // Debug endpoint for testing login
-app.post('/debug-login', async (req, res) => {
+app.post('/debug-login', async (req: express.Request, res: express.Response) => {
   try {
     const { email, password } = req.body;
     console.log('Debug login called with:', { email, password: password ? '***' : 'undefined' });
     
-    const { getModels } = require('./models/index');
-    const { User } = await getModels();
+    const { User } = await import('./models');
     const user = await User.findOne({ email });
     
     if (!user) {
@@ -112,19 +111,19 @@ app.post('/debug-login', async (req, res) => {
     
     res.json({ success: true, message: 'Login successful', user: { email: user.email, status: user.status } });
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('Debug login error:', error);
     res.json({ success: false, message: 'Error: ' + error.message });
   }
 });
 
 // Debug endpoint for testing AuthController
-app.post('/debug-auth-controller', async (req, res) => {
+app.post('/debug-auth-controller', async (req: express.Request, res: express.Response) => {
   try {
     console.log('Debug auth controller called');
-    const { AuthHandlers } = require('./handlers/authHandlers');
-    await AuthHandlers.login(req, res);
-  } catch (error) {
+    const { AuthHandler } = await import('./handlers/authHandler');
+    await AuthHandler.login(req, res);
+  } catch (error: any) {
     console.error('Debug auth controller error:', error);
     res.json({ success: false, message: 'Error: ' + error.message });
   }
@@ -179,7 +178,7 @@ app.use('/api/admin', adminRoutes);
  *                       type: string
  *                       example: "/health"
  */
-app.get('/', (req, res) => {
+app.get('/', (req: express.Request, res: express.Response) => {
   res.json({
     success: true,
     message: 'CMPE 202 Team Project API',
@@ -196,7 +195,7 @@ app.get('/', (req, res) => {
 });
 
 // 404 handler
-app.use((req, res) => {
+app.use((req: express.Request, res: express.Response) => {
   res.status(404).json({
     success: false,
     message: 'Route not found',
@@ -205,7 +204,7 @@ app.use((req, res) => {
 });
 
 // Global error handler
-app.use((error: any, req: any, res: any, next: any) => {
+app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Global error handler:', error);
   
   // Mongoose validation error
@@ -255,10 +254,10 @@ const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 API Base URL: http://localhost:${PORT}`);
-  console.log(`💚 Health Check: http://localhost:${PORT}/health`);
-  console.log(`🌐 Frontend: http://localhost:3000`);
+  // console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+  // console.log(`🔗 API Base URL: http://localhost:${PORT}`);
+  // console.log(`💚 Health Check: http://localhost:${PORT}/health`);
+  console.log(`🌐 Client: http://localhost:3000`);
 });
 
 // Graceful shutdown
@@ -272,6 +271,4 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
-module.exports = app;
-
-export {};
+export default app;

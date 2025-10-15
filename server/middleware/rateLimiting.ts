@@ -1,16 +1,8 @@
-// Get models dynamically to avoid ES module issues
-let models: any = null;
-
-const getModels = async () => {
-  if (!models) {
-    const { getModels: getModelsFunc } = require('../models/index');
-    models = await getModelsFunc();
-  }
-  return models;
-};
+import { Request, Response, NextFunction } from 'express';
+import { LoginAttempt } from '../models/LoginAttempt';
 
 // Rate limiting for login attempts
-const loginRateLimit = async (req, res, next) => {
+const loginRateLimit = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email } = req.body;
     const clientIP = req.ip || req.connection.remoteAddress;
@@ -20,7 +12,6 @@ const loginRateLimit = async (req, res, next) => {
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 
     // Check failed attempts in last 5 minutes
-    const { LoginAttempt } = await getModels();
     const recentFailedAttempts = await LoginAttempt.countDocuments({
       email: email,
       success: false,
@@ -60,10 +51,10 @@ const loginRateLimit = async (req, res, next) => {
 };
 
 // Log login attempt
-const logLoginAttempt = async (req, res, next) => {
+const logLoginAttempt = async (req: Request, res: Response, next: NextFunction) => {
   const originalSend = res.send;
   
-  res.send = function(data) {
+  res.send = function(data: any) {
     // Log the attempt after response is sent
     setImmediate(async () => {
       try {
@@ -71,7 +62,6 @@ const logLoginAttempt = async (req, res, next) => {
         const clientIP = req.ip || req.connection.remoteAddress;
         const success = res.statusCode === 200;
 
-        const { LoginAttempt } = await getModels();
         await LoginAttempt.create({
           email: email,
           ip_address: clientIP,
@@ -82,16 +72,14 @@ const logLoginAttempt = async (req, res, next) => {
       }
     });
 
-    originalSend.call(this, data);
+    return originalSend.call(this, data);
   };
 
   next();
 };
 
-module.exports = {
+export {
   loginRateLimit,
   logLoginAttempt
 };
-
-export {};
 

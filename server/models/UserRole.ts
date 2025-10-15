@@ -1,6 +1,11 @@
-const mongoose = require('mongoose');
+import mongoose, { Schema, Document } from 'mongoose';
 
-const userRoleSchema = new mongoose.Schema({
+export interface IUserRole extends Document {
+  user_id: mongoose.Types.ObjectId;
+  role_id: mongoose.Types.ObjectId;
+}
+
+const userRoleSchema = new Schema<IUserRole>({
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -18,7 +23,5 @@ const userRoleSchema = new mongoose.Schema({
 // Compound index to ensure unique user-role combinations
 userRoleSchema.index({ user_id: 1, role_id: 1 }, { unique: true });
 
-module.exports = mongoose.model('UserRole', userRoleSchema);
-
-export {};
+export const UserRole = mongoose.model<IUserRole>('UserRole', userRoleSchema);
 

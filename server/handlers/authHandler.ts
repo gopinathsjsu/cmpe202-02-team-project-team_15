@@ -30,7 +30,7 @@ const sendPasswordResetEmail = async (user: any, token: string): Promise<boolean
   return true;
 };
 
-class AuthController {
+class AuthHandler {
   // @route   POST /api/auth/register
   // @desc    Register a new user
   // @access  Public
@@ -440,6 +440,6 @@ class AuthController {
   }
 }
 
-module.exports = { AuthController };
+module.exports = { AuthHandler };
 
-export {};
+export {AuthHandler};

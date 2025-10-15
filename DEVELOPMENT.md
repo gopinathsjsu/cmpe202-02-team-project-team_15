@@ -13,7 +13,7 @@
    ```
 
 3. **Access the application:**
-   - Frontend: http://localhost:3000
+   - Client: http://localhost:3000
    - Backend API: http://localhost:5000
 
 ## Project Structure
@@ -21,7 +21,7 @@
 ```
 campus-market/
 ├── server/          # Backend API (Node.js + Express + MongoDB)
-├── frontend/        # Frontend (HTML + CSS + JavaScript + Tailwind)
+├── client/          # Client (HTML + CSS + JavaScript + Tailwind)
 ├── package.json     # Root package.json with management scripts
 └── README.md        # Main documentation
 ```
@@ -30,9 +30,9 @@ campus-market/
 
 ### Root Level Commands
 - `npm run install:all` - Install all dependencies
-- `npm run dev` - Start both frontend and backend
+- `npm run dev` - Start both client and backend
 - `npm run dev:server` - Start only backend
-- `npm run dev:frontend` - Start only frontend
+- `npm run dev:client` - Start only client
 - `npm run build` - Build both projects
 - `npm run start` - Start production server
 
@@ -44,9 +44,9 @@ npm run build    # Build TypeScript
 npm run seed     # Seed database
 ```
 
-### Frontend Development
+### Client Development
 ```bash
-cd frontend
+cd client
 npm run dev              # Start development server
 npm run build:css        # Build Tailwind CSS
 npm run build:css:watch  # Watch and build CSS
@@ -75,7 +75,7 @@ npm run build:css:watch  # Watch and build CSS
 - `POST /api/auth/forgot-password` - Password reset request
 - `POST /api/auth/reset-password` - Password reset
 
-## Frontend Pages
+## Client Pages
 
 - `/login.html` - Login page
 - `/signup.html` - Sign up page
@@ -90,7 +90,7 @@ npm run build:css:watch  # Watch and build CSS
 - JWT Authentication
 - bcryptjs for password hashing
 
-### Frontend
+### Client
 - HTML5 + CSS3 + JavaScript
 - Tailwind CSS for styling
 - Responsive design

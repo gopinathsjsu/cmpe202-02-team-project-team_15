@@ -1,18 +1,12 @@
-const jwt = require('jsonwebtoken');
-
-// Get models dynamically to avoid ES module issues
-let models: any = null;
-
-const getModels = async () => {
-  if (!models) {
-    const { getModels: getModelsFunc } = require('../models/index');
-    models = await getModelsFunc();
-  }
-  return models;
-};
+import jwt from 'jsonwebtoken';
+import { Request, Response, NextFunction } from 'express';
+import { User } from '../models/User';
+import { UserRole } from '../models/UserRole';
+import { Session } from '../models/Session';
+import { JwtPayload } from '../types/global';
 
 // Middleware to verify JWT token
-const authenticateToken = async (req, res, next) => {
+const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
@@ -24,10 +18,9 @@ const authenticateToken = async (req, res, next) => {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret_key_here');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret_key_here') as JwtPayload;
     
     // Check if user exists and is active
-    const { User } = await getModels();
     const user = await User.findById(decoded.userId);
     if (!user || user.status !== 'active') {
       return res.status(401).json({ 
@@ -38,7 +31,7 @@ const authenticateToken = async (req, res, next) => {
 
     req.user = user;
     next();
-  } catch (error) {
+  } catch (error: any) {
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({ 
         success: false, 
@@ -61,8 +54,8 @@ const authenticateToken = async (req, res, next) => {
 };
 
 // Middleware to check user roles
-const requireRole = (roles) => {
-  return async (req, res, next) => {
+const requireRole = (roles: string[]) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.user) {
         return res.status(401).json({ 
@@ -73,7 +66,6 @@ const requireRole = (roles) => {
 
       
       // Get user roles
-      const { UserRole } = await getModels();
       const userRoles = await UserRole.find({ user_id: req.user._id })
         .populate('role_id');
       
@@ -102,7 +94,7 @@ const requireRole = (roles) => {
 };
 
 // Middleware to verify refresh token
-const verifyRefreshToken = async (req, res, next) => {
+const verifyRefreshToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { refreshToken } = req.body;
 
@@ -113,7 +105,6 @@ const verifyRefreshToken = async (req, res, next) => {
       });
     }
 
-    const { Session } = await getModels();
     const session = await Session.findOne({ 
       refresh_token: refreshToken 
     }).populate('user_id');
@@ -137,11 +128,9 @@ const verifyRefreshToken = async (req, res, next) => {
   }
 };
 
-module.exports = {
+export {
   authenticateToken,
   requireRole,
   verifyRefreshToken
 };
-
-export {};
 

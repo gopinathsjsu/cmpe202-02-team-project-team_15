@@ -1,6 +1,13 @@
-const mongoose = require('mongoose');
+import mongoose, { Schema, Document } from 'mongoose';
 
-const auditLogSchema = new mongoose.Schema({
+export interface IAuditLog extends Document {
+  user_id: mongoose.Types.ObjectId | null;
+  action: 'SIGN_UP' | 'VERIFY_EMAIL' | 'LOGIN' | 'LOGOUT' | 'REFRESH' | 'ENABLE_MFA' | 'DISABLE_MFA' | 'RESET_PASSWORD' | 'CHANGE_PASSWORD' | 'ASSIGN_ROLE' | 'REVOKE_ROLE' | 'SUSPEND_USER' | 'REACTIVATE_USER';
+  metadata: any;
+  created_at: Date;
+}
+
+const auditLogSchema = new Schema<IAuditLog>({
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -37,7 +44,5 @@ const auditLogSchema = new mongoose.Schema({
 auditLogSchema.index({ user_id: 1, created_at: -1 });
 auditLogSchema.index({ action: 1, created_at: -1 });
 
-module.exports = mongoose.model('AuditLog', auditLogSchema);
-
-export {};
+export const AuditLog = mongoose.model<IAuditLog>('AuditLog', auditLogSchema);
 
