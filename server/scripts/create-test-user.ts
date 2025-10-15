@@ -1,11 +1,17 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const { User, Role, UserRole } = require('../models');
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
+import dotenv from 'dotenv';
+import { User } from '../models/User';
+import { Role } from '../models/Role';
+import { UserRole } from '../models/UserRole';
+
+// Load environment variables
+dotenv.config();
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/campus-market');
 
-async function createTestUser() {
+async function createTestUser(): Promise<void> {
   try {
     // Check if user already exists
     const existingUser = await User.findOne({ email: 'test@sjsu.edu' });
@@ -32,7 +38,7 @@ async function createTestUser() {
     // Assign buyer role
     let buyerRole = await Role.findOne({ name: 'buyer' });
     if (!buyerRole) {
-      buyerRole = new Role({ name: 'buyer', description: 'Buyer role' });
+      buyerRole = new Role({ name: 'buyer' });
       await buyerRole.save();
     }
 

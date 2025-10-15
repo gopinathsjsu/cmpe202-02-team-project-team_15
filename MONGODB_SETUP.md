@@ -80,18 +80,18 @@ Your server is already configured to run without MongoDB for development purpose
    cd server
    npm run dev
    
-   # Frontend (Terminal 2)
-   cd frontend
+   # Client (Terminal 2)
+   cd client
    npm run dev
    ```
 
 2. **Access the application**:
-   - Frontend: http://localhost:3000
+   - Client: http://localhost:3000
    - Backend API: http://localhost:5000/health
 
 ## 📝 Notes
 
 - The server will continue running even without MongoDB
-- You can test the frontend UI without database functionality
+- You can test the client UI without database functionality
 - For full functionality, you'll need to set up MongoDB using one of the options above
 - MongoDB Atlas is the easiest option for development

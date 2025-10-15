@@ -1,6 +1,13 @@
-const mongoose = require('mongoose');
+import mongoose, { Schema, Document } from 'mongoose';
 
-const campusSchema = new mongoose.Schema({
+export interface ICampus extends Document {
+  name: string;
+  email_domain: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
+const campusSchema = new Schema<ICampus>({
   name: {
     type: String,
     required: true,
@@ -17,7 +24,5 @@ const campusSchema = new mongoose.Schema({
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });
 
-module.exports = mongoose.model('Campus', campusSchema);
-
-export {};
+export const Campus = mongoose.model<ICampus>('Campus', campusSchema);
 

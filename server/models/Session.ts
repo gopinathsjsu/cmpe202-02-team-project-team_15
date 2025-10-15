@@ -1,6 +1,18 @@
-const mongoose = require('mongoose');
+import mongoose, { Schema, Document } from 'mongoose';
 
-const sessionSchema = new mongoose.Schema({
+export interface ISession extends Document {
+  user_id: mongoose.Types.ObjectId;
+  refresh_token: string;
+  user_agent: string;
+  ip_address: string;
+  expires_at: Date;
+  revoked_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
+  isValid(): boolean;
+}
+
+const sessionSchema = new Schema<ISession>({
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -40,7 +52,5 @@ sessionSchema.methods.isValid = function() {
   return !this.revoked_at && this.expires_at > new Date();
 };
 
-module.exports = mongoose.model('Session', sessionSchema);
-
-export {};
+export const Session = mongoose.model<ISession>('Session', sessionSchema);
 

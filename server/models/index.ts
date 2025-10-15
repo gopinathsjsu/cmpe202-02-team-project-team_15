@@ -1,33 +1,24 @@
-// Export all models using dynamic imports to avoid ES module issues
-const getModels = async () => {
-  const User = require('./User');
-  const Campus = require('./Campus');
-  const Role = require('./Role');
-  const UserRole = require('./UserRole');
-  const Session = require('./Session');
-  const EmailVerification = require('./EmailVerification');
-  const PasswordReset = require('./PasswordReset');
-  const LoginAttempt = require('./LoginAttempt');
-  const AuditLog = require('./AuditLog');
-  const UserStatus = require('./UserStatus');
+// Export all models (re-export from individual files)
+export { User } from './User';
+export { Campus } from './Campus';
+export { Role } from './Role';
+export { UserRole } from './UserRole';
+export { Session } from './Session';
+export { EmailVerification } from './EmailVerification';
+export { PasswordReset } from './PasswordReset';
+export { LoginAttempt } from './LoginAttempt';
+export { AuditLog } from './AuditLog';
+export { UserStatus } from './UserStatus';
 
-  return {
-    User,
-    Campus,
-    Role,
-    UserRole,
-    Session,
-    EmailVerification,
-    PasswordReset,
-    LoginAttempt,
-    AuditLog,
-    UserStatus
-  };
-};
-
-// For backward compatibility, export a function that returns models
-module.exports = { getModels };
-module.exports.default = getModels;
-
-export {};
+// Export interfaces
+export type { IUser } from './User';
+export type { ICampus } from './Campus';
+export type { IRole } from './Role';
+export type { IUserRole } from './UserRole';
+export type { ISession } from './Session';
+export type { IEmailVerification } from './EmailVerification';
+export type { IPasswordReset } from './PasswordReset';
+export type { ILoginAttempt } from './LoginAttempt';
+export type { IAuditLog } from './AuditLog';
+export type { IUserStatus } from './UserStatus';
 

@@ -1,7 +1,20 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+import mongoose, { Schema, Document } from 'mongoose';
+import bcrypt from 'bcryptjs';
 
-const userSchema = new mongoose.Schema({
+export interface IUser extends Document {
+  email: string;
+  password_hash: string;
+  first_name: string;
+  last_name: string;
+  status: 'pending_verification' | 'active' | 'suspended' | 'deleted';
+  email_verified_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
+  full_name: string;
+  comparePassword(candidatePassword: string): Promise<boolean>;
+}
+
+const userSchema = new Schema<IUser>({
   email: {
     type: String,
     required: true,
@@ -47,13 +60,13 @@ userSchema.pre('save', async function(next) {
     const salt = await bcrypt.genSalt(12);
     this.password_hash = await bcrypt.hash(this.password_hash, salt);
     next();
-  } catch (error) {
+  } catch (error: any) {
     next(error);
   }
 });
 
 // Method to compare password
-userSchema.methods.comparePassword = async function(candidatePassword) {
+userSchema.methods.comparePassword = async function(candidatePassword: string) {
   return bcrypt.compare(candidatePassword, this.password_hash);
 };
 
@@ -62,7 +75,5 @@ userSchema.virtual('full_name').get(function() {
   return `${this.first_name} ${this.last_name}`;
 });
 
-module.exports = mongoose.model('User', userSchema);
-
-export {};
+export const User = mongoose.model<IUser>('User', userSchema);
 

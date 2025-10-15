@@ -112,5 +112,5 @@ module.exports = {
   handleValidationErrors
 };
 
-export {};
+export { validateUserRegistration, validateUserLogin, validatePasswordResetRequest, validatePasswordReset, validateEmailVerification, validateCampusCreation, validateRoleAssignment, handleValidationErrors };
 

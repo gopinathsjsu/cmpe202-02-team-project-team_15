@@ -21,7 +21,7 @@
 - Tailwind CSS for styling
 
 ### **N**ode.js
-- Runtime environment for both frontend and backend
+- Runtime environment for both client and backend
 - npm for package management
 - Concurrently for running multiple servers
 
@@ -35,13 +35,13 @@ campus-market/
 │   ├── routes/           # API routes
 │   ├── middleware/        # Authentication & validation
 │   └── scripts/          # Database utilities
-├── frontend-react/        # Frontend (React.js)
+├── client/               # Client (React.js)
 │   ├── src/
 │   │   ├── components/   # React components
 │   │   ├── contexts/     # React Context (Auth)
 │   │   └── services/     # API services
 │   └── public/           # Static assets
-└── frontend/             # Legacy HTML frontend (deprecated)
+└── client/               # Legacy HTML client (deprecated)
 ```
 
 ## 🚀 Getting Started
@@ -74,7 +74,7 @@ campus-market/
 
 This will start:
 - **Backend server** on `http://localhost:5000`
-- **React frontend** on `http://localhost:3000`
+- **React client** on `http://localhost:3000`
 
 ## 🔧 Development
 
@@ -86,9 +86,9 @@ npm run build        # Build TypeScript
 npm run seed         # Seed database
 ```
 
-### Frontend Development
+### Client Development
 ```bash
-cd frontend-react
+cd client
 npm start           # Start React development server
 npm run build       # Build for production
 npm test            # Run tests
@@ -106,7 +106,7 @@ npm test            # Run tests
 - `GET /api/users/profile` - Get user profile
 - `PUT /api/users/profile` - Update user profile
 
-## 🎨 Frontend Features
+## 🎨 Client Features
 
 ### Components
 - **Login** - User authentication
@@ -182,7 +182,7 @@ node scripts/test-full-login-flow.js # Test login flow
 
 The application has been migrated from vanilla HTML/CSS/JavaScript to a modern React application while maintaining the same functionality and design.
 
-**Old Frontend:** `frontend/` (HTML/CSS/JS)  
-**New Frontend:** `frontend-react/` (React/TypeScript)  
+**Old Client:** `client/` (HTML/CSS/JS)  
+**New Client:** `client/` (React/TypeScript)  
 
 Both can coexist during the transition period.

@@ -1,6 +1,13 @@
-const mongoose = require('mongoose');
+import mongoose, { Schema, Document } from 'mongoose';
 
-const userStatusSchema = new mongoose.Schema({
+export interface IUserStatus extends Document {
+  pending_verification: boolean;
+  active: boolean;
+  suspended: boolean;
+  deleted: boolean;
+}
+
+const userStatusSchema = new Schema<IUserStatus>({
   pending_verification: {
     type: Boolean,
     default: true
@@ -21,7 +28,5 @@ const userStatusSchema = new mongoose.Schema({
   timestamps: false
 });
 
-module.exports = mongoose.model('UserStatus', userStatusSchema);
-
-export {};
+export const UserStatus = mongoose.model<IUserStatus>('UserStatus', userStatusSchema);
 

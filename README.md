@@ -17,7 +17,7 @@ campus-market/
 │   ├── server.ts         # Main server file
 │   ├── tsconfig.json     # TypeScript configuration
 │   └── package.json      # Server dependencies
-├── frontend/              # Frontend Application
+├── client/               # Client Application
 │   ├── public/           # Static HTML files
 │   │   ├── login.html    # Login page
 │   │   ├── signup.html   # Sign up page
@@ -26,7 +26,7 @@ campus-market/
 │   ├── src/              # Source files (if needed)
 │   ├── tailwind.config.js # Tailwind configuration
 │   ├── tsconfig.json     # TypeScript configuration
-│   └── package.json      # Frontend dependencies
+│   └── package.json      # Client dependencies
 ├── package.json          # Root package.json with scripts
 └── README.md            # This file
 ```
@@ -68,18 +68,18 @@ campus-market/
 
    This will start:
    - Backend server on http://localhost:5000
-   - Frontend server on http://localhost:3000
+   - Client server on http://localhost:3000
 
 ## 🛠️ Development
 
 ### Available Scripts
 
 #### Root Level Scripts
-- `npm run install:all` - Install dependencies for both server and frontend
-- `npm run dev` - Start both server and frontend in development mode
+- `npm run install:all` - Install dependencies for both server and client
+- `npm run dev` - Start both server and client in development mode
 - `npm run dev:server` - Start only the backend server
-- `npm run dev:frontend` - Start only the frontend server
-- `npm run build` - Build both server and frontend
+- `npm run dev:client` - Start only the client server
+- `npm run build` - Build both server and client
 - `npm run start` - Start the production server
 
 #### Server Scripts (in `server/` directory)
@@ -87,8 +87,8 @@ campus-market/
 - `npm run build` - Compile TypeScript
 - `npm run seed` - Seed the database with sample data
 
-#### Frontend Scripts (in `frontend/` directory)
-- `npm run dev` - Start frontend development server
+#### Client Scripts (in `client/` directory)
+- `npm run dev` - Start client development server
 - `npm run build:css` - Build Tailwind CSS
 - `npm run build:css:watch` - Watch and build CSS
 
@@ -108,13 +108,13 @@ The backend provides the following API endpoints:
 - `GET /health` - Health check
 - `GET /` - API information
 
-### Frontend Pages
+### Client Pages
 
 - **Login**: http://localhost:3000/login.html
 - **Sign Up**: http://localhost:3000/signup.html
 - **Dashboard**: http://localhost:3000/dashboard.html
 
-## 🎨 Frontend Features
+## 🎨 Client Features
 
 - **Modern Design**: Clean, responsive UI built with Tailwind CSS
 - **Authentication Flow**: Complete login/signup with validation
