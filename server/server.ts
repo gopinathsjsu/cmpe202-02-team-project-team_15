@@ -2,7 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import dotenv from 'dotenv';
-import { connectDB } from './config/database';
+// import { connectDB } from './config/database';
+import mongoose from 'mongoose';
 import { swaggerUi, specs } from './config/swagger';
 
 // Load environment variables
@@ -18,8 +19,13 @@ import adminRoutes from './routes/admin';
 const app = express();
 
 // Connect to MongoDB
-connectDB();
+// connectDB();
 
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("Database is connected!"))
+  .catch((err) => console.error(err));
+  
 // Middleware
 app.use(cors({
   origin: [
