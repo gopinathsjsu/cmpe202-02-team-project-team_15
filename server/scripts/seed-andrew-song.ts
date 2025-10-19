@@ -184,7 +184,7 @@ function generateListings(): SeedListing[] {
 async function seedDatabase(): Promise<void> {
   try {
     // Connect to MongoDB
-    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost/campus-marketplace');
+    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost/campus-market');
     console.log('Connected to MongoDB');
     
     // Clear existing data

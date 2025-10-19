@@ -1,11 +1,17 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
+  };
+
+  const handleBuyItems = () => {
+    navigate('/search');
   };
 
   return (
@@ -45,10 +51,13 @@ const Dashboard: React.FC = () => {
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-gray-50 rounded-lg p-6 card-enhanced">
+              <button 
+                onClick={handleBuyItems}
+                className="bg-gray-50 rounded-lg p-6 card-enhanced hover:bg-gray-100 transition-colors duration-200 text-left w-full"
+              >
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Buy Items</h3>
                 <p className="text-gray-600 text-sm">Browse and purchase items from other students</p>
-              </div>
+              </button>
               <div className="bg-gray-50 rounded-lg p-6 card-enhanced">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Sell Items</h3>
                 <p className="text-gray-600 text-sm">List your items for sale to other students</p>
