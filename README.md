@@ -324,10 +324,10 @@ The application has been fully migrated from JavaScript to TypeScript while main
 
 ## Sample Data
 
-The seed script creates:
-- 5 sample users (4 students, 1 admin)
-- 8 product categories
-- 12 sample listings with realistic data
+Sample data created:
+- 5 users
+- 8 categories
+- 77 listings
 
 Run `npm run seed` to populate your database with sample data for testing and development.
 
