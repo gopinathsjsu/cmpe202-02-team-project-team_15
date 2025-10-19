@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'http://localhost:5000';
 
 // Create axios instance
 const api = axios.create({
@@ -33,7 +33,7 @@ api.interceptors.response.use(
       const refreshToken = localStorage.getItem('refreshToken');
       if (refreshToken) {
         try {
-          const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+          const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
             refreshToken
           });
           const { accessToken } = response.data.data;
@@ -55,16 +55,88 @@ api.interceptors.response.use(
 
 export const authAPI = {
   login: (email: string, password: string) =>
-    api.post('/auth/login', { email, password }),
+    api.post('/api/auth/login', { email, password }),
   
   signup: (email: string, password: string, first_name: string, last_name: string) =>
-    api.post('/auth/register', { email, password, first_name, last_name }),
+    api.post('/api/auth/register', { email, password, first_name, last_name }),
   
   logout: (refreshToken: string) =>
-    api.post('/auth/logout', { refreshToken }),
+    api.post('/api/auth/logout', { refreshToken }),
   
   refresh: (refreshToken: string) =>
-    api.post('/auth/refresh', { refreshToken }),
+    api.post('/api/auth/refresh', { refreshToken }),
 };
 
+// Types based on backend API
+export interface IListing {
+  _id: string;
+  listingId: string;
+  title: string;
+  description: string;
+  price: number;
+  status: 'ACTIVE' | 'SOLD';
+  userId: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  categoryId: {
+    _id: string;
+    name: string;
+  };
+  photos: Array<{
+    url: string;
+    alt: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ICategory {
+  _id: string;
+  name: string;
+  description?: string;
+}
+
+export interface SearchParams {
+  q?: string;
+  category?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sort?: 'createdAt_desc' | 'createdAt_asc' | 'price_desc' | 'price_asc';
+  page?: number;
+  pageSize?: number;
+}
+
+export interface SearchResponse {
+  items: IListing[];
+  page: {
+    current: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+class ApiService {
+  // Search listings with filters
+  async searchListings(params: SearchParams = {}): Promise<SearchResponse> {
+    const { data } = await api.get<SearchResponse>('/api/listings/search', { params });
+    return data;
+  }
+
+  // Get all categories
+  async getCategories(): Promise<ICategory[]> {
+    const { data } = await api.get<{ categories: ICategory[] }>('/api/listings/categories');
+    return data.categories;
+  }
+
+  // Get single listing by ID
+  async getListingById(id: string): Promise<IListing> {
+    const { data } = await api.get<IListing>(`/api/listings/${id}`);
+    return data;
+  }
+}
+
+export const apiService = new ApiService();
 export default api;

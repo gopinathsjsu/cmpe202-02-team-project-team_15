@@ -2,30 +2,26 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import dotenv from 'dotenv';
-// import { connectDB } from './config/database';
-import mongoose from 'mongoose';
 import { swaggerUi, specs } from './config/swagger';
 
 // Load environment variables
 dotenv.config();
+
+// Import models to ensure they're registered with Mongoose
+import './models/User';
+import './models/Category';
+import './models/Listing';
 
 // Import routes
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
 import campusRoutes from './routes/campus';
 import adminRoutes from './routes/admin';
+import searchRoutes from './routes/searchRoutes';
+import listingsRoutes from './routes/listings';
 
-// Initialize Express app
-const app = express();
+export const app = express();
 
-// Connect to MongoDB
-// connectDB();
-
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("Database is connected!"))
-  .catch((err) => console.error(err));
-  
 // Middleware
 app.use(cors({
   origin: [
@@ -38,8 +34,6 @@ app.use(cors({
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-
-// Note: Client is served separately from the client folder
 
 // Trust proxy for accurate IP addresses
 app.set('trust proxy', 1);
@@ -140,6 +134,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/campus', campusRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/listings', searchRoutes);
+app.use('/api/listings', listingsRoutes);
 
 /**
  * @swagger
@@ -254,27 +250,3 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
     ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
   });
 });
-
-// Start server
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  // console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  // console.log(`🔗 API Base URL: http://localhost:${PORT}`);
-  // console.log(`💚 Health Check: http://localhost:${PORT}/health`);
-  console.log(`🌐 Client: http://localhost:3000`);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received. Shutting down gracefully...');
-  process.exit(0);
-});
-
-process.on('SIGINT', () => {
-  console.log('SIGINT received. Shutting down gracefully...');
-  process.exit(0);
-});
-
-export default app;
