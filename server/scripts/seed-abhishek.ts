@@ -9,10 +9,7 @@ dotenv.config();
 const seedDatabase = async (): Promise<void> => {
   try {
     // Connect to MongoDB
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/cmpe202_project', {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/cmpe202_project');
 
     console.log('Connected to MongoDB');
 
