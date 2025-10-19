@@ -8,6 +8,7 @@ import './models/Listing';
 
 // Import routes
 import searchRoutes from './routes/searchRoutes';
+import listingsRoutes from './routes/listings';
 
 export const app = express();
 
@@ -17,6 +18,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/listings', searchRoutes);
+app.use('/api/listings', listingsRoutes);
 
 // Basic route
 app.get('/', (req, res) => {
