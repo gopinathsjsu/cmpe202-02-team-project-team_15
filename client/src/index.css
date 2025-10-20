@@ -268,7 +268,15 @@ code {
   @apply text-gray-400 font-medium;
 }
 
-/* Reset Button Styles */
+/* Action Button Styles */
+.create-listing-button {
+  @apply w-full px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium rounded-lg shadow-md hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 flex items-center justify-center;
+}
+
+.create-listing-button:hover {
+  @apply transform -translate-y-0.5 shadow-lg;
+}
+
 .reset-button {
   @apply w-full px-3 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white font-medium rounded-lg shadow-md hover:from-red-600 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 flex items-center justify-center;
 }
