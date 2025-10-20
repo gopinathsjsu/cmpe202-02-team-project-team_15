@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
 import FilterMenu from '../components/FilterMenu';
 import ProductGrid from '../components/ProductGrid';
@@ -9,6 +9,7 @@ import { apiService, IListing, ICategory, SearchParams } from '../services/api';
 const SearchPage: React.FC = () => {
   // URL search params
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   // State management
   const [listings, setListings] = useState<IListing[]>([]);
@@ -307,7 +308,9 @@ const SearchPage: React.FC = () => {
     onSortChange: handleSortChange,
     pageSize,
     onPageSizeChange: handlePageSizeChange,
-    onReset: handleResetFilters
+    onReset: handleResetFilters,
+    // TODO: change null to the create listing page path like '/create-listing'
+    onCreateListing: () => null
   };
 
   return (
@@ -319,7 +322,7 @@ const SearchPage: React.FC = () => {
             onClick={toggleFilterMenu}
             className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm flex items-center justify-between hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <span className="font-medium text-gray-700">Filters</span>
+            <span className="font-medium text-gray-700">Menu</span>
             <svg 
               className={`w-5 h-5 text-gray-500 transition-transform ${isFilterMenuOpen ? 'rotate-180' : ''}`}
               fill="none" 
@@ -337,7 +340,7 @@ const SearchPage: React.FC = () => {
             {/* Mobile Header - Only shown on mobile when menu is open */}
             {isFilterMenuOpen && (
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Menu</h3>
                 <button
                   onClick={closeFilterMenu}
                   className="p-2 text-gray-400 hover:text-gray-600 focus:outline-none"

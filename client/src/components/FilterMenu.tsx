@@ -1,5 +1,6 @@
 import React, { memo, useState, useEffect } from 'react';
 import { ICategory } from '../services/api';
+import CreateNewListingButton from './CreateNewListingButton';
 
 interface FilterMenuProps {
   categories: ICategory[];
@@ -14,6 +15,7 @@ interface FilterMenuProps {
   pageSize: number;
   onPageSizeChange: (pageSize: number) => void;
   onReset: () => void;
+  onCreateListing?: () => void;
 }
 
 const FilterMenu: React.FC<FilterMenuProps> = ({
@@ -28,7 +30,8 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
   onSortChange,
   pageSize,
   onPageSizeChange,
-  onReset
+  onReset,
+  onCreateListing
 }) => {
   // Local state for price inputs
   const [localMinPrice, setLocalMinPrice] = useState<string>('');
@@ -105,6 +108,13 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
 
   return (
     <div className="filter-menu">
+      {/* Create New Listing Button */}
+      {onCreateListing && (
+        <div className="filter-section">
+          <CreateNewListingButton onClick={onCreateListing} />
+        </div>
+      )}
+
       {/* Category Filter */}
       <div className="filter-section">
         <label className="filter-label">Category</label>
