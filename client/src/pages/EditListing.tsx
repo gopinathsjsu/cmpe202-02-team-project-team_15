@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Upload } from 'lucide-react';
+import { Upload } from 'lucide-react';
+import BackButton from '../components/BackButton';
 import { categories, mockListing } from '../data/mockData';
 
 interface EditListingProps {
@@ -76,13 +77,7 @@ export function EditListing({ onBack, onSave }: EditListingProps) {
       </header>
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <button
-          onClick={onBack}
-          className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 mb-6 transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span className="font-medium">Back</span>
-        </button>
+        <BackButton onBack={onBack} />
 
         <div className="bg-white rounded-lg shadow-sm p-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Edit Listing</h1>

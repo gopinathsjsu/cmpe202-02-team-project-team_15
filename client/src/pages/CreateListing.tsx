@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ArrowLeft, Upload, ImagePlus } from 'lucide-react';
+import { Upload, ImagePlus } from 'lucide-react';
+import BackButton from '../components/BackButton';
 
 const CATEGORIES = [
   'Electronics',
@@ -91,13 +92,7 @@ export default function CreateListing({ onBack, onSave }: CreateListingProps) {
 
       {/* ---------- Body ---------- */}
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-gray-700 hover:text-gray-900 mb-6 transition-colors"
-        >
-          <ArrowLeft size={20} />
-          <span className="font-medium">Back</span>
-        </button>
+        <BackButton onBack={onBack} />
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Create New Listing</h1>

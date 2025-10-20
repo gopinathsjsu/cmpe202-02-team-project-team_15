@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Calendar, MessageSquare, Flag } from 'lucide-react';
+import { Calendar, MessageSquare, Flag } from 'lucide-react';
+import BackButton from '../components/BackButton';
 import { mockListing, ListingData } from '../data/mockData';
 
 interface ViewListingProps {
@@ -68,13 +69,7 @@ export function ViewListing({ onBack }: ViewListingProps) {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <button
-          onClick={onBack}
-          className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 mb-6 transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span className="font-medium">Back</span>
-        </button>
+        <BackButton onBack={onBack} />
 
         <div className="grid lg:grid-cols-2 gap-8">
           <div className="bg-white rounded-lg overflow-hidden shadow-sm">
