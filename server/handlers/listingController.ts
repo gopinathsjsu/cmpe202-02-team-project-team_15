@@ -17,6 +17,16 @@ export const createListing = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
+    // Ensure user is authenticated
+    const authUser = (req as any).user;
+    if (!authUser || !authUser._id) {
+      res.status(401).json({
+        success: false,
+        error: 'Authentication required'
+      });
+      return;
+    }
+
     // Validate category exists
     const category = await Category.findById(categoryId);
     if (!category) {
@@ -27,13 +37,9 @@ export const createListing = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    // For now, we'll use a default user ID since we don't have auth middleware
-    // In a real app, this would come from the authenticated user
-    const defaultUserId = new mongoose.Types.ObjectId('68f71050f10e6347781fd28f'); // Using existing user ID from seed data
-
     // Create new listing
     const newListing = new Listing({
-      userId: defaultUserId,
+      userId: authUser._id,
       categoryId,
       title,
       description,
