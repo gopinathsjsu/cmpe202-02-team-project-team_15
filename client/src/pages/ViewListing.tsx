@@ -2,20 +2,38 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Calendar, MessageSquare, Flag } from 'lucide-react';
 import BackButton from '../components/BackButton';
-import { mockListing, ListingData } from '../data/mockData';
+import { apiService, IListing } from '../services/api';
 
 const ViewListing = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [listing, setListing] = useState<ListingData | null>(null);
+  const [listing, setListing] = useState<IListing | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setTimeout(() => {
-      setListing(mockListing);
-      setLoading(false);
-    }, 300);
-  }, []);
+    const fetchListing = async () => {
+      if (!id) {
+        setError('Listing ID is missing');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        const fetchedListing = await apiService.getListingById(id);
+        setListing(fetchedListing);
+      } catch (err) {
+        console.error('Failed to fetch listing:', err);
+        setError('Failed to fetch listing. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchListing();
+  }, [id]);
 
   if (loading) {
     return (
@@ -25,16 +43,40 @@ const ViewListing = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 mb-4">{error}</div>
+          <button 
+            onClick={() => navigate('/search')}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Back to Search
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!listing) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-red-600">Listing not found</div>
+        <div className="text-center">
+          <div className="text-gray-600 mb-4">Listing not found</div>
+          <button 
+            onClick={() => navigate('/search')}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Back to Search
+          </button>
+        </div>
       </div>
     );
   }
 
   const mainPhoto = listing.photos.find(p => p.url) || { url: '', alt: listing.title };
-  const formattedDate = new Date(listing.created_at).toLocaleDateString('en-US', {
+  const formattedDate = new Date(listing.createdAt).toLocaleDateString('en-US', {
     month: 'numeric',
     day: 'numeric',
     year: 'numeric'
