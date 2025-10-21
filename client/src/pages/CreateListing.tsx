@@ -1,19 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, ImagePlus } from 'lucide-react';
 import BackButton from '../components/BackButton';
-
-const CATEGORIES = [
-  'Electronics',
-  'Furniture',
-  'Clothing',
-  'Books',
-  'Sports',
-  'Toys',
-  'Home & Garden',
-  'Automotive',
-  'Other'
-];
+import { apiService, ICategory } from '../services/api';
 
 const CreateListing = () => {
   const navigate = useNavigate();
@@ -24,6 +13,24 @@ const CreateListing = () => {
   const [description, setDescription] = useState('');
   const [addedPhoto, setAddedPhoto] = useState('');
   const [saving, setSaving] = useState(false);
+  const [categories, setCategories] = useState<ICategory[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load categories on component mount
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const categoriesData = await apiService.getCategories();
+        setCategories(categoriesData);
+      } catch (err) {
+        console.error('Failed to load categories:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCategories();
+  }, []);
 
   const handleAddPhoto = () => {
     if (photoUrl.trim()) {
@@ -37,20 +44,27 @@ const CreateListing = () => {
     setSaving(true);
 
     try {
-      const newListing = {
-        photo: addedPhoto,
-        itemName,
-        category,
-        price,
-        description
+      // Find the selected category ID
+      const selectedCategory = categories.find(cat => cat.name === category);
+      if (!selectedCategory) {
+        throw new Error('Please select a valid category');
+      }
+
+      const listingData = {
+        title: itemName,
+        description: description,
+        price: parseFloat(price),
+        categoryId: selectedCategory._id,
+        photos: addedPhoto ? [{ url: addedPhoto, alt: itemName }] : []
       };
 
-      // You can later replace this with a Supabase insert or API call
-      console.log('New Listing Created:', newListing);
+      const createdListing = await apiService.createListing(listingData);
+      console.log('New Listing Created:', createdListing);
 
       navigate('/search'); // ✅ Navigate back to search
     } catch (err) {
       console.error('Error creating listing:', err);
+      alert('Failed to create listing. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -64,6 +78,14 @@ const CreateListing = () => {
     setDescription('');
     setAddedPhoto('');
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading categories...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -173,9 +195,9 @@ const CreateListing = () => {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all bg-white cursor-pointer"
                 >
                   <option value="">Select a category</option>
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
+                  {categories.map((cat) => (
+                    <option key={cat._id} value={cat.name}>
+                      {cat.name}
                     </option>
                   ))}
                 </select>
