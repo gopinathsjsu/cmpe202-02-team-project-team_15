@@ -136,6 +136,18 @@ class ApiService {
     const { data } = await api.get<IListing>(`/api/listings/${id}`);
     return data;
   }
+
+  // Create new listing
+  async createListing(listingData: {
+    title: string;
+    description: string;
+    price: number;
+    categoryId: string;
+    photos?: Array<{ url: string; alt: string }>;
+  }): Promise<IListing> {
+    const { data } = await api.post<IListing>('/api/listings', listingData);
+    return data;
+  }
 }
 
 export const apiService = new ApiService();
