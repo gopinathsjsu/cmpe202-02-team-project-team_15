@@ -75,9 +75,25 @@ const ViewListing = () => {
     );
   }
 
-  const mainPhoto = listing.photos.find(p => p.url) || { url: '', alt: listing.title };
+  // Safely access nested properties with fallbacks
+  const mainPhoto = listing.photos && listing.photos.length > 0 
+    ? listing.photos.find(p => p.url) || { url: '', alt: listing.title }
+    : { url: '', alt: listing.title };
+
+  const categoryName = listing.categoryId && typeof listing.categoryId === 'object' 
+    ? listing.categoryId.name 
+    : 'Unknown Category';
+
+  const sellerName = listing.userId && typeof listing.userId === 'object' 
+    ? listing.userId.name || listing.userId.email || 'Unknown Seller'
+    : 'Unknown Seller';
+
+  const sellerEmail = listing.userId && typeof listing.userId === 'object' 
+    ? listing.userId.email 
+    : '';
+
   const formattedDate = new Date(listing.createdAt).toLocaleDateString('en-US', {
-    month: 'numeric',
+    month: 'long',
     day: 'numeric',
     year: 'numeric'
   });
@@ -110,7 +126,7 @@ const ViewListing = () => {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <BackButton onBack={onBack} />
+        <BackButton />
 
         <div className="grid lg:grid-cols-2 gap-8">
           <div className="bg-white rounded-lg overflow-hidden shadow-sm">
@@ -119,6 +135,10 @@ const ViewListing = () => {
                 src={mainPhoto.url}
                 alt={mainPhoto.alt}
                 className="w-full h-[500px] object-cover"
+                onError={(e) => {
+                  // Fallback to placeholder if image fails to load
+                  (e.target as HTMLImageElement).src = '/placeholder-image.svg';
+                }}
               />
             ) : (
               <div className="w-full h-[500px] bg-gray-200 flex items-center justify-center">
@@ -131,7 +151,7 @@ const ViewListing = () => {
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{listing.title}</h1>
               <div className="inline-block px-3 py-1 bg-gray-100 rounded-md text-sm text-gray-700 mb-4">
-                {listing.category.name}
+                {categoryName}
               </div>
               <div className="text-4xl font-bold text-gray-900">${listing.price}</div>
             </div>
@@ -150,7 +170,10 @@ const ViewListing = () => {
               </div>
               <div>
                 <div className="text-sm text-gray-600 mb-1">Seller</div>
-                <div className="text-lg font-semibold text-gray-900">{listing.user.full_name}</div>
+                <div className="text-lg font-semibold text-gray-900">{sellerName}</div>
+                {sellerEmail && (
+                  <div className="text-sm text-gray-500">{sellerEmail}</div>
+                )}
               </div>
             </div>
 
