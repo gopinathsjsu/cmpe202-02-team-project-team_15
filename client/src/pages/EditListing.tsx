@@ -1,14 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Upload } from 'lucide-react';
 import BackButton from '../components/BackButton';
 import { categories, mockListing } from '../data/mockData';
 
-interface EditListingProps {
-  onBack: () => void;
-  onSave: () => void;
-}
-
-export function EditListing({ onBack, onSave }: EditListingProps) {
+const EditListing = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -43,12 +40,12 @@ export function EditListing({ onBack, onSave }: EditListingProps) {
     setTimeout(() => {
       console.log('Saved listing:', formData);
       setSaving(false);
-      onSave();
+      navigate('/search');
     }, 500);
   };
 
   const handleCancel = () => {
-    onBack();
+    navigate('/search');
   };
 
   if (loading) {
@@ -77,7 +74,7 @@ export function EditListing({ onBack, onSave }: EditListingProps) {
       </header>
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <BackButton onBack={onBack} />
+        <BackButton />
 
         <div className="bg-white rounded-lg shadow-sm p-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Edit Listing</h1>
@@ -223,4 +220,6 @@ export function EditListing({ onBack, onSave }: EditListingProps) {
       </div>
     </div>
   );
-}
+};
+
+export default EditListing;
