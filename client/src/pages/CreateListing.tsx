@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Upload, ImagePlus } from 'lucide-react';
 import BackButton from '../components/BackButton';
 
@@ -14,18 +15,8 @@ const CATEGORIES = [
   'Other'
 ];
 
-interface CreateListingProps {
-  onBack: () => void;
-  onSave: (newListing: {
-    photo: string;
-    itemName: string;
-    category: string;
-    price: string;
-    description: string;
-  }) => void;
-}
-
-export default function CreateListing({ onBack, onSave }: CreateListingProps) {
+const CreateListing = () => {
+  const navigate = useNavigate();
   const [photoUrl, setPhotoUrl] = useState('');
   const [itemName, setItemName] = useState('');
   const [category, setCategory] = useState('');
@@ -57,7 +48,7 @@ export default function CreateListing({ onBack, onSave }: CreateListingProps) {
       // You can later replace this with a Supabase insert or API call
       console.log('New Listing Created:', newListing);
 
-      onSave(newListing); // ✅ Trigger parent callback
+      navigate('/search'); // ✅ Navigate back to search
     } catch (err) {
       console.error('Error creating listing:', err);
     } finally {
@@ -92,7 +83,7 @@ export default function CreateListing({ onBack, onSave }: CreateListingProps) {
 
       {/* ---------- Body ---------- */}
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <BackButton onBack={onBack} />
+        <BackButton />
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Create New Listing</h1>
@@ -262,4 +253,6 @@ export default function CreateListing({ onBack, onSave }: CreateListingProps) {
       </div>
     </div>
   );
-}
+};
+
+export default CreateListing;

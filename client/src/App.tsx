@@ -4,6 +4,9 @@ import { AuthProvider } from './contexts/AuthContext';
 import Auth from './components/Auth';
 import Dashboard from './pages/Dashboard';
 import SearchPage from './pages/SearchPage';
+import ViewListing from './pages/ViewListing';
+import EditListing from './pages/EditListing';
+import CreateListing from './pages/CreateListing';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -32,6 +35,34 @@ function App() {
               element={
                 <ProtectedRoute>
                   <SearchPage />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Protected listing pages */}
+            <Route 
+              path="/listing/:id" 
+              element={
+                <ProtectedRoute>
+                  <ViewListing />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/listing/:id/edit" 
+              element={
+                <ProtectedRoute>
+                  <EditListing />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/create-listing" 
+              element={
+                <ProtectedRoute>
+                  <CreateListing />
                 </ProtectedRoute>
               } 
             />

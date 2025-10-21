@@ -57,7 +57,7 @@ const Auth: React.FC = () => {
     try {
       const success = await login(loginData.email, loginData.password);
       if (success) {
-        navigate('/dashboard');
+        navigate('/search');
       } else {
         setError('Invalid credentials');
       }

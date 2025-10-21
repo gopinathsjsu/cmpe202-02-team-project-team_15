@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Calendar, MessageSquare, Flag } from 'lucide-react';
 import BackButton from '../components/BackButton';
 import { mockListing, ListingData } from '../data/mockData';
 
-interface ViewListingProps {
-  onBack: () => void;
-}
-
-export function ViewListing({ onBack }: ViewListingProps) {
+const ViewListing = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [listing, setListing] = useState<ListingData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -128,4 +127,6 @@ export function ViewListing({ onBack }: ViewListingProps) {
       </div>
     </div>
   );
-}
+};
+
+export default ViewListing;
