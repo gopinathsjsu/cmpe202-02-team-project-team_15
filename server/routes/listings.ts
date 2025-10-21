@@ -1,11 +1,12 @@
 import { Router } from "express";
 import { createListing, markAsSold, getListings, deleteListing } from "../handlers/listingController";
+import { authenticateToken } from "../middleware/auth";
 
 const router = Router();
 
-router.post("/", createListing);
-router.patch("/:id/sold", markAsSold);
+router.post("/", authenticateToken, createListing);
+router.patch("/:id/sold", authenticateToken, markAsSold);
 router.get("/", getListings);
-router.delete("/:id", deleteListing);
+router.delete("/:id", authenticateToken, deleteListing);
 
 export default router;
