@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import Auth from './components/Auth';
-import Dashboard from './pages/Dashboard';
 import SearchPage from './pages/SearchPage';
 import ViewListing from './pages/ViewListing';
 import EditListing from './pages/EditListing';
@@ -18,16 +17,6 @@ function App() {
             {/* Authentication routes */}
             <Route path="/login" element={<Auth />} />
             <Route path="/signup" element={<Auth />} />
-            
-            {/* Protected dashboard page */}
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } 
-            />
             
             {/* Protected search page */}
             <Route 

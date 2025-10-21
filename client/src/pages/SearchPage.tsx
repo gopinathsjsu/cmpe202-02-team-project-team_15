@@ -310,8 +310,7 @@ const SearchPage: React.FC = () => {
     pageSize,
     onPageSizeChange: handlePageSizeChange,
     onReset: handleResetFilters,
-    // TODO: change null to the create listing page path like '/create-listing'
-    onCreateListing: () => null
+    onCreateListing: () => navigate('/create-listing')
   };
 
   return (
