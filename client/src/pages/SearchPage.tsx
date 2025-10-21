@@ -276,7 +276,8 @@ const SearchPage: React.FC = () => {
   // Handle product click
   const handleProductClick = (listing: IListing) => {
     console.log('Product clicked:', listing);
-    navigate(`/listing/${listing.listingId}`);
+    // Use _id for navigation as it's more reliable than listingId
+    navigate(`/listing/${listing._id}`);
   };
 
   // Handle page size change for testing

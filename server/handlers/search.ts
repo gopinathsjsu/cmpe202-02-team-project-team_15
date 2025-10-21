@@ -148,16 +148,28 @@ export const getListingById = async (req: Request<{ id: string }>, res: Response
   try {
     const { id } = req.params;
 
-    // Validate custom ID format (LST-YYYYMMDD-XXXX)
-    if (!id || !id.match(/^LST-\d{8}-\d{4}$/)) {
-      res.status(400).json({ error: 'Invalid listing ID format. Expected format: LST-YYYYMMDD-XXXX' });
+    if (!id) {
+      res.status(400).json({ error: 'Listing ID is required' });
       return;
     }
 
-    // Find the listing with populated references using custom listingId
-    const listing = await Listing.findOne({ listingId: id })
-      .populate('categoryId', 'name description')
-      .populate('userId', 'name email campusId');
+    let listing;
+
+    // Check if the ID is a MongoDB ObjectId
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      // Find by _id (MongoDB ObjectId)
+      listing = await Listing.findById(id)
+        .populate('categoryId', 'name description')
+        .populate('userId', 'name email campusId');
+    } else if (id.match(/^LST-\d{8}-\d{4}$/)) {
+      // Find by custom listingId format (LST-YYYYMMDD-XXXX)
+      listing = await Listing.findOne({ listingId: id })
+        .populate('categoryId', 'name description')
+        .populate('userId', 'name email campusId');
+    } else {
+      res.status(400).json({ error: 'Invalid listing ID format. Expected MongoDB ObjectId or LST-YYYYMMDD-XXXX format' });
+      return;
+    }
 
     if (!listing) {
       res.status(404).json({ error: 'Listing not found' });
