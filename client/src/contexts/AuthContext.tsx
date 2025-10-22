@@ -66,10 +66,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signup = async (email: string, password: string, firstName: string, lastName: string): Promise<boolean> => {
     try {
+      console.log('Attempting signup with:', { email, firstName, lastName });
       const response = await authAPI.signup(email, password, firstName, lastName);
+      console.log('Signup response:', response.data);
       return response.data.success;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Signup error:', error);
+      console.error('Error response:', error.response?.data);
       return false;
     }
   };

@@ -24,14 +24,44 @@ const validateUserRegistration = [
     .withMessage('Password must be at least 8 characters long')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
     .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'),
+  // Handle both field name formats - make them optional but validate if present
   body('first_name')
+    .optional()
+    .notEmpty()
     .trim()
     .isLength({ min: 1, max: 50 })
     .withMessage('First name must be between 1 and 50 characters'),
   body('last_name')
+    .optional()
+    .notEmpty()
     .trim()
     .isLength({ min: 1, max: 50 })
     .withMessage('Last name must be between 1 and 50 characters'),
+  body('firstName')
+    .optional()
+    .notEmpty()
+    .trim()
+    .isLength({ min: 1, max: 50 })
+    .withMessage('First name must be between 1 and 50 characters'),
+  body('lastName')
+    .optional()
+    .notEmpty()
+    .trim()
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Last name must be between 1 and 50 characters'),
+  // Custom validation to ensure at least one name format is provided
+  body().custom((value) => {
+    const hasFirstName = value.first_name || value.firstName;
+    const hasLastName = value.last_name || value.lastName;
+    
+    if (!hasFirstName) {
+      throw new Error('First name is required');
+    }
+    if (!hasLastName) {
+      throw new Error('Last name is required');
+    }
+    return true;
+  }),
   handleValidationErrors
 ];
 

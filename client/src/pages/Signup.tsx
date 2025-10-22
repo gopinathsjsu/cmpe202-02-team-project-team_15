@@ -35,6 +35,7 @@ const Signup: React.FC = () => {
     }
 
     try {
+      console.log('Submitting signup form:', formData);
       const success = await signup(
         formData.email,
         formData.password,
@@ -43,12 +44,15 @@ const Signup: React.FC = () => {
       );
       
       if (success) {
+        console.log('Signup successful, navigating to login');
         navigate('/login');
       } else {
-        setError('Signup failed. Please try again.');
+        console.log('Signup failed - success was false');
+        setError('Signup failed. Please check your email domain (.edu required) and try again.');
       }
     } catch (err) {
-      setError('Signup failed. Please try again.');
+      console.error('Signup catch block:', err);
+      setError('Signup failed. Please check your email domain (.edu required) and try again.');
     } finally {
       setLoading(false);
     }

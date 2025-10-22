@@ -18,6 +18,9 @@ const router = express.Router();
 // @access  Public
 router.post('/register', validateUserRegistration, AuthHandler.register);
 
+router.post('/signup', AuthHandler.register);
+
+
 // @route   POST /api/auth/verify-email
 // @desc    Verify user email
 // @access  Public
