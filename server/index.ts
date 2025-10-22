@@ -1,16 +1,21 @@
 import * as dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { app } from './app';
+import path from 'path';
+
+
 
 // Load environment variables
-dotenv.config();
 
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB
 const connectDatabase = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost/campus-market');
+console.log('✅ Connected to MongoDB:', process.env.MONGO_URI || 'mongodb://localhost/campus-market');
+
     console.log('Database is connected!');
   } catch (err) {
     console.error('Database connection error:', err);

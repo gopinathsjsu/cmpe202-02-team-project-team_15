@@ -36,7 +36,15 @@ class AuthHandler {
   // @access  Public
   static async register(req, res) {
     try {
-      const { email, password, first_name, last_name } = req.body;
+      console.log("=== SIGNUP REQUEST ===");
+      console.log("Incoming signup data:", req.body);
+      console.log("Request headers:", req.headers);
+      console.log("Request origin:", req.get('Origin'));
+      
+      // Handle both field name formats (frontend sends firstName/lastName, backend expects first_name/last_name)
+      const { email, password, first_name, last_name, firstName, lastName } = req.body;
+      const finalFirstName = first_name || firstName;
+      const finalLastName = last_name || lastName;
 
       // Check if user already exists
       const existingUser = await User.findOne({ email });
@@ -62,13 +70,22 @@ class AuthHandler {
       const user = new User({
         email,
         password_hash: password, // Will be hashed by pre-save middleware
-        first_name,
-        last_name,
+        first_name: finalFirstName,
+        last_name: finalLastName,
         status: 'active',
         email_verified_at: new Date()
       });
 
-      await user.save();
+      try {
+        await user.save();
+        console.log("User saved successfully:", user._id);
+      } catch (saveError) {
+        console.error("Error saving user:", saveError);
+        return res.status(400).json({ 
+          success: false, 
+          message: saveError.message || "Invalid signup data" 
+        });
+      }
 
       // Assign default buyer role
       const buyerRole = await Role.findOne({ name: 'buyer' });
