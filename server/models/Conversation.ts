@@ -1,6 +1,6 @@
 import { Schema, model, Types, Document } from "mongoose";
 export interface IConversation extends Document {
-  productId: Types.ObjectId;
+  listingId: Types.ObjectId;
   buyerId: Types.ObjectId;
   sellerId: Types.ObjectId;
   lastMessageAt: Date;
@@ -9,7 +9,7 @@ export interface IConversation extends Document {
 
 const ConversationSchema = new Schema<IConversation>(
   {
-    productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },
+    listingId: { type: Schema.Types.ObjectId, ref: "Listing", required: true },
     buyerId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     sellerId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     lastMessageAt: { type: Date, default: Date.now },
@@ -23,7 +23,7 @@ const ConversationSchema = new Schema<IConversation>(
 );
 
 ConversationSchema.index(
-  { productId: 1, buyerId: 1, sellerId: 1 },
+  { listingId: 1, buyerId: 1, sellerId: 1 },
   { unique: true }
 );
 ConversationSchema.index({ lastMessageAt: -1 }); // WHY: fast inbox sorting

@@ -144,7 +144,7 @@ app.use('/api/listings', searchRoutes);
 app.use('/api/listings', listingsRoutes);
 
 app.use(cookieParser());
-app.use("/chats", chatRouter);
+app.use("/api/chats", chatRouter);
 /**
  * @swagger
  * /:
@@ -198,6 +198,8 @@ app.get('/', (req: express.Request, res: express.Response) => {
       users: '/api/users',
       campus: '/api/campus',
       admin: '/api/admin',
+      listings: '/api/listings',
+      chats: '/api/chats',
       health: '/health',
       docs: '/api-docs'
     }
