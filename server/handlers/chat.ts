@@ -7,7 +7,7 @@ import { User } from "../models/User";
 export const initiateChat = async (req: any, res: Response) => {
   try {
     const { listingId } = req.body as { listingId: string };
-    const buyerId = req.user._id;
+    const buyerId = String(req.user._id);
 
     // Get the listing to find the seller
     const listing = await Listing.findById(listingId).select("userId");
@@ -29,19 +29,41 @@ export const initiateChat = async (req: any, res: Response) => {
 };
 
 export const listConversations = async (req: any, res: Response) => {
-  const userId = req.user._id;
+  const userId = String(req.user._id);
   const conversations = await Conversation.find({
     $or: [{ buyerId: userId }, { sellerId: userId }],
   })
+    .populate({
+      path: "listingId",
+      select: "title price",
+      model: "Listing",
+    })
+    .populate({
+      path: "buyerId",
+      select: "first_name last_name email",
+      model: "User",
+    })
+    .populate({
+      path: "sellerId",
+      select: "first_name last_name email",
+      model: "User",
+    })
     .sort({ lastMessageAt: -1 })
     .lean();
+
+  // console.log("listConversations - userId:", userId);
+  // console.log("listConversations - conversations count:", conversations.length);
+  // if (conversations.length > 0) {
+  //   console.log('listConversations - first conversation:', JSON.stringify(conversations[0], null, 2));
+  // }
+
   return res.json({ conversations });
 };
 
 export const getMessages = async (req: any, res: Response) => {
   const { conversationId } = req.params as any;
   const { cursor, limit = 50 } = req.query as any;
-  const userId = req.user._id;
+  const userId = String(req.user._id);
 
   const conv = await Conversation.findById(conversationId);
   if (!conv) return res.status(404).json({ message: "Conversation not found" });
@@ -64,7 +86,7 @@ export const getMessages = async (req: any, res: Response) => {
 export const postMessage = async (req: any, res: Response) => {
   const { conversationId } = req.params as any;
   const { body } = req.body as { body: string };
-  const userId = req.user._id;
+  const userId = String(req.user._id);
 
   if (!body?.trim()) return res.status(400).json({ message: "Empty message" });
 

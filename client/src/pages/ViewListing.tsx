@@ -3,10 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Calendar, MessageSquare, Flag } from 'lucide-react';
 import BackButton from '../components/BackButton';
 import { apiService, IListing } from '../services/api';
+// import { useAuth } from '../contexts/AuthContext'; // Removed since we're not using it
 
 const ViewListing = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  // const { user } = useAuth(); // Removed since we're not using it in this component
   const [listing, setListing] = useState<IListing | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,8 +47,24 @@ const ViewListing = () => {
       
       // Navigate to messages with the conversation ID
       navigate(`/messages?conversationId=${response.conversation._id}`);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error initiating chat:', err);
+      // Check if it's a 400 error (conversation already exists)
+      if (err.response?.status === 400) {
+        // Try to get existing conversations and find the one for this listing
+        try {
+          const conversationsResponse = await apiService.getConversations();
+          const existingConv = conversationsResponse.conversations.find(
+            conv => conv.listingId === listing._id
+          );
+          if (existingConv) {
+            navigate(`/messages?conversationId=${existingConv._id}`);
+            return;
+          }
+        } catch (convErr) {
+          console.error('Error fetching conversations:', convErr);
+        }
+      }
       // You could show a toast notification here
       alert('Failed to start conversation. Please try again.');
     } finally {
