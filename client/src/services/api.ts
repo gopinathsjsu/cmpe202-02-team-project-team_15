@@ -159,6 +159,27 @@ class ApiService {
     const { data } = await api.post<IListing>("/api/listings", listingData);
     return data;
   }
+
+  // Chat functionality
+  async initiateChat(listingId: string): Promise<{ conversation: any }> {
+    const { data } = await api.post("/api/chats/initiate", { listingId });
+    return data;
+  }
+
+  async getConversations(): Promise<{ conversations: any[] }> {
+    const { data } = await api.get("/api/chats/");
+    return data;
+  }
+
+  async getMessages(conversationId: string): Promise<{ messages: any[] }> {
+    const { data } = await api.get(`/api/chats/${conversationId}/messages`);
+    return data;
+  }
+
+  async sendMessage(conversationId: string, body: string): Promise<{ message: any }> {
+    const { data } = await api.post(`/api/chats/${conversationId}/messages`, { body });
+    return data;
+  }
 }
 
 export const apiService = new ApiService();

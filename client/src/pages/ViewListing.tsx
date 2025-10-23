@@ -10,6 +10,7 @@ const ViewListing = () => {
   const [listing, setListing] = useState<IListing | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [contacting, setContacting] = useState(false);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -34,6 +35,24 @@ const ViewListing = () => {
 
     fetchListing();
   }, [id]);
+
+  const handleContactSeller = async () => {
+    if (!listing) return;
+    
+    try {
+      setContacting(true);
+      const response = await apiService.initiateChat(listing._id);
+      
+      // Navigate to messages with the conversation ID
+      navigate(`/messages?conversationId=${response.conversation._id}`);
+    } catch (err) {
+      console.error('Error initiating chat:', err);
+      // You could show a toast notification here
+      alert('Failed to start conversation. Please try again.');
+    } finally {
+      setContacting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -112,11 +131,19 @@ const ViewListing = () => {
               </div>
             </div>
             <div className="flex items-center space-x-6">
-              <a href="#" className="text-gray-700 hover:text-gray-900">Marketplace</a>
-              <a href="#" className="text-gray-700 hover:text-gray-900 flex items-center space-x-1">
+              <button 
+                onClick={() => navigate('/search')}
+                className="text-gray-700 hover:text-gray-900"
+              >
+                Marketplace
+              </button>
+              <button 
+                onClick={() => navigate('/messages')}
+                className="text-gray-700 hover:text-gray-900 flex items-center space-x-1"
+              >
                 <MessageSquare className="w-5 h-5" />
                 <span>Messages</span>
-              </a>
+              </button>
               <button className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
                 <span className="text-gray-700 text-sm font-medium">A</span>
               </button>
@@ -178,9 +205,13 @@ const ViewListing = () => {
             </div>
 
             <div className="space-y-3">
-              <button className="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2">
+              <button 
+                onClick={handleContactSeller}
+                disabled={contacting}
+                className="w-full bg-gray-900 hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+              >
                 <MessageSquare className="w-5 h-5" />
-                <span>Contact Seller</span>
+                <span>{contacting ? 'Starting conversation...' : 'Contact Seller'}</span>
               </button>
               <button className="w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-lg border border-gray-300 transition-colors flex items-center justify-center space-x-2">
                 <Flag className="w-5 h-5" />
