@@ -14,6 +14,8 @@ dotenv.config();
 import './models/User';
 import './models/Category';
 import './models/Listing';
+import './models/Conversation';
+import './models/Message';
 
 // Import routes
 import authRoutes from './routes/auth';
