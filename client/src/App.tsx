@@ -6,6 +6,7 @@ import SearchPage from './pages/SearchPage';
 import ViewListing from './pages/ViewListing';
 import EditListing from './pages/EditListing';
 import CreateListing from './pages/CreateListing';
+import MessagesPage from './pages/Messages';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -52,6 +53,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <CreateListing />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/messages" 
+              element={
+                <ProtectedRoute>
+                  <MessagesPage />
                 </ProtectedRoute>
               } 
             />
