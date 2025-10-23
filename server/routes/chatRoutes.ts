@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireAuth } from "../middleware/authMock";
+import { authenticateToken } from "../middleware/auth";
 import {
   initiateChat,
   listConversations,
@@ -9,7 +9,7 @@ import {
 
 export const chatRouter = Router();
 
-chatRouter.post("/initiate", requireAuth, initiateChat);
-chatRouter.get("/", requireAuth, listConversations);
-chatRouter.get("/:conversationId/messages", requireAuth, getMessages);
-chatRouter.post("/:conversationId/messages", requireAuth, postMessage);
+chatRouter.post("/initiate", authenticateToken, initiateChat);
+chatRouter.get("/", authenticateToken, listConversations);
+chatRouter.get("/:conversationId/messages", authenticateToken, getMessages);
+chatRouter.post("/:conversationId/messages", authenticateToken, postMessage);
