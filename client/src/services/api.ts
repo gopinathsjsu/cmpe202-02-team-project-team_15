@@ -180,6 +180,27 @@ class ApiService {
     const { data } = await api.post(`/api/chats/${conversationId}/messages`, { body });
     return data;
   }
+
+  // Report functionality
+  async createReport(listingId: string, reportCategory: string, details?: string): Promise<{ report: any }> {
+    const { data } = await api.post("/api/reports", { listingId, reportCategory, details });
+    return data;
+  }
+
+  async getUserReports(status?: string, page = 1, limit = 20): Promise<{ reports: any[], pagination: any }> {
+    const params = new URLSearchParams();
+    if (status) params.append('status', status);
+    params.append('page', page.toString());
+    params.append('limit', limit.toString());
+    
+    const { data } = await api.get(`/api/reports?${params.toString()}`);
+    return data;
+  }
+
+  async getReport(reportId: string): Promise<{ report: any }> {
+    const { data } = await api.get(`/api/reports/${reportId}`);
+    return data;
+  }
 }
 
 export const apiService = new ApiService();
