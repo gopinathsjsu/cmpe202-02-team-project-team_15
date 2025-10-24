@@ -69,7 +69,7 @@ const requireRole = (roles: string[]) => {
       const userRoles = await UserRole.find({ user_id: req.user._id })
         .populate('role_id');
       
-      const userRoleNames = userRoles.map(ur => ur.role_id.name);
+      const userRoleNames = userRoles.map(ur => (ur.role_id as any).name);
       
       // Check if user has any of the required roles
       const hasRequiredRole = roles.some(role => userRoleNames.includes(role));
