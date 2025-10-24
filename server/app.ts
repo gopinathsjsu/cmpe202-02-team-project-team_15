@@ -3,6 +3,9 @@ import cors from 'cors';
 import path from 'path';
 import dotenv from 'dotenv';
 import { swaggerUi, specs } from './config/swagger';
+// import cors from 'cors';
+import cookieParser from "cookie-parser";
+import { chatRouter } from "./routes/chatRoutes";
 
 // Load environment variables
 dotenv.config();
@@ -11,6 +14,8 @@ dotenv.config();
 import './models/User';
 import './models/Category';
 import './models/Listing';
+import './models/Conversation';
+import './models/Message';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -36,6 +41,7 @@ app.use(cors({
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+// app.use(cors({ origin: process.env.FRONTEND_ORIGIN?.split(',') ?? '*', credentials: true }));
 
 // Trust proxy for accurate IP addresses
 app.set('trust proxy', 1);
@@ -139,6 +145,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/listings', searchRoutes);
 app.use('/api/listings', listingsRoutes);
 
+app.use(cookieParser());
+app.use("/api/chats", chatRouter);
 /**
  * @swagger
  * /:
@@ -192,6 +200,8 @@ app.get('/', (req: express.Request, res: express.Response) => {
       users: '/api/users',
       campus: '/api/campus',
       admin: '/api/admin',
+      listings: '/api/listings',
+      chats: '/api/chats',
       health: '/health',
       docs: '/api-docs'
     }

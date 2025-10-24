@@ -1,19 +1,19 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = "http://localhost:8080";
 
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
 // Add request interceptor to include auth token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -30,22 +30,25 @@ api.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401) {
       // Token expired, try to refresh
-      const refreshToken = localStorage.getItem('refreshToken');
+      const refreshToken = localStorage.getItem("refreshToken");
       if (refreshToken) {
         try {
-          const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
-            refreshToken
-          });
+          const response = await axios.post(
+            `${API_BASE_URL}/api/auth/refresh`,
+            {
+              refreshToken,
+            }
+          );
           const { accessToken } = response.data.data;
-          localStorage.setItem('accessToken', accessToken);
+          localStorage.setItem("accessToken", accessToken);
           // Retry the original request
           return api.request(error.config);
         } catch (refreshError) {
           // Refresh failed, redirect to login
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('user');
-          window.location.href = '/login';
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          localStorage.removeItem("user");
+          window.location.href = "/login";
         }
       }
     }
@@ -55,16 +58,20 @@ api.interceptors.response.use(
 
 export const authAPI = {
   login: (email: string, password: string) =>
-    api.post('/api/auth/login', { email, password }),
-  
-  signup: (email: string, password: string, firstName: string, lastName: string) =>
-    api.post('/api/auth/signup', { email, password, firstName, lastName }),
-  
+    api.post("/api/auth/login", { email, password }),
+
+  signup: (
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string
+  ) => api.post("/api/auth/signup", { email, password, firstName, lastName }),
+
   logout: (refreshToken: string) =>
-    api.post('/api/auth/logout', { refreshToken }),
-  
+    api.post("/api/auth/logout", { refreshToken }),
+
   refresh: (refreshToken: string) =>
-    api.post('/api/auth/refresh', { refreshToken }),
+    api.post("/api/auth/refresh", { refreshToken }),
 };
 
 // Types based on backend API
@@ -74,7 +81,7 @@ export interface IListing {
   title: string;
   description: string;
   price: number;
-  status: 'ACTIVE' | 'SOLD';
+  status: "ACTIVE" | "SOLD";
   userId: {
     _id: string;
     name: string;
@@ -103,7 +110,7 @@ export interface SearchParams {
   category?: string;
   minPrice?: number;
   maxPrice?: number;
-  sort?: 'createdAt_desc' | 'createdAt_asc' | 'price_desc' | 'price_asc';
+  sort?: "createdAt_desc" | "createdAt_asc" | "price_desc" | "price_asc";
   page?: number;
   pageSize?: number;
 }
@@ -121,13 +128,17 @@ export interface SearchResponse {
 class ApiService {
   // Search listings with filters
   async searchListings(params: SearchParams = {}): Promise<SearchResponse> {
-    const { data } = await api.get<SearchResponse>('/api/listings/search', { params });
+    const { data } = await api.get<SearchResponse>("/api/listings/search", {
+      params,
+    });
     return data;
   }
 
   // Get all categories
   async getCategories(): Promise<ICategory[]> {
-    const { data } = await api.get<{ categories: ICategory[] }>('/api/listings/categories');
+    const { data } = await api.get<{ categories: ICategory[] }>(
+      "/api/listings/categories"
+    );
     return data.categories;
   }
 
@@ -145,7 +156,28 @@ class ApiService {
     categoryId: string;
     photos?: Array<{ url: string; alt: string }>;
   }): Promise<IListing> {
-    const { data } = await api.post<IListing>('/api/listings', listingData);
+    const { data } = await api.post<IListing>("/api/listings", listingData);
+    return data;
+  }
+
+  // Chat functionality
+  async initiateChat(listingId: string): Promise<{ conversation: any }> {
+    const { data } = await api.post("/api/chats/initiate", { listingId });
+    return data;
+  }
+
+  async getConversations(): Promise<{ conversations: any[] }> {
+    const { data } = await api.get("/api/chats/");
+    return data;
+  }
+
+  async getMessages(conversationId: string): Promise<{ messages: any[] }> {
+    const { data } = await api.get(`/api/chats/${conversationId}/messages`);
+    return data;
+  }
+
+  async sendMessage(conversationId: string, body: string): Promise<{ message: any }> {
+    const { data } = await api.post(`/api/chats/${conversationId}/messages`, { body });
     return data;
   }
 }
