@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Calendar, MessageSquare, Flag } from 'lucide-react';
 import BackButton from '../components/BackButton';
+import { ReportModal } from '../components/ReportModal';
 import { apiService, IListing } from '../services/api';
 // import { useAuth } from '../contexts/AuthContext'; // Removed since we're not using it
 
@@ -13,6 +14,7 @@ const ViewListing = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [contacting, setContacting] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -70,6 +72,11 @@ const ViewListing = () => {
     } finally {
       setContacting(false);
     }
+  };
+
+  const handleReportSubmitted = () => {
+    // You could show a success message here
+    console.log('Report submitted successfully');
   };
 
   if (loading) {
@@ -231,7 +238,10 @@ const ViewListing = () => {
                 <MessageSquare className="w-5 h-5" />
                 <span>{contacting ? 'Starting conversation...' : 'Contact Seller'}</span>
               </button>
-              <button className="w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-lg border border-gray-300 transition-colors flex items-center justify-center space-x-2">
+              <button 
+                onClick={() => setShowReportModal(true)}
+                className="w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-lg border border-gray-300 transition-colors flex items-center justify-center space-x-2"
+              >
                 <Flag className="w-5 h-5" />
                 <span>Report</span>
               </button>
@@ -239,6 +249,17 @@ const ViewListing = () => {
           </div>
         </div>
       </div>
+
+      {/* Report Modal */}
+      {listing && (
+        <ReportModal
+          isOpen={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          listingId={listing._id}
+          listingTitle={listing.title}
+          onReportSubmitted={handleReportSubmitted}
+        />
+      )}
     </div>
   );
 };

@@ -6,6 +6,7 @@ import { swaggerUi, specs } from './config/swagger';
 // import cors from 'cors';
 import cookieParser from "cookie-parser";
 import { chatRouter } from "./routes/chatRoutes";
+import { reportRouter } from "./routes/reportRoutes";
 
 // Load environment variables
 dotenv.config();
@@ -16,6 +17,7 @@ import './models/Category';
 import './models/Listing';
 import './models/Conversation';
 import './models/Message';
+import './models/Report';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -147,6 +149,7 @@ app.use('/api/listings', listingsRoutes);
 
 app.use(cookieParser());
 app.use("/api/chats", chatRouter);
+app.use("/api/reports", reportRouter);
 /**
  * @swagger
  * /:
@@ -202,6 +205,7 @@ app.get('/', (req: express.Request, res: express.Response) => {
       admin: '/api/admin',
       listings: '/api/listings',
       chats: '/api/chats',
+      reports: '/api/reports',
       health: '/health',
       docs: '/api-docs'
     }
