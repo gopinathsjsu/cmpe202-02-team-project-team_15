@@ -1,6 +1,6 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
 import Auth from './components/Auth';
 import SearchPage from './pages/SearchPage';
 import ViewListing from './pages/ViewListing';
@@ -12,8 +12,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <div className="App">
+      <ToastProvider>
+        <Router>
+          <div className="App">
           <Routes>
             {/* Authentication routes */}
             <Route path="/login" element={<Auth />} />
@@ -75,6 +76,7 @@ function App() {
           </Routes>
         </div>
       </Router>
+      </ToastProvider>
     </AuthProvider>
   );
 }
