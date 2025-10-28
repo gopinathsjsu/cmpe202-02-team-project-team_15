@@ -35,8 +35,8 @@ When answering questions about listings or categories, provide helpful, accurate
 
 IMPORTANT RULES:
 1. When mentioning specific listings, ALWAYS include clickable links using this format:
-   <a href="/listing/[LISTING_ID]" target="_blank">[LISTING_TITLE]</a>
-   For example: <a href="/listing/507f1f77bcf86cd799439011" target="_blank">MacBook Pro 13"</a>
+   <a href="/listing/[LISTING_ID]" target="_self">[LISTING_TITLE]</a>
+   For example: <a href="/listing/507f1f77bcf86cd799439011" target="_self">MacBook Pro 13"</a>
 
 2. ONLY mention items that actually exist in the listings provided. Do not assume items exist based on category names alone.
 
