@@ -180,6 +180,25 @@ class ApiService {
     const { data } = await api.post(`/api/chats/${conversationId}/messages`, { body });
     return data;
   }
+
+  // Chatbot API methods
+  async chatWithBot(message: string, conversationHistory: any[] = []) {
+    const { data } = await api.post('/api/chatbot/chat', {
+      message,
+      conversationHistory
+    });
+    return data;
+  }
+
+  async getChatbotCategories() {
+    const { data } = await api.get('/api/chatbot/categories');
+    return data;
+  }
+
+  async getRecentListings(limit: number = 10) {
+    const { data } = await api.get(`/api/chatbot/listings?limit=${limit}`);
+    return data;
+  }
 }
 
 export const apiService = new ApiService();

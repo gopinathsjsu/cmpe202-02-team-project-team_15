@@ -24,6 +24,7 @@ import campusRoutes from './routes/campus';
 import adminRoutes from './routes/admin';
 import searchRoutes from './routes/searchRoutes';
 import listingsRoutes from './routes/listings';
+import chatbotRoutes from './routes/chatbot';
 
 export const app = express();
 
@@ -145,6 +146,9 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/listings', searchRoutes);
 app.use('/api/listings', listingsRoutes);
 
+// Chatbot routes
+app.use('/api/chatbot', chatbotRoutes);
+
 app.use(cookieParser());
 app.use("/api/chats", chatRouter);
 /**
@@ -201,6 +205,7 @@ app.get('/', (req: express.Request, res: express.Response) => {
       campus: '/api/campus',
       admin: '/api/admin',
       listings: '/api/listings',
+      chatbot: '/api/chatbot',
       chats: '/api/chats',
       health: '/health',
       docs: '/api-docs'

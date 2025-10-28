@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import Auth from './components/Auth';
@@ -8,12 +7,14 @@ import EditListing from './pages/EditListing';
 import CreateListing from './pages/CreateListing';
 import MessagesPage from './pages/Messages';
 import ProtectedRoute from './components/ProtectedRoute';
+import ChatbotButton from './components/ChatbotButton';
 
 function App() {
   return (
     <AuthProvider>
       <Router>
         <div className="App">
+          <ChatbotButton />
           <Routes>
             {/* Authentication routes */}
             <Route path="/login" element={<Auth />} />
