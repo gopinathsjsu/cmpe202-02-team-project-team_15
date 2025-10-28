@@ -8,6 +8,7 @@ import EditListing from './pages/EditListing';
 import CreateListing from './pages/CreateListing';
 import MessagesPage from './pages/Messages';
 import ProtectedRoute from './components/ProtectedRoute';
+import ChatbotButton from './components/ChatbotButton';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
       <ToastProvider>
         <Router>
           <div className="App">
+            <ChatbotButton />
           <Routes>
             {/* Authentication routes */}
             <Route path="/login" element={<Auth />} />
