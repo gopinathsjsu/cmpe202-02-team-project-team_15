@@ -31,3 +31,4 @@ savedListingSchema.index({ userId: 1, saved_at: -1 });
 
 export const SavedListing = mongoose.model<ISavedListing>('SavedListing', savedListingSchema);
 
+
