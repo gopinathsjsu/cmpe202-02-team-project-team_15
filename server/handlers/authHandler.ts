@@ -23,7 +23,7 @@ const sendVerificationEmail = async (user: any, token: string): Promise<boolean>
   return true;
 };
 
-// Helper function to send password reset email (mock implementation)
+// This codebase handles authentication for a Node.js backend, including user registration, login, session management, email verification, and password reset functionality. It uses JWTs for stateless access tokens, UUIDs for refresh tokens, and provides mock implementations for sending verification and password reset emails (these logs simulate real emails in a production system). The codebase integrates with user/session models and enforces educational email domains for registration security.
 const sendPasswordResetEmail = async (user: any, token: string): Promise<boolean> => {
   // In a real implementation, you would use nodemailer or similar
   console.log(`Password reset email sent to ${user.email} with token: ${token}`);

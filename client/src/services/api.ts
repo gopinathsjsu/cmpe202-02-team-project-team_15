@@ -220,6 +220,96 @@ class ApiService {
     const { data } = await api.get(`/api/reports/${reportId}`);
     return data;
   }
+
+  // Upload functionality - Generate presigned URL for single file
+  async getPresignedUploadUrl(
+    fileName: string,
+    fileType: string,
+    fileSize: number,
+    folder: 'listings' | 'profiles' = 'listings'
+  ): Promise<{ uploadUrl: string; fileUrl: string; key: string }> {
+    const { data } = await api.post<{ success: boolean; data: { uploadUrl: string; fileUrl: string; key: string } }>(
+      '/api/upload/presigned-url',
+      { fileName, fileType, fileSize, folder }
+    );
+    return data.data;
+  }
+
+  // Upload functionality - Generate presigned URLs for multiple files
+  async getBatchPresignedUploadUrls(
+    files: Array<{ fileName: string; fileType: string; fileSize: number }>,
+    folder: 'listings' | 'profiles' = 'listings'
+  ): Promise<Array<{ uploadUrl: string; fileUrl: string; key: string }>> {
+    const { data } = await api.post<{ success: boolean; data: Array<{ uploadUrl: string; fileUrl: string; key: string }> }>(
+      '/api/upload/presigned-urls/batch',
+      { files, folder }
+    );
+    return data.data;
+  }
+
+  // Upload file to S3 using presigned URL
+  async uploadFileToS3(presignedUrl: string, file: File): Promise<void> {
+    await axios.put(presignedUrl, file, {
+      headers: {
+        'Content-Type': file.type,
+      },
+    });
+  }
+
+  // Delete file from S3
+  async deleteFileFromS3(key: string): Promise<void> {
+    // Send key in request body
+    await api.delete('/api/upload/delete', {
+      data: { key }
+    });
+  }
+
+  // Complete upload flow: Get presigned URL and upload file
+  async uploadImage(
+    file: File,
+    folder: 'listings' | 'profiles' = 'listings'
+  ): Promise<{ fileUrl: string; key: string }> {
+    // Step 1: Get presigned URL
+    const { uploadUrl, fileUrl, key } = await this.getPresignedUploadUrl(
+      file.name,
+      file.type,
+      file.size,
+      folder
+    );
+
+    // Step 2: Upload file to S3
+    await this.uploadFileToS3(uploadUrl, file);
+
+    return { fileUrl, key };
+  }
+
+  // Complete upload flow for multiple files
+  async uploadMultipleImages(
+    files: File[],
+    folder: 'listings' | 'profiles' = 'listings'
+  ): Promise<Array<{ fileUrl: string; key: string }>> {
+    // Step 1: Get presigned URLs for all files
+    const fileDetails = files.map(file => ({
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
+    }));
+
+    const urlData = await this.getBatchPresignedUploadUrls(fileDetails, folder);
+
+    // Step 2: Upload all files in parallel
+    const uploadPromises = files.map((file, index) =>
+      this.uploadFileToS3(urlData[index].uploadUrl, file)
+    );
+
+    await Promise.all(uploadPromises);
+
+    // Return file URLs and keys
+    return urlData.map(data => ({
+      fileUrl: data.fileUrl,
+      key: data.key,
+    }));
+  }
 }
 
 export const apiService = new ApiService();
