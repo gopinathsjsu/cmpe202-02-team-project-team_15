@@ -18,6 +18,7 @@ import './models/Listing';
 import './models/Conversation';
 import './models/Message';
 import './models/Report';
+import './models/SavedListing';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -28,6 +29,7 @@ import searchRoutes from './routes/searchRoutes';
 import listingsRoutes from './routes/listings';
 import chatbotRoutes from './routes/chatbot';
 import uploadRoutes from './routes/upload';
+import savedListingsRoutes from './routes/savedListings';
 
 export const app = express();
 
@@ -149,6 +151,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/listings', searchRoutes);
 app.use('/api/listings', listingsRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/saved-listings', savedListingsRoutes);
 
 // Chatbot routes
 app.use('/api/chatbot', chatbotRoutes);
@@ -212,6 +215,7 @@ app.get('/', (req: express.Request, res: express.Response) => {
       listings: '/api/listings',
       chatbot: '/api/chatbot',
       upload: '/api/upload',
+      savedListings: '/api/saved-listings',
       chats: '/api/chats',
       reports: '/api/reports',
       health: '/health',

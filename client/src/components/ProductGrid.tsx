@@ -6,12 +6,16 @@ interface ProductGridProps {
   listings: IListing[];
   loading?: boolean;
   onProductClick?: (listing: IListing) => void;
+  savedListingIds?: Set<string>;
+  onSaveToggle?: (listingId: string, isSaved: boolean) => void;
 }
 
 const ProductGrid: React.FC<ProductGridProps> = ({ 
   listings, 
   loading = false, 
-  onProductClick 
+  onProductClick,
+  savedListingIds = new Set(),
+  onSaveToggle
 }) => {
   if (loading) {
     return (
@@ -44,6 +48,8 @@ const ProductGrid: React.FC<ProductGridProps> = ({
           key={listing._id}
           listing={listing}
           onClick={onProductClick}
+          isSaved={savedListingIds.has(listing._id)}
+          onSaveToggle={onSaveToggle}
         />
       ))}
     </div>

@@ -84,7 +84,8 @@ export interface IListing {
   status: "ACTIVE" | "SOLD";
   userId: {
     _id: string;
-    name: string;
+    first_name: string;
+    last_name: string;
     email: string;
   };
   categoryId: {
@@ -326,6 +327,32 @@ class ApiService {
       fileUrl: data.fileUrl,
       key: data.key,
     }));
+  }
+
+  // Saved Listings functionality
+  async saveListing(listingId: string): Promise<{ message: string; savedListing: any }> {
+    const { data } = await api.post('/api/saved-listings', { listingId });
+    return data;
+  }
+
+  async unsaveListing(listingId: string): Promise<{ message: string }> {
+    const { data } = await api.delete(`/api/saved-listings/${listingId}`);
+    return data;
+  }
+
+  async getSavedListings(): Promise<{ savedListings: Array<{ savedId: string; savedAt: string; listing: IListing }>; count: number }> {
+    const { data } = await api.get('/api/saved-listings');
+    return data;
+  }
+
+  async checkIfSaved(listingId: string): Promise<{ isSaved: boolean }> {
+    const { data } = await api.get(`/api/saved-listings/check/${listingId}`);
+    return data;
+  }
+
+  async getSavedListingIds(): Promise<{ listingIds: string[] }> {
+    const { data } = await api.get('/api/saved-listings/ids');
+    return data;
   }
 }
 

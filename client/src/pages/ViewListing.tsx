@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Calendar, MessageSquare, Flag } from 'lucide-react';
+import { Calendar, MessageSquare, Flag, Heart } from 'lucide-react';
 import BackButton from '../components/BackButton';
 import { ReportModal } from '../components/ReportModal';
 import { apiService, IListing } from '../services/api';
@@ -129,12 +129,8 @@ const ViewListing = () => {
     : 'Unknown Category';
 
   const sellerName = listing.userId && typeof listing.userId === 'object' 
-    ? listing.userId.name || listing.userId.email || 'Unknown Seller'
+    ? `${listing.userId.first_name || ''} ${listing.userId.last_name || ''}`.trim() || 'Unknown Seller'
     : 'Unknown Seller';
-
-  const sellerEmail = listing.userId && typeof listing.userId === 'object' 
-    ? listing.userId.email 
-    : '';
 
   const formattedDate = new Date(listing.createdAt).toLocaleDateString('en-US', {
     month: 'long',
@@ -169,6 +165,13 @@ const ViewListing = () => {
                 <MessageSquare className="w-5 h-5" />
                 <span>Messages</span>
               </button>
+              <button 
+                onClick={() => navigate('/saved')}
+                className="text-gray-700 hover:text-gray-900 flex items-center space-x-1"
+              >
+                <Heart className="w-5 h-5" />
+                <span>Saved</span>
+              </button>
               <button className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
                 <span className="text-gray-700 text-sm font-medium">A</span>
               </button>
@@ -186,7 +189,7 @@ const ViewListing = () => {
               <img
                 src={mainPhoto.url}
                 alt={mainPhoto.alt}
-                className="w-full h-[500px] object-cover"
+                className="w-full h-[500px] object-contain bg-gray-50"
                 onError={(e) => {
                   // Fallback to placeholder if image fails to load
                   (e.target as HTMLImageElement).src = '/placeholder-image.svg';
@@ -223,9 +226,6 @@ const ViewListing = () => {
               <div>
                 <div className="text-sm text-gray-600 mb-1">Seller</div>
                 <div className="text-lg font-semibold text-gray-900">{sellerName}</div>
-                {sellerEmail && (
-                  <div className="text-sm text-gray-500">{sellerEmail}</div>
-                )}
               </div>
             </div>
 

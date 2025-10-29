@@ -7,6 +7,7 @@ import ViewListing from './pages/ViewListing';
 import EditListing from './pages/EditListing';
 import CreateListing from './pages/CreateListing';
 import MessagesPage from './pages/Messages';
+import SavedListings from './pages/SavedListings';
 import ProtectedRoute from './components/ProtectedRoute';
 import ChatbotButton from './components/ChatbotButton';
 
@@ -65,6 +66,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <MessagesPage />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/saved" 
+              element={
+                <ProtectedRoute>
+                  <SavedListings />
                 </ProtectedRoute>
               } 
             />

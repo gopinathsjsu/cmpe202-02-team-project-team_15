@@ -87,7 +87,7 @@ export const getListings = async (req: Request, res: Response): Promise<void> =>
     const [listings, total] = await Promise.all([
       Listing.find(filter)
         .populate('categoryId', 'name description')
-        .populate('userId', 'name email')
+        .populate('userId', 'first_name last_name email')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(Number(limit)),

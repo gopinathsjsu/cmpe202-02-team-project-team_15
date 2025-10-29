@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Send, MessageSquare } from "lucide-react";
+import { Send, MessageSquare, Heart } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
 
@@ -332,6 +332,13 @@ export const Messages: React.FC<MessagesProps> = ({
               >
                 <MessageSquare className="w-5 h-5" />
                 Messages
+              </button>
+              <button
+                onClick={() => onNavigate("saved")}
+                className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-2"
+              >
+                <Heart className="w-5 h-5" />
+                Saved
               </button>
               <button className="text-sm text-gray-600 hover:text-gray-900">
                 <span className="w-5 h-5">👤</span>
