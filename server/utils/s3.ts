@@ -2,6 +2,17 @@ import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import crypto from 'crypto';
 
+// Get bucket name - with runtime validation
+const getBucketName = (): string => {
+  const bucketName = process.env.AWS_BUCKET_NAME;
+  if (!bucketName) {
+    console.error('❌ CRITICAL: AWS_BUCKET_NAME is not set in environment variables!');
+    console.error('Available AWS env vars:', Object.keys(process.env).filter(k => k.startsWith('AWS_')));
+    throw new Error('AWS_BUCKET_NAME environment variable is required but not set');
+  }
+  return bucketName;
+};
+
 // Initialize S3 client
 const s3Client = new S3Client({
   region: process.env.AWS_REGION || 'us-east-1',
@@ -11,7 +22,13 @@ const s3Client = new S3Client({
   },
 });
 
-const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME || '';
+// Log S3 configuration on module load (for debugging)
+console.log('🔧 S3 Module Loaded - Configuration:', {
+  region: process.env.AWS_REGION || 'us-east-1',
+  bucketName: process.env.AWS_BUCKET_NAME || '❌ NOT SET',
+  hasAccessKeyId: !!process.env.AWS_ACCESS_KEY_ID,
+  hasSecretAccessKey: !!process.env.AWS_SECRET_ACCESS_KEY,
+});
 
 // Allowed image types
 const ALLOWED_FILE_TYPES = [
@@ -64,22 +81,31 @@ export const generatePresignedUploadUrl = async (
   fileType: string,
   folder: 'listings' | 'profiles' = 'listings'
 ): Promise<{ uploadUrl: string; fileUrl: string; key: string }> => {
+  const bucketName = getBucketName();
   const uniqueFileName = generateUniqueFileName(fileName);
   const key = `${folder}/${uniqueFileName}`;
 
+  console.log('📤 Generating presigned URL:', {
+    bucketName,
+    key,
+    fileType,
+    folder
+  });
+
   const command = new PutObjectCommand({
-    Bucket: BUCKET_NAME,
+    Bucket: bucketName,
     Key: key,
     ContentType: fileType,
-    // Optional: Set ACL to public-read if you want images to be publicly accessible
-    // ACL: 'public-read',
+    // ServerSideEncryption: 'AES256', // Optional: Enable encryption
   });
 
   // Generate presigned URL valid for 5 minutes
   const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 300 });
 
   // Construct the public URL for the file
-  const fileUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+  const fileUrl = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+
+  console.log('✅ Presigned URL generated successfully');
 
   return {
     uploadUrl, // URL for uploading
@@ -92,12 +118,18 @@ export const generatePresignedUploadUrl = async (
  * Delete a file from S3
  */
 export const deleteFileFromS3 = async (key: string): Promise<void> => {
+  const bucketName = getBucketName();
+  
+  console.log('🗑️  Deleting file from S3:', { bucketName, key });
+  
   const command = new DeleteObjectCommand({
-    Bucket: BUCKET_NAME,
+    Bucket: bucketName,
     Key: key,
   });
 
   await s3Client.send(command);
+  
+  console.log('✅ File deleted successfully');
 };
 
 /**
@@ -113,7 +145,8 @@ export const deleteMultipleFilesFromS3 = async (keys: string[]): Promise<void> =
  */
 export const extractS3KeyFromUrl = (url: string): string | null => {
   try {
-    const urlPattern = new RegExp(`https://${BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/(.+)`);
+    const bucketName = getBucketName();
+    const urlPattern = new RegExp(`https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/(.+)`);
     const match = url.match(urlPattern);
     return match ? match[1] : null;
   } catch (error) {

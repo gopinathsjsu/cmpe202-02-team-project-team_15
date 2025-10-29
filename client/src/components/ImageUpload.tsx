@@ -72,8 +72,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       // Import API service
       const { apiService } = await import('../services/api');
 
+      console.log('📤 Starting upload for', filesArray.length, 'files');
+
       // Upload files
       const uploadedData = await apiService.uploadMultipleImages(filesArray, 'listings');
+
+      console.log('✅ Upload successful:', uploadedData);
 
       // Create new image objects
       const newImages: UploadedImage[] = uploadedData.map((data, index) => ({
@@ -89,8 +93,25 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       // Notify parent component
       onImagesChange(updatedImages.map(({ url, alt }) => ({ url, alt })));
     } catch (err: any) {
-      console.error('Upload error:', err);
-      setError(err.response?.data?.error || 'Failed to upload images. Please try again.');
+      console.error('❌ Upload error details:', {
+        message: err.message,
+        response: err.response,
+        status: err.response?.status,
+        data: err.response?.data
+      });
+      
+      // Determine error message
+      let errorMessage = 'Failed to upload images. Please try again.';
+      
+      if (err.response?.status === 401) {
+        errorMessage = 'Authentication required. Please log in again.';
+      } else if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setUploading(false);
       if (fileInputRef.current) {

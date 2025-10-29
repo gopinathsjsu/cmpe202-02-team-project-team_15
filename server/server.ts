@@ -1,10 +1,13 @@
 import * as dotenv from "dotenv"; // For ES modules
+
+// CRITICAL: Load environment variables FIRST before any other imports
+dotenv.config();
+
+// Now import everything else AFTER env vars are loaded
 import http from "http";
 import mongoose from "mongoose";
 import { app } from "./app";
 import { initSocket } from "./utils/socket";
-
-dotenv.config();
 
 (async function main() {
   try {
