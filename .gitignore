@@ -101,3 +101,6 @@ Thumbs.db
 
 # Tailwind CSS output
 frontend/public/css/output.css
+
+# Documentation files (markdown)
+*.md
