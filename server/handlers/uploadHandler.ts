@@ -50,6 +50,12 @@ export const getPresignedUploadUrl = async (req: Request, res: Response): Promis
     // Generate presigned URL
     const urlData = await generatePresignedUploadUrl(fileName, fileType, folder);
 
+    console.log('✅ Generated Presigned URL for:', fileName);
+    console.log('📋 Upload URL:', urlData.uploadUrl);
+    console.log('📋 File URL:', urlData.fileUrl);
+    console.log('📋 S3 Key:', urlData.key);
+    console.log('---');
+
     res.json({
       success: true,
       data: urlData,
@@ -134,6 +140,15 @@ export const getBatchPresignedUploadUrls = async (req: Request, res: Response): 
     );
 
     const urlDataArray = await Promise.all(urlPromises);
+
+    console.log('✅ Generated', urlDataArray.length, 'Presigned URLs');
+    urlDataArray.forEach((urlData, index) => {
+      console.log(`\n📋 File ${index + 1}:`, files[index].fileName);
+      console.log('   Upload URL:', urlData.uploadUrl.substring(0, 100) + '...');
+      console.log('   File URL:', urlData.fileUrl);
+      console.log('   S3 Key:', urlData.key);
+    });
+    console.log('---');
 
     res.json({
       success: true,

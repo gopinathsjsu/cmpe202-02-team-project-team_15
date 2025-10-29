@@ -2,6 +2,50 @@ import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import crypto from 'crypto';
 
+// Lazy S3 client initialization - only create when first needed
+let s3ClientInstance: S3Client | null = null;
+let s3ConfigLogged = false;
+
+const getS3Client = (): S3Client => {
+  if (!s3ClientInstance) {
+    // Log configuration on first initialization
+    if (!s3ConfigLogged) {
+      console.log('\n=== S3 Client Initialization (First Use) ===');
+      console.log('📋 Configuration Details:');
+      console.log('   Region:', process.env.AWS_REGION || 'us-east-1');
+      console.log('   Access Key ID:', process.env.AWS_ACCESS_KEY_ID ? 
+        `${process.env.AWS_ACCESS_KEY_ID.substring(0, 8)}...` : '❌ NOT SET');
+      console.log('   Secret Access Key:', process.env.AWS_SECRET_ACCESS_KEY ? 
+        `${'*'.repeat(20)} (${process.env.AWS_SECRET_ACCESS_KEY.length} chars)` : '❌ NOT SET');
+      console.log('   Bucket Name:', process.env.AWS_BUCKET_NAME || '❌ NOT SET');
+      console.log('\n🔍 Validation:');
+      console.log('   Has Region:', !!process.env.AWS_REGION, process.env.AWS_REGION ? '✅' : '⚠️ Using default');
+      console.log('   Has Access Key:', !!process.env.AWS_ACCESS_KEY_ID, process.env.AWS_ACCESS_KEY_ID ? '✅' : '❌');
+      console.log('   Has Secret Key:', !!process.env.AWS_SECRET_ACCESS_KEY, process.env.AWS_SECRET_ACCESS_KEY ? '✅' : '❌');
+      console.log('   Has Bucket Name:', !!process.env.AWS_BUCKET_NAME, process.env.AWS_BUCKET_NAME ? '✅' : '❌');
+      console.log('================================\n');
+      s3ConfigLogged = true;
+    }
+
+    // Validate credentials before creating client
+    if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+      throw new Error('AWS credentials not found. Check AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in .env file');
+    }
+
+    // Create S3 client
+    s3ClientInstance = new S3Client({
+      region: process.env.AWS_REGION || 'us-east-1',
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
+    });
+
+    console.log('✅ S3Client initialized successfully with credentials from .env\n');
+  }
+  return s3ClientInstance;
+};
+
 // Get bucket name - with runtime validation
 const getBucketName = (): string => {
   const bucketName = process.env.AWS_BUCKET_NAME;
@@ -12,23 +56,6 @@ const getBucketName = (): string => {
   }
   return bucketName;
 };
-
-// Initialize S3 client
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'us-east-1',
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-  },
-});
-
-// Log S3 configuration on module load (for debugging)
-console.log('🔧 S3 Module Loaded - Configuration:', {
-  region: process.env.AWS_REGION || 'us-east-1',
-  bucketName: process.env.AWS_BUCKET_NAME || '❌ NOT SET',
-  hasAccessKeyId: !!process.env.AWS_ACCESS_KEY_ID,
-  hasSecretAccessKey: !!process.env.AWS_SECRET_ACCESS_KEY,
-});
 
 // Allowed image types
 const ALLOWED_FILE_TYPES = [
@@ -99,8 +126,9 @@ export const generatePresignedUploadUrl = async (
     // ServerSideEncryption: 'AES256', // Optional: Enable encryption
   });
 
-  // Generate presigned URL valid for 5 minutes
-  const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 300 });
+  // Get S3 client and generate presigned URL valid for 5 minutes
+  const client = getS3Client();
+  const uploadUrl = await getSignedUrl(client, command, { expiresIn: 300 });
 
   // Construct the public URL for the file
   const fileUrl = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
@@ -119,6 +147,7 @@ export const generatePresignedUploadUrl = async (
  */
 export const deleteFileFromS3 = async (key: string): Promise<void> => {
   const bucketName = getBucketName();
+  const client = getS3Client();
   
   console.log('🗑️  Deleting file from S3:', { bucketName, key });
   
@@ -127,7 +156,7 @@ export const deleteFileFromS3 = async (key: string): Promise<void> => {
     Key: key,
   });
 
-  await s3Client.send(command);
+  await client.send(command);
   
   console.log('✅ File deleted successfully');
 };
