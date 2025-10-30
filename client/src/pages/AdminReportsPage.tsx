@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { MessageSquare } from 'lucide-react';
 import BackButton from '../components/BackButton';
 import Pagination from '../components/Pagination';
-import { useAuth } from '../contexts/AuthContext';
+import Navbar from '../components/Navbar';
 import api from '../services/api';
 
 const REPORT_CATEGORIES = [
@@ -22,7 +21,6 @@ const REPORT_STATUSES = [
 
 const AdminReportsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [reports, setReports] = useState<any[]>([]);
@@ -208,46 +206,7 @@ const AdminReportsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header with Navigation */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">CM</span>
-                </div>
-                <span className="font-semibold text-gray-900">Campus Market</span>
-              </div>
-            </div>
-            <div className="flex items-center space-x-6">
-              <button 
-                onClick={() => navigate('/search')}
-                className="text-gray-700 hover:text-gray-900 font-medium"
-              >
-                Marketplace
-              </button>
-              <button 
-                onClick={() => navigate('/messages')}
-                className="text-gray-700 hover:text-gray-900 flex items-center space-x-1"
-              >
-                <MessageSquare className="w-5 h-5" />
-                <span>Messages</span>
-              </button>
-              {user?.roles?.includes('admin') && (
-                <button
-                  onClick={() => navigate('/admin/reports')}
-                  className="text-gray-900 font-medium"
-                >
-                  Admin / Reports
-                </button>
-              )}
-              <button className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                <span className="text-gray-700 text-sm font-medium">A</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       <div className="max-w-7xl mx-auto p-4 lg:p-5">
         {/* Back Button */}
