@@ -64,8 +64,9 @@ export const authAPI = {
     email: string,
     password: string,
     firstName: string,
-    lastName: string
-  ) => api.post("/api/auth/signup", { email, password, firstName, lastName }),
+    lastName: string,
+    adminKey?: string
+  ) => api.post("/api/auth/signup", adminKey ? { email, password, firstName, lastName, adminKey } : { email, password, firstName, lastName }),
 
   logout: (refreshToken: string) =>
     api.post("/api/auth/logout", { refreshToken }),
