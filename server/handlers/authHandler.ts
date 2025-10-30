@@ -19,14 +19,12 @@ const generateTokens = (userId: string) => {
 // Helper function to send verification email (mock implementation)
 const sendVerificationEmail = async (user: any, token: string): Promise<boolean> => {
   // In a real implementation, you would use nodemailer or similar
-  console.log(`Verification email sent to ${user.email} with token: ${token}`);
   return true;
 };
 
 // Helper function to send password reset email (mock implementation)
 const sendPasswordResetEmail = async (user: any, token: string): Promise<boolean> => {
   // In a real implementation, you would use nodemailer or similar
-  console.log(`Password reset email sent to ${user.email} with token: ${token}`);
   return true;
 };
 
@@ -36,11 +34,6 @@ class AuthHandler {
   // @access  Public
   static async register(req, res) {
     try {
-      console.log("=== SIGNUP REQUEST ===");
-      console.log("Incoming signup data:", req.body);
-      console.log("Request headers:", req.headers);
-      console.log("Request origin:", req.get('Origin'));
-      
       // Handle both field name formats (frontend sends firstName/lastName, backend expects first_name/last_name)
       const { email, password, first_name, last_name, firstName, lastName } = req.body;
       const finalFirstName = first_name || firstName;
@@ -78,7 +71,6 @@ class AuthHandler {
 
       try {
         await user.save();
-        console.log("User saved successfully:", user._id);
       } catch (saveError) {
         console.error("Error saving user:", saveError);
         return res.status(400).json({ 
@@ -192,12 +184,9 @@ class AuthHandler {
       const userAgent = req.get('User-Agent') || '';
       const ipAddress = req.ip || req.connection.remoteAddress;
 
-      console.log('[AuthController.login] Starting login for:', email);
-
       // Find user
       const user = await User.findOne({ email });
       if (!user) {
-        console.log('[AuthController.login] User not found');
         res.status(401).json({
           success: false,
           message: 'Invalid credentials'
@@ -205,13 +194,8 @@ class AuthHandler {
         return;
       }
 
-      console.log('[AuthController.login] User found:', { email: user.email, status: user.status });
-      console.log('[AuthController.login] Password hash:', user.password_hash?.substring(0, 20) + '...');
-
       // Check password
-      console.log('[AuthController.login] Checking password...');
       const isPasswordValid = await user.comparePassword(password);
-      console.log('[AuthController.login] Password valid:', isPasswordValid);
       if (!isPasswordValid) {
         res.status(401).json({
           success: false,
