@@ -4,12 +4,14 @@ import { Calendar, Flag, MessageSquare } from 'lucide-react';
 import BackButton from '../components/BackButton';
 import Navbar from '../components/Navbar';
 import { ReportModal } from '../components/ReportModal';
+import ReportedDetailsPanel from '../components/ReportedDetailsPanel';
+import { useAuth } from '../contexts/AuthContext';
 import { apiService, IListing } from '../services/api';
 
 const ViewListing = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  // const { user } = useAuth(); // Removed since we're not using it in this component
+  const { user } = useAuth();
   const [listing, setListing] = useState<IListing | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -217,6 +219,13 @@ const ViewListing = () => {
             </div>
           </div>
         </div>
+
+        {/* Admin: Reported Details Panel */}
+        {user?.roles?.includes('admin') && listing && (
+          <div className="mt-8">
+            <ReportedDetailsPanel listingId={listing._id} />
+          </div>
+        )}
       </div>
 
       {/* Report Modal */}

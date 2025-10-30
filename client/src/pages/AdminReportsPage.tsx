@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import Pagination from '../components/Pagination';
 import Navbar from '../components/Navbar';
-import api from '../services/api';
+import { apiService } from '../services/api';
 
 const REPORT_CATEGORIES = [
   { label: 'Fraud', value: 'FRAUD' },
@@ -33,6 +33,7 @@ const AdminReportsPage: React.FC = () => {
   const [dateFrom, setDateFrom] = useState(searchParams.get('from') || '');
   const [dateTo, setDateTo] = useState(searchParams.get('to') || '');
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  const [filterByListingId, setFilterByListingId] = useState(searchParams.get('listingId') || '');
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);
@@ -49,7 +50,8 @@ const AdminReportsPage: React.FC = () => {
     dateFrom,
     dateTo,
     searchQuery,
-    pageSize
+    pageSize,
+    filterByListingId
   });
 
   useEffect(() => {
@@ -59,9 +61,10 @@ const AdminReportsPage: React.FC = () => {
       dateFrom,
       dateTo,
       searchQuery,
-      pageSize
+      pageSize,
+      filterByListingId
     };
-  }, [selectedStatus, selectedCategory, dateFrom, dateTo, searchQuery, pageSize]);
+  }, [selectedStatus, selectedCategory, dateFrom, dateTo, searchQuery, pageSize, filterByListingId]);
 
   // Update URL parameters
   const updateURL = useCallback((params: {
@@ -72,6 +75,7 @@ const AdminReportsPage: React.FC = () => {
     q?: string;
     page?: number;
     pageSize?: number;
+    listingId?: string;
   }) => {
     const newSearchParams = new URLSearchParams();
     
@@ -82,6 +86,7 @@ const AdminReportsPage: React.FC = () => {
     if (params.q && params.q.trim()) newSearchParams.set('q', params.q.trim());
     if (params.page && params.page > 1) newSearchParams.set('page', params.page.toString());
     if (params.pageSize && params.pageSize !== 12) newSearchParams.set('pageSize', params.pageSize.toString());
+    if (params.listingId) newSearchParams.set('listingId', params.listingId);
 
     setSearchParams(newSearchParams);
   }, [setSearchParams]);
@@ -103,10 +108,10 @@ const AdminReportsPage: React.FC = () => {
       if (params.dateFrom) queryParams.from = params.dateFrom;
       if (params.dateTo) queryParams.to = params.dateTo;
       if (params.searchQuery.trim()) queryParams.q = params.searchQuery.trim();
+      if (params.filterByListingId) queryParams.listingId = params.filterByListingId;
 
-      const response = await api.get('/api/admin/reports', { params: queryParams });
+      const data = await apiService.getAdminReports(queryParams);
       
-      const data = response.data?.data;
       setReports(data?.reports || []);
       setCurrentPage(data?.pagination?.current_page || 1);
       setTotalPages(data?.pagination?.total_pages || 1);
@@ -133,6 +138,7 @@ const AdminReportsPage: React.FC = () => {
     dateTo?: string;
     searchQuery?: string;
     pageSize?: number;
+    filterByListingId?: string;
   }) => {
     if (updates.selectedStatus !== undefined) setSelectedStatus(updates.selectedStatus);
     if (updates.selectedCategory !== undefined) setSelectedCategory(updates.selectedCategory);
@@ -140,6 +146,7 @@ const AdminReportsPage: React.FC = () => {
     if (updates.dateTo !== undefined) setDateTo(updates.dateTo);
     if (updates.searchQuery !== undefined) setSearchQuery(updates.searchQuery);
     if (updates.pageSize !== undefined) setPageSize(updates.pageSize);
+    if (updates.filterByListingId !== undefined) setFilterByListingId(updates.filterByListingId);
     
     setCurrentPage(1);
     setIsFilterMenuOpen(false);
@@ -153,10 +160,11 @@ const AdminReportsPage: React.FC = () => {
         to: updates.dateTo !== undefined ? updates.dateTo : dateTo,
         q: updates.searchQuery !== undefined ? updates.searchQuery : searchQuery,
         page: 1,
-        pageSize: updates.pageSize !== undefined ? updates.pageSize : pageSize
+        pageSize: updates.pageSize !== undefined ? updates.pageSize : pageSize,
+        listingId: updates.filterByListingId !== undefined ? updates.filterByListingId : filterByListingId
       });
     }, 0);
-  }, [selectedStatus, selectedCategory, dateFrom, dateTo, searchQuery, pageSize, performSearch, updateURL]);
+  }, [selectedStatus, selectedCategory, dateFrom, dateTo, searchQuery, pageSize, filterByListingId, performSearch, updateURL]);
 
   const handleStatusChange = useCallback((status: string) => {
     handleFilterChange({ selectedStatus: status });
@@ -187,7 +195,8 @@ const AdminReportsPage: React.FC = () => {
       dateFrom: '',
       dateTo: '',
       searchQuery: '',
-      pageSize: 12
+      pageSize: 12,
+      filterByListingId: ''
     });
   };
 
@@ -358,6 +367,31 @@ const AdminReportsPage: React.FC = () => {
             {error && (
               <div className="bg-red-100 text-red-800 px-4 py-3 rounded-lg border border-red-200">
                 {error}
+              </div>
+            )}
+
+            {/* Listing Filter Badge */}
+            {filterByListingId && reports.length > 0 && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-blue-900 font-semibold text-sm">
+                      📋 Filtering by Listing:
+                    </span>
+                    <span className="text-blue-700 font-medium">
+                      "{reports[0]?.listingId?.title || 'Unknown Listing'}"
+                    </span>
+                    <span className="text-xs text-blue-600 font-mono bg-blue-100 px-2 py-1 rounded">
+                      ID: {reports[0]?.listingId?.listingId || filterByListingId}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleFilterChange({ filterByListingId: '' })}
+                    className="text-blue-700 hover:text-blue-900 font-medium text-sm underline"
+                  >
+                    Clear Listing Filter
+                  </button>
+                </div>
               </div>
             )}
 

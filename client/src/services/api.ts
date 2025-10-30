@@ -221,6 +221,22 @@ class ApiService {
     const { data } = await api.get(`/api/reports/${reportId}`);
     return data;
   }
+
+  // Admin: Get all reports with filters
+  async getAdminReports(params?: {
+    page?: number;
+    pageSize?: number;
+    status?: string;
+    category?: string;
+    from?: string;
+    to?: string;
+    q?: string;
+    listingId?: string;
+    sort?: string;
+  }): Promise<{ reports: any[], pagination: any }> {
+    const { data } = await api.get('/api/admin/reports', { params });
+    return data.data; // Backend wraps in { success, data: { reports, pagination } }
+  }
 }
 
 export const apiService = new ApiService();
