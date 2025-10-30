@@ -4,29 +4,9 @@ import crypto from 'crypto';
 
 // Lazy S3 client initialization - only create when first needed
 let s3ClientInstance: S3Client | null = null;
-let s3ConfigLogged = false;
 
 const getS3Client = (): S3Client => {
   if (!s3ClientInstance) {
-    // Log configuration on first initialization
-    if (!s3ConfigLogged) {
-      console.log('\n=== S3 Client Initialization (First Use) ===');
-      console.log('📋 Configuration Details:');
-      console.log('   Region:', process.env.AWS_REGION || 'us-east-1');
-      console.log('   Access Key ID:', process.env.AWS_ACCESS_KEY_ID ? 
-        `${process.env.AWS_ACCESS_KEY_ID.substring(0, 8)}...` : '❌ NOT SET');
-      console.log('   Secret Access Key:', process.env.AWS_SECRET_ACCESS_KEY ? 
-        `${'*'.repeat(20)} (${process.env.AWS_SECRET_ACCESS_KEY.length} chars)` : '❌ NOT SET');
-      console.log('   Bucket Name:', process.env.AWS_BUCKET_NAME || '❌ NOT SET');
-      console.log('\n🔍 Validation:');
-      console.log('   Has Region:', !!process.env.AWS_REGION, process.env.AWS_REGION ? '✅' : '⚠️ Using default');
-      console.log('   Has Access Key:', !!process.env.AWS_ACCESS_KEY_ID, process.env.AWS_ACCESS_KEY_ID ? '✅' : '❌');
-      console.log('   Has Secret Key:', !!process.env.AWS_SECRET_ACCESS_KEY, process.env.AWS_SECRET_ACCESS_KEY ? '✅' : '❌');
-      console.log('   Has Bucket Name:', !!process.env.AWS_BUCKET_NAME, process.env.AWS_BUCKET_NAME ? '✅' : '❌');
-      console.log('================================\n');
-      s3ConfigLogged = true;
-    }
-
     // Validate credentials before creating client
     if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
       throw new Error('AWS credentials not found. Check AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in .env file');
@@ -40,8 +20,6 @@ const getS3Client = (): S3Client => {
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
       },
     });
-
-    console.log('✅ S3Client initialized successfully with credentials from .env\n');
   }
   return s3ClientInstance;
 };
@@ -112,13 +90,6 @@ export const generatePresignedUploadUrl = async (
   const uniqueFileName = generateUniqueFileName(fileName);
   const key = `${folder}/${uniqueFileName}`;
 
-  console.log('📤 Generating presigned URL:', {
-    bucketName,
-    key,
-    fileType,
-    folder
-  });
-
   const command = new PutObjectCommand({
     Bucket: bucketName,
     Key: key,
@@ -132,8 +103,6 @@ export const generatePresignedUploadUrl = async (
 
   // Construct the public URL for the file
   const fileUrl = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
-
-  console.log('✅ Presigned URL generated successfully');
 
   return {
     uploadUrl, // URL for uploading
@@ -149,16 +118,12 @@ export const deleteFileFromS3 = async (key: string): Promise<void> => {
   const bucketName = getBucketName();
   const client = getS3Client();
   
-  console.log('🗑️  Deleting file from S3:', { bucketName, key });
-  
   const command = new DeleteObjectCommand({
     Bucket: bucketName,
     Key: key,
   });
 
   await client.send(command);
-  
-  console.log('✅ File deleted successfully');
 };
 
 /**

@@ -72,12 +72,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       // Import API service
       const { apiService } = await import('../services/api');
 
-      console.log('📤 Starting upload for', filesArray.length, 'files');
-
       // Upload files
       const uploadedData = await apiService.uploadMultipleImages(filesArray, 'listings');
-
-      console.log('✅ Upload successful:', uploadedData);
 
       // Create new image objects
       const newImages: UploadedImage[] = uploadedData.map((data, index) => ({

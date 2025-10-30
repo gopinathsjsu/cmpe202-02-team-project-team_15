@@ -250,8 +250,6 @@ class ApiService {
 
   // Upload file to S3 using presigned URL
   async uploadFileToS3(presignedUrl: string, file: File): Promise<void> {
-    console.log('🔄 Uploading to S3:', { url: presignedUrl, type: file.type, size: file.size });
-    
     try {
       const response = await axios.put(presignedUrl, file, {
         headers: {
@@ -261,15 +259,9 @@ class ApiService {
         transformRequest: [(data) => data],
       });
       
-      console.log('✅ S3 upload successful:', response.status);
       return response.data;
     } catch (error: any) {
-      console.error('❌ S3 upload failed:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        message: error.message,
-        url: presignedUrl.split('?')[0] // Log URL without query params
-      });
+      console.error('S3 upload failed:', error.message);
       throw error;
     }
   }

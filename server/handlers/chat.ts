@@ -9,28 +9,20 @@ export const initiateChat = async (req: any, res: Response) => {
     const { listingId } = req.body as { listingId: string };
     const buyerId = String(req.user._id);
 
-    console.log('initiateChat - Request body:', { listingId });
-    console.log('initiateChat - Buyer ID:', buyerId);
-    console.log('initiateChat - User object:', req.user);
-
     // Validate listingId is provided
     if (!listingId) {
-      console.error('initiateChat - Missing listingId');
       return res.status(400).json({ message: "Listing ID is required" });
     }
 
     // Get the listing to find the seller
     const listing = await Listing.findById(listingId).select("userId");
     if (!listing) {
-      console.error('initiateChat - Listing not found:', listingId);
       return res.status(404).json({ message: "Listing not found" });
     }
 
     const sellerId = String(listing.userId);
-    console.log('initiateChat - Seller ID:', sellerId);
     
     if (sellerId === buyerId) {
-      console.error('initiateChat - Cannot chat with yourself');
       return res.status(400).json({ message: "Cannot chat with yourself" });
     }
 
@@ -40,12 +32,10 @@ export const initiateChat = async (req: any, res: Response) => {
       { new: true, upsert: true }
     );
     
-    console.log('initiateChat - Conversation created/found:', conversation._id);
     return res.json({ conversation });
   } catch (e: any) {
-    console.error('initiateChat - Error:', e);
-    console.error('initiateChat - Error details:', e.message, e.stack);
-    return res.status(500).json({ message: "Server error", error: e.message });
+    console.error('Chat initiation error:', e);
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
