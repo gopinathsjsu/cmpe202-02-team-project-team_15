@@ -1,5 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { MessageSquare } from 'lucide-react';
+import BackButton from '../components/BackButton';
+import Pagination from '../components/Pagination';
+import { useAuth } from '../contexts/AuthContext';
+import api from '../services/api';
 
 const REPORT_CATEGORIES = [
   { label: 'Fraud', value: 'FRAUD' },
@@ -8,268 +13,495 @@ const REPORT_CATEGORIES = [
   { label: 'Inappropriate/Prohibited/Safety Concern', value: 'INAPPROPRIATE_PROHIBITED_SAFETY' },
   { label: 'Other', value: 'OTHER' },
 ];
+
 const REPORT_STATUSES = [
   { label: 'Open', value: 'OPEN' },
   { label: 'In Review', value: 'IN_REVIEW' },
   { label: 'Closed', value: 'CLOSED' },
 ];
-const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
 const AdminReportsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [reports, setReports] = useState<any[]>([]);
-  const [pagination, setPagination] = useState({ current_page: 1, total_pages: 1, total_reports: 0, per_page: 20 });
-  const [filters, setFilters] = useState<{
-    status: string[];
-    category: string[];
-    from: string;
-    to: string;
-    q: string;
-    page: number;
-    pageSize: number;
-    sort: string;
-  }>({
-    status: [],
-    category: [],
-    from: '',
-    to: '',
-    q: '',
-    page: 1,
-    pageSize: 20,
-    sort: 'desc',
-  });
-  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
+  const { user } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const status = searchParams.getAll('status');
-    const category = searchParams.getAll('category');
-    const from = searchParams.get('from') || '';
-    const to = searchParams.get('to') || '';
-    const q = searchParams.get('q') || '';
-    const page = +(searchParams.get('page') || 1);
-    const pageSize = +(searchParams.get('pageSize') || 20);
-    const sort = searchParams.get('sort') || 'desc';
-    setFilters(f => ({ ...f, status, category, from, to, q, page, pageSize, sort }));
-  }, [searchParams]);
+  const [reports, setReports] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Filter states
+  const [selectedStatus, setSelectedStatus] = useState(searchParams.get('status') || '');
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
+  const [dateFrom, setDateFrom] = useState(searchParams.get('from') || '');
+  const [dateTo, setDateTo] = useState(searchParams.get('to') || '');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [pageSize, setPageSize] = useState(Number(searchParams.get('pageSize')) || 12);
+
+  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
+
+  // Refs for values
+  const searchParamsRef = useRef({
+    selectedStatus,
+    selectedCategory,
+    dateFrom,
+    dateTo,
+    searchQuery,
+    pageSize
+  });
 
   useEffect(() => {
+    searchParamsRef.current = {
+      selectedStatus,
+      selectedCategory,
+      dateFrom,
+      dateTo,
+      searchQuery,
+      pageSize
+    };
+  }, [selectedStatus, selectedCategory, dateFrom, dateTo, searchQuery, pageSize]);
+
+  // Update URL parameters
+  const updateURL = useCallback((params: {
+    status?: string;
+    category?: string;
+    from?: string;
+    to?: string;
+    q?: string;
+    page?: number;
+    pageSize?: number;
+  }) => {
+    const newSearchParams = new URLSearchParams();
+    
+    if (params.status) newSearchParams.set('status', params.status);
+    if (params.category) newSearchParams.set('category', params.category);
+    if (params.from) newSearchParams.set('from', params.from);
+    if (params.to) newSearchParams.set('to', params.to);
+    if (params.q && params.q.trim()) newSearchParams.set('q', params.q.trim());
+    if (params.page && params.page > 1) newSearchParams.set('page', params.page.toString());
+    if (params.pageSize && params.pageSize !== 12) newSearchParams.set('pageSize', params.pageSize.toString());
+
+    setSearchParams(newSearchParams);
+  }, [setSearchParams]);
+
+  // Fetch reports
+  const performSearch = useCallback(async (page: number = 1) => {
     setLoading(true);
     setError(null);
-    const params = new URLSearchParams();
-    filters.status.forEach((s: string) => params.append('status', s));
-    filters.category.forEach((c: string) => params.append('category', c));
-    if (filters.from) params.append('from', filters.from);
-    if (filters.to) params.append('to', filters.to);
-    if (filters.q) params.append('q', filters.q);
-    params.set('page', filters.page.toString());
-    params.set('pageSize', filters.pageSize.toString());
-    params.set('sort', filters.sort);
-    fetch(`/api/admin/reports?${params.toString()}`, {
-      credentials: 'include',
-    })
-      .then(res => res.json())
-      .then(data => {
-        setReports(data.data?.reports || []);
-        setPagination(data.data?.pagination || pagination);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError('Failed to load reports');
-        setLoading(false);
-      });
-    // eslint-disable-next-line
-  }, [filters.status, filters.category, filters.from, filters.to, filters.q, filters.page, filters.pageSize, filters.sort]);
 
-  function handleFilterChange(newFilters: any) {
-    setFilters(f => ({ ...f, ...newFilters, page: 1 }));
-    const nextParams = new URLSearchParams();
-    Object.entries({ ...filters, ...newFilters, page: 1 }).forEach(([k, val]: any) => {
-      if (Array.isArray(val)) val.forEach((v: string) => v && nextParams.append(k, v));
-      else if (val) nextParams.set(k, val);
-    });
-    setSearchParams(nextParams);
-  }
-  function handleClearFilters() {
-    setSearchParams('');
-  }
-  function handlePageChange(page: number) {
-    handleFilterChange({ page });
-  }
-  function handlePageSizeChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    handleFilterChange({ pageSize: +e.target.value, page: 1 });
-  }
-  function closeFilterMenu() {
+    try {
+      const params = searchParamsRef.current;
+      const queryParams: any = {
+        page,
+        pageSize: params.pageSize,
+      };
+
+      if (params.selectedStatus) queryParams.status = params.selectedStatus;
+      if (params.selectedCategory) queryParams.category = params.selectedCategory;
+      if (params.dateFrom) queryParams.from = params.dateFrom;
+      if (params.dateTo) queryParams.to = params.dateTo;
+      if (params.searchQuery.trim()) queryParams.q = params.searchQuery.trim();
+
+      const response = await api.get('/api/admin/reports', { params: queryParams });
+      
+      const data = response.data?.data;
+      setReports(data?.reports || []);
+      setCurrentPage(data?.pagination?.current_page || 1);
+      setTotalPages(data?.pagination?.total_pages || 1);
+      setTotalItems(data?.pagination?.total_reports || 0);
+    } catch (err: any) {
+      console.error('Failed to load reports:', err);
+      setError(err.response?.data?.message || 'Failed to load reports');
+      setReports([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Load reports on mount and filter change
+  useEffect(() => {
+    performSearch(currentPage);
+  }, [performSearch, currentPage]);
+
+  // Filter change handlers
+  const handleFilterChange = useCallback((updates: {
+    selectedStatus?: string;
+    selectedCategory?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    searchQuery?: string;
+    pageSize?: number;
+  }) => {
+    if (updates.selectedStatus !== undefined) setSelectedStatus(updates.selectedStatus);
+    if (updates.selectedCategory !== undefined) setSelectedCategory(updates.selectedCategory);
+    if (updates.dateFrom !== undefined) setDateFrom(updates.dateFrom);
+    if (updates.dateTo !== undefined) setDateTo(updates.dateTo);
+    if (updates.searchQuery !== undefined) setSearchQuery(updates.searchQuery);
+    if (updates.pageSize !== undefined) setPageSize(updates.pageSize);
+    
+    setCurrentPage(1);
     setIsFilterMenuOpen(false);
-  }
-  // UI
+    
+    setTimeout(() => {
+      performSearch(1);
+      updateURL({
+        status: updates.selectedStatus !== undefined ? updates.selectedStatus : selectedStatus,
+        category: updates.selectedCategory !== undefined ? updates.selectedCategory : selectedCategory,
+        from: updates.dateFrom !== undefined ? updates.dateFrom : dateFrom,
+        to: updates.dateTo !== undefined ? updates.dateTo : dateTo,
+        q: updates.searchQuery !== undefined ? updates.searchQuery : searchQuery,
+        page: 1,
+        pageSize: updates.pageSize !== undefined ? updates.pageSize : pageSize
+      });
+    }, 0);
+  }, [selectedStatus, selectedCategory, dateFrom, dateTo, searchQuery, pageSize, performSearch, updateURL]);
+
+  const handleStatusChange = useCallback((status: string) => {
+    handleFilterChange({ selectedStatus: status });
+  }, [handleFilterChange]);
+
+  const handleCategoryChange = useCallback((category: string) => {
+    handleFilterChange({ selectedCategory: category });
+  }, [handleFilterChange]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    performSearch(page);
+    updateURL({
+      status: selectedStatus,
+      category: selectedCategory,
+      from: dateFrom,
+      to: dateTo,
+      q: searchQuery,
+      page,
+      pageSize
+    });
+  };
+
+  const handleResetFilters = () => {
+    handleFilterChange({
+      selectedStatus: '',
+      selectedCategory: '',
+      dateFrom: '',
+      dateTo: '',
+      searchQuery: '',
+      pageSize: 12
+    });
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    handleFilterChange({ pageSize: newPageSize });
+  };
+
+  const toggleFilterMenu = () => {
+    setIsFilterMenuOpen(!isFilterMenuOpen);
+  };
+
+  const closeFilterMenu = () => {
+    setIsFilterMenuOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header (same as marketplace style) */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10 mb-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center h-16 space-x-6">
-          <h1 className="text-2xl font-bold flex-1">Reports</h1>
+      {/* Header with Navigation */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">CM</span>
+                </div>
+                <span className="font-semibold text-gray-900">Campus Market</span>
+              </div>
+            </div>
+            <div className="flex items-center space-x-6">
+              <button 
+                onClick={() => navigate('/search')}
+                className="text-gray-700 hover:text-gray-900 font-medium"
+              >
+                Marketplace
+              </button>
+              <button 
+                onClick={() => navigate('/messages')}
+                className="text-gray-700 hover:text-gray-900 flex items-center space-x-1"
+              >
+                <MessageSquare className="w-5 h-5" />
+                <span>Messages</span>
+              </button>
+              {user?.roles?.includes('admin') && (
+                <button
+                  onClick={() => navigate('/admin/reports')}
+                  className="text-gray-900 font-medium"
+                >
+                  Admin / Reports
+                </button>
+              )}
+              <button className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                <span className="text-gray-700 text-sm font-medium">A</span>
+              </button>
+            </div>
+          </div>
         </div>
       </header>
+
       <div className="max-w-7xl mx-auto p-4 lg:p-5">
+        {/* Back Button */}
+        <div className="mb-4">
+          <BackButton />
+        </div>
+        
+        {/* Mobile Filter Toggle Button */}
+        <div className="lg:hidden mb-4">
+          <button
+            onClick={toggleFilterMenu}
+            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm flex items-center justify-between hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <span className="font-medium text-gray-700">Filters</span>
+            <svg 
+              className={`w-5 h-5 text-gray-500 transition-transform ${isFilterMenuOpen ? 'rotate-180' : ''}`}
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+
         <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-          {/* Filter Sidebar */}
+          {/* Filter Menu Sidebar */}
           <div className={`${isFilterMenuOpen ? 'block lg:hidden' : 'hidden lg:block'} w-full lg:w-72 flex-shrink-0 bg-white rounded-xl p-6 h-fit shadow-lg`}>
-            {/* Mobile Header for filter */}
+            {/* Mobile Header */}
             {isFilterMenuOpen && (
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
-                <button onClick={closeFilterMenu} className="p-2 text-gray-400 hover:text-gray-600 focus:outline-none">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                <button
+                  onClick={closeFilterMenu}
+                  className="p-2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
             )}
-            <div className="space-y-4">
-              {/* Status Multi-Select */}
-              <div>
-                <label className="block text-xs font-semibold mb-1">Status</label>
-                <select
-                  multiple
-                  value={filters.status}
-                  onChange={e => handleFilterChange({ status: Array.from(e.target.selectedOptions).map(opt => opt.value) })}
-                  className="w-full min-h-[2.6rem] bg-white border-gray-300 rounded px-2 py-1 text-sm"
-                >
-                  {REPORT_STATUSES.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </select>
+            <div className="filter-menu">
+              {/* Status Filter */}
+              <div className="filter-section">
+                <label className="filter-label">Status</label>
+                <div className="select-container">
+                  <select
+                    value={selectedStatus}
+                    onChange={(e) => handleStatusChange(e.target.value)}
+                    className="filter-select"
+                  >
+                    <option value="">All Statuses</option>
+                    {REPORT_STATUSES.map((status) => (
+                      <option key={status.value} value={status.value}>
+                        {status.label}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="select-icon">▼</span>
+                </div>
               </div>
-              {/* Category Multi-Select */}
-              <div>
-                <label className="block text-xs font-semibold mb-1">Category</label>
-                <select
-                  multiple
-                  value={filters.category}
-                  onChange={e => handleFilterChange({ category: Array.from(e.target.selectedOptions).map(opt => opt.value) })}
-                  className="w-full min-h-[2.6rem] bg-white border-gray-300 rounded px-2 py-1 text-sm"
-                >
-                  {REPORT_CATEGORIES.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </select>
+
+              {/* Category Filter */}
+              <div className="filter-section">
+                <label className="filter-label">Category</label>
+                <div className="select-container">
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => handleCategoryChange(e.target.value)}
+                    className="filter-select"
+                  >
+                    <option value="">All Categories</option>
+                    {REPORT_CATEGORIES.map((category) => (
+                      <option key={category.value} value={category.value}>
+                        {category.label}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="select-icon">▼</span>
+                </div>
               </div>
-              {/* Date range */}
-              <div>
-                <label className="block text-xs font-semibold mb-1">From</label>
-                <input type="date" value={filters.from} onChange={e => handleFilterChange({ from: e.target.value })} className="border-gray-300 rounded px-2 py-1 text-sm w-full" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold mb-1">To</label>
-                <input type="date" value={filters.to} onChange={e => handleFilterChange({ to: e.target.value })} className="border-gray-300 rounded px-2 py-1 text-sm w-full" />
-              </div>
-              {/* Search */}
-              <div>
-                <label className="block text-xs font-semibold mb-1">Search</label>
+
+              {/* Date Range */}
+              <div className="filter-section">
+                <label className="filter-label">Date From</label>
                 <input
-                  type="search"
-                  className="w-full border-gray-300 rounded px-2 py-1 text-sm"
-                  placeholder="Listing title/ID, user, email..."
-                  value={filters.q}
-                  onChange={e => handleFilterChange({ q: e.target.value })}
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => handleFilterChange({ dateFrom: e.target.value })}
+                  className="filter-select"
                 />
               </div>
-              <button type="button" className="text-xs text-blue-600 underline" onClick={handleClearFilters}>Clear filters</button>
+
+              <div className="filter-section">
+                <label className="filter-label">Date To</label>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => handleFilterChange({ dateTo: e.target.value })}
+                  className="filter-select"
+                />
+              </div>
+
+              {/* Search Query */}
+              <div className="filter-section">
+                <label className="filter-label">Search</label>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => handleFilterChange({ searchQuery: e.target.value })}
+                  className="filter-select"
+                  placeholder="Listing title, user, email..."
+                />
+              </div>
+
+              {/* Items per Page */}
+              <div className="filter-section">
+                <label className="filter-label">Items per Page</label>
+                <div className="select-container">
+                  <select
+                    value={pageSize}
+                    onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                    className="filter-select"
+                  >
+                    <option value={6}>6 items</option>
+                    <option value={12}>12 items</option>
+                    <option value={24}>24 items</option>
+                    <option value={48}>48 items</option>
+                  </select>
+                  <span className="select-icon">▼</span>
+                </div>
+              </div>
+
+              {/* Reset Button */}
+              <div className="filter-section">
+                <button
+                  onClick={handleResetFilters}
+                  className="reset-button"
+                >
+                  Reset Filters
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Results Main Area */}
-          <main className="flex-1 flex flex-col gap-6">
-            {/* Desktop toggle not necessary, but you can add a button on mobile if needed */}
+          {/* Main content */}
+          <main className="flex-1 flex flex-col gap-5">
+            {error && (
+              <div className="bg-red-100 text-red-800 px-4 py-3 rounded-lg border border-red-200">
+                {error}
+              </div>
+            )}
+
+            <div className="text-gray-600 text-sm">
+              {!loading && (
+                <p>{totalItems} report{totalItems !== 1 ? 's' : ''} found</p>
+              )}
+            </div>
+
+            {/* Reports Grid */}
             {loading ? (
-              <div className="text-center py-24 text-lg text-gray-500">Loading...</div>
-            ) : error ? (
-              <div className="text-center text-red-600 py-24">{error}</div>
+              <div className="grid gap-6">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="bg-white rounded-lg shadow-md p-6 animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                ))}
+              </div>
             ) : reports.length === 0 ? (
-              <div className="py-24 text-center text-gray-400">No reports found</div>
+              <div className="text-center py-24 text-gray-500">
+                <p className="text-xl">No reports found</p>
+                <p className="text-sm mt-2">Try adjusting your filters</p>
+              </div>
             ) : (
-              <div className="grid gap-4">
-                {reports.map((r: any) => (
+              <div className="grid gap-6">
+                {reports.map((report: any) => (
                   <div
-                    key={r._id}
-                    className="bg-white rounded-xl shadow p-5 flex flex-col sm:flex-row sm:items-center sm:gap-6 hover:shadow-lg transition cursor-pointer group border border-gray-100"
-                    onClick={() => navigate(`/listing/${r.listingId?.listingId}`)}
+                    key={report._id}
+                    className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.01] hover:shadow-lg"
+                    onClick={() => navigate(`/listing/${report.listingId?._id}`)}
                   >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-1">
-                        <span className="text-xs text-gray-500" title={new Date(r.createdAt).toLocaleString()}>{timeAgo(r.createdAt)}</span>
-                        <span>{statusBadge(r.status)}</span>
-                        <span className="inline-block bg-gray-100 rounded px-2 py-0.5 text-xs text-gray-500 ml-2">{categoryLabel(r.reportCategory)}</span>
+                    <div className="p-6">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                            {report.listingId?.title || 'Listing Deleted'}
+                          </h3>
+                          {report.listingId?.listingId && (
+                            <p className="text-xs text-gray-500 font-mono">
+                              {report.listingId.listingId}
+                            </p>
+                          )}
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          report.status === 'OPEN' ? 'bg-yellow-100 text-yellow-800' :
+                          report.status === 'IN_REVIEW' ? 'bg-blue-100 text-blue-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {report.status.replace('_', ' ')}
+                        </span>
                       </div>
-                      <div className="font-bold text-lg text-blue-800 group-hover:underline mb-1">{r.listingId?.title || 'Listing Deleted'}</div>
-                      <div className="flex flex-wrap text-xs text-gray-600 gap-x-4 gap-y-1 mb-1">
-                        <span>
-                          Listing ID: <span className="font-mono font-medium text-black">{r.listingId?.listingId}</span>
-                        </span>
-                        <span>
-                          Reporter: {userSummary(r.reporterId)}
-                        </span>
-                        <span>
-                          Reported User: {userSummary(r.sellerId)}
-                        </span>
+
+                      <div className="space-y-2 text-sm text-gray-600 mb-4">
+                        <div className="flex items-center">
+                          <span className="font-medium text-gray-700 w-28">Category:</span>
+                          <span>{REPORT_CATEGORIES.find(c => c.value === report.reportCategory)?.label || report.reportCategory}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="font-medium text-gray-700 w-28">Reporter:</span>
+                          <span>{report.reporterId ? `${report.reporterId.first_name} ${report.reporterId.last_name} (${report.reporterId.email})` : 'Unknown'}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="font-medium text-gray-700 w-28">Reported User:</span>
+                          <span>{report.sellerId ? `${report.sellerId.first_name} ${report.sellerId.last_name} (${report.sellerId.email})` : 'Unknown'}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="font-medium text-gray-700 w-28">Reported:</span>
+                          <span>{new Date(report.createdAt).toLocaleString()}</span>
+                        </div>
                       </div>
-                      {r.details && (
-                        <div className="mt-2 text-sm text-gray-800 bg-gray-50 rounded p-2 italic">
-                          "{r.details}"
+
+                      {report.details && (
+                        <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                          <p className="text-sm text-gray-700 italic">"{report.details}"</p>
                         </div>
                       )}
-                    </div>
-                    <div className="mt-4 sm:mt-0 flex flex-col items-end justify-between min-w-[120px]">
+
                       <button
-                        type="button"
-                        className="underline text-blue-600 text-xs font-bold px-2 py-1 rounded hover:text-blue-900"
-                        onClick={e => { e.stopPropagation(); navigate(`/listing/${r.listingId?.listingId}`); }}
-                      >Open Listing</button>
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/listing/${report.listingId?._id}`);
+                        }}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium underline"
+                      >
+                        View Listing →
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* Pagination */}
-            <div className="flex items-center justify-between my-4">
-              <span className="text-xs text-gray-600">Page {pagination.current_page} of {pagination.total_pages} ({pagination.total_reports} total)</span>
-              <div className="flex items-center gap-2">
-                <button type="button" disabled={filters.page <= 1} className="px-2 py-1 rounded border text-xs disabled:opacity-50" onClick={() => handlePageChange(filters.page - 1)}>Prev</button>
-                <button type="button" disabled={filters.page >= pagination.total_pages} className="px-2 py-1 rounded border text-xs disabled:opacity-50" onClick={() => handlePageChange(filters.page + 1)}>Next</button>
-                <select value={filters.pageSize} className="border rounded px-1 py-0.5 text-xs" onChange={handlePageSizeChange}>
-                  {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}/page</option>)}
-                </select>
-              </div>
-            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
           </main>
         </div>
       </div>
     </div>
   );
 };
-
-function categoryLabel(raw: string) {
-  const found = REPORT_CATEGORIES.find(x => x.value === raw);
-  return found ? found.label : raw;
-}
-function statusBadge(status: string) {
-  const color =
-    status === 'OPEN' ? 'bg-yellow-200 text-yellow-900' :
-      status === 'IN_REVIEW' ? 'bg-blue-200 text-blue-900' :
-        status === 'CLOSED' ? 'bg-gray-200 text-gray-900' : 'bg-gray-100 text-gray-600';
-  return <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${color}`}>{status.replace(/_/g, ' ')}</span>;
-}
-function userSummary(user: any) {
-  if (!user) return null;
-  return <span className="font-medium">{user.first_name} {user.last_name}<br /><span className="text-xs text-gray-500">{user.email}</span></span>;
-}
-function timeAgo(date: string) {
-  const now = new Date();
-  const d = new Date(date);
-  const sec = Math.floor((now.getTime() - d.getTime()) / 1000);
-  if (sec < 60) return `${sec}s ago`;
-  if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
-  if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
-  if (sec < 604800) return `${Math.floor(sec / 86400)}d ago`;
-  return d.toLocaleDateString();
-}
 
 export default AdminReportsPage;

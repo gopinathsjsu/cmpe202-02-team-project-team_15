@@ -352,7 +352,7 @@ const SearchPage: React.FC = () => {
                   onClick={() => navigate('/admin/reports')}
                   className="text-gray-700 hover:text-gray-900 font-medium"
                 >
-                  Admin / Reports
+                  Reports
                 </button>
               )}
               {/* Profile/Avatar can remain here... */}
