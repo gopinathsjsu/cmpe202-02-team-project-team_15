@@ -1,47 +1,75 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Upload } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
 import BackButton from '../components/BackButton';
-import { categories, mockListing } from '../data/mockData';
+import ImageUpload from '../components/ImageUpload';
+import { apiService, ICategory, IListing } from '../services/api';
 
 const EditListing = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [categories, setCategories] = useState<ICategory[]>([]);
 
   const [formData, setFormData] = useState({
     title: '',
     categoryId: '',
     price: '',
     description: '',
-    photoUrl: '',
+    photos: [] as Array<{ url: string; alt: string }>,
     status: 'ACTIVE' as 'ACTIVE' | 'SOLD'
   });
 
   useEffect(() => {
-    setTimeout(() => {
-      const categoryMatch = categories.find(c => c.name === mockListing.category.name);
-      setFormData({
-        title: mockListing.title,
-        categoryId: categoryMatch?.id || '1',
-        price: mockListing.price.toString(),
-        description: mockListing.description,
-        photoUrl: mockListing.photos[0]?.url || '',
-        status: mockListing.status
-      });
-      setLoading(false);
-    }, 300);
-  }, []);
+    const loadData = async () => {
+      try {
+        // Load categories and listing in parallel
+        const [categoriesData, listingData] = await Promise.all([
+          apiService.getCategories(),
+          id ? apiService.getListingById(id) : Promise.reject('No listing ID'),
+        ]);
+
+        setCategories(categoriesData);
+
+        // Populate form
+        setFormData({
+          title: listingData.title,
+          categoryId: typeof listingData.categoryId === 'string' 
+            ? listingData.categoryId 
+            : listingData.categoryId._id,
+          price: listingData.price.toString(),
+          description: listingData.description,
+          photos: listingData.photos || [],
+          status: listingData.status,
+        });
+      } catch (err) {
+        console.error('Failed to load listing:', err);
+        alert('Failed to load listing. Redirecting...');
+        navigate('/search');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [id, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
-    setTimeout(() => {
-      console.log('Saved listing:', formData);
-      setSaving(false);
+    try {
+      // Note: You'll need to implement updateListing in the API service
+      // For now, this is a placeholder
+      console.log('Update listing:', formData);
+      alert('Edit functionality not yet implemented on backend. Photos are uploaded and ready!');
       navigate('/search');
-    }, 500);
+    } catch (err) {
+      console.error('Failed to update listing:', err);
+      alert('Failed to update listing. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -82,38 +110,13 @@ const EditListing = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Item Photo URL
+                Item Photos (up to 5)
               </label>
-              <div className="flex items-center space-x-4">
-                <div className="flex-1">
-                  <input
-                    type="url"
-                    value={formData.photoUrl}
-                    onChange={(e) => setFormData({ ...formData, photoUrl: e.target.value })}
-                    placeholder="https://example.com/photo.jpg"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none"
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors flex items-center space-x-2"
-                >
-                  <Upload className="w-5 h-5" />
-                  <span>Upload</span>
-                </button>
-              </div>
-              {formData.photoUrl && (
-                <div className="mt-4">
-                  <img
-                    src={formData.photoUrl}
-                    alt="Preview"
-                    className="w-full h-64 object-cover rounded-lg"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                </div>
-              )}
+              <ImageUpload
+                maxImages={5}
+                onImagesChange={(photos) => setFormData({ ...formData, photos })}
+                existingImages={formData.photos}
+              />
             </div>
 
             <div>
@@ -144,7 +147,7 @@ const EditListing = () => {
               >
                 <option value="">Select a category</option>
                 {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
+                  <option key={category._id} value={category._id}>
                     {category.name}
                   </option>
                 ))}

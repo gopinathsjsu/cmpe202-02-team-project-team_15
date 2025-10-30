@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Calendar, MessageSquare, Flag } from 'lucide-react';
+import { Calendar, MessageSquare, Flag, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 import BackButton from '../components/BackButton';
 import { ReportModal } from '../components/ReportModal';
 import { apiService, IListing } from '../services/api';
@@ -15,6 +15,7 @@ const ViewListing = () => {
   const [error, setError] = useState<string | null>(null);
   const [contacting, setContacting] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -120,18 +121,14 @@ const ViewListing = () => {
   }
 
   // Safely access nested properties with fallbacks
-  const mainPhoto = listing.photos && listing.photos.length > 0 
-    ? listing.photos.find(p => p.url) || { url: '', alt: listing.title }
-    : { url: '', alt: listing.title };
-
   const categoryName = listing.categoryId && typeof listing.categoryId === 'object' 
     ? listing.categoryId.name 
     : 'Unknown Category';
 
   const sellerName = listing.userId && typeof listing.userId === 'object' 
-    ? listing.userId.name || listing.userId.email || 'Unknown Seller'
+    ? `${listing.userId.first_name || ''} ${listing.userId.last_name || ''}`.trim() || listing.userId.email || 'Unknown Seller'
     : 'Unknown Seller';
-
+  
   const sellerEmail = listing.userId && typeof listing.userId === 'object' 
     ? listing.userId.email 
     : '';
@@ -141,6 +138,18 @@ const ViewListing = () => {
     day: 'numeric',
     year: 'numeric'
   });
+
+  // Get all valid photos
+  const validPhotos = listing.photos?.filter(p => p.url) || [];
+  const hasMultipleImages = validPhotos.length > 1;
+
+  const handlePreviousImage = () => {
+    setCurrentImageIndex((prev) => (prev === 0 ? validPhotos.length - 1 : prev - 1));
+  };
+
+  const handleNextImage = () => {
+    setCurrentImageIndex((prev) => (prev === validPhotos.length - 1 ? 0 : prev + 1));
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -169,6 +178,13 @@ const ViewListing = () => {
                 <MessageSquare className="w-5 h-5" />
                 <span>Messages</span>
               </button>
+              <button 
+                onClick={() => navigate('/saved')}
+                className="text-gray-700 hover:text-gray-900 flex items-center space-x-1"
+              >
+                <Heart className="w-5 h-5" />
+                <span>Saved</span>
+              </button>
               <button className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
                 <span className="text-gray-700 text-sm font-medium">A</span>
               </button>
@@ -181,17 +197,44 @@ const ViewListing = () => {
         <BackButton />
 
         <div className="grid lg:grid-cols-2 gap-8">
-          <div className="bg-white rounded-lg overflow-hidden shadow-sm">
-            {mainPhoto.url ? (
-              <img
-                src={mainPhoto.url}
-                alt={mainPhoto.alt}
-                className="w-full h-[500px] object-cover"
-                onError={(e) => {
-                  // Fallback to placeholder if image fails to load
-                  (e.target as HTMLImageElement).src = '/placeholder-image.svg';
-                }}
-              />
+          <div className="bg-white rounded-lg overflow-hidden shadow-sm relative">
+            {validPhotos.length > 0 ? (
+              <>
+                <img
+                  src={validPhotos[currentImageIndex].url}
+                  alt={validPhotos[currentImageIndex].alt || listing.title}
+                  className="w-full h-[500px] object-contain bg-gray-50"
+                  onError={(e) => {
+                    // Fallback to placeholder if image fails to load
+                    (e.target as HTMLImageElement).src = '/placeholder-image.svg';
+                  }}
+                />
+                {/* Navigation arrows for multiple images */}
+                {hasMultipleImages && (
+                  <>
+                    {/* Forward arrow - show for all images */}
+                    <button
+                      onClick={handleNextImage}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all z-10"
+                      aria-label="Next image"
+                    >
+                      <ChevronRight className="w-6 h-6" />
+                    </button>
+                    {/* Back arrow - show for all images */}
+                    <button
+                      onClick={handlePreviousImage}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all z-10"
+                      aria-label="Previous image"
+                    >
+                      <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    {/* Image counter */}
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                      {currentImageIndex + 1} / {validPhotos.length}
+                    </div>
+                  </>
+                )}
+              </>
             ) : (
               <div className="w-full h-[500px] bg-gray-200 flex items-center justify-center">
                 <span className="text-gray-400">No image available</span>

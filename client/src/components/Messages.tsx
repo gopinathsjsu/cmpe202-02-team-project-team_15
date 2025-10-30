@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Send, MessageSquare } from "lucide-react";
+import { Send, MessageSquare, Heart } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
+import { useNavigate } from "react-router-dom";
 
 // Types for chat functionality
 interface Conversation {
@@ -77,6 +78,7 @@ export const Messages: React.FC<MessagesProps> = ({
   initialConversationId,
 }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] =
     useState<Conversation | null>(null);
@@ -332,6 +334,13 @@ export const Messages: React.FC<MessagesProps> = ({
               >
                 <MessageSquare className="w-5 h-5" />
                 Messages
+              </button>
+              <button
+                onClick={() => navigate('/saved')}
+                className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-2"
+              >
+                <Heart className="w-5 h-5" />
+                Saved
               </button>
               <button className="text-sm text-gray-600 hover:text-gray-900">
                 <span className="w-5 h-5">👤</span>

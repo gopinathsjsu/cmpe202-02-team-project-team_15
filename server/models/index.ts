@@ -9,6 +9,7 @@ export { PasswordReset } from './PasswordReset';
 export { LoginAttempt } from './LoginAttempt';
 export { AuditLog } from './AuditLog';
 export { UserStatus } from './UserStatus';
+export { SavedListing } from './SavedListing';
 
 // Export interfaces
 export type { IUser } from './User';
@@ -21,4 +22,5 @@ export type { IPasswordReset } from './PasswordReset';
 export type { ILoginAttempt } from './LoginAttempt';
 export type { IAuditLog } from './AuditLog';
 export type { IUserStatus } from './UserStatus';
+export type { ISavedListing } from './SavedListing';
 

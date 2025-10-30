@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, Heart } from 'lucide-react';
 import SearchBar from '../components/SearchBar';
 import FilterMenu from '../components/FilterMenu';
 import ProductGrid from '../components/ProductGrid';
@@ -18,6 +18,7 @@ const SearchPage: React.FC = () => {
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [savedListingIds, setSavedListingIds] = useState<Set<string>>(new Set());
 
   // Search and filter state - initialize from URL params
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
@@ -114,7 +115,18 @@ const SearchPage: React.FC = () => {
       }
     };
 
+    const loadSavedListingIds = async () => {
+      try {
+        const response = await apiService.getSavedListingIds();
+        setSavedListingIds(new Set(response.listingIds));
+      } catch (err) {
+        console.error('Failed to load saved listings:', err);
+        // Don't show error for saved listings - it's not critical
+      }
+    };
+
     loadCategories();
+    loadSavedListingIds();
   }, []);
 
   // Search function using ref values to prevent constant re-creation
@@ -281,6 +293,18 @@ const SearchPage: React.FC = () => {
     navigate(`/listing/${listing._id}`);
   };
 
+  const handleSaveToggle = (listingId: string, isSaved: boolean) => {
+    setSavedListingIds(prev => {
+      const newSet = new Set(prev);
+      if (isSaved) {
+        newSet.add(listingId);
+      } else {
+        newSet.delete(listingId);
+      }
+      return newSet;
+    });
+  };
+
   // Handle page size change for testing
   const handlePageSizeChange = (newPageSize: number) => {
     handleFilterChange({ pageSize: newPageSize });
@@ -342,6 +366,13 @@ const SearchPage: React.FC = () => {
               >
                 <MessageSquare className="w-5 h-5" />
                 <span>Messages</span>
+              </button>
+              <button 
+                onClick={() => navigate('/saved')}
+                className="text-gray-700 hover:text-gray-900 flex items-center space-x-1"
+              >
+                <Heart className="w-5 h-5" />
+                <span>Saved</span>
               </button>
               <button className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
                 <span className="text-gray-700 text-sm font-medium">A</span>
@@ -419,6 +450,8 @@ const SearchPage: React.FC = () => {
               listings={listings}
               loading={loading}
               onProductClick={handleProductClick}
+              savedListingIds={savedListingIds}
+              onSaveToggle={handleSaveToggle}
             />
 
             <Pagination
