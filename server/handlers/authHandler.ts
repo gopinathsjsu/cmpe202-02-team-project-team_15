@@ -87,12 +87,12 @@ class AuthHandler {
         });
       }
 
-      // Assign default buyer role
-      const buyerRole = await Role.findOne({ name: 'buyer' });
-      if (buyerRole) {
+      // Assign default user role
+      const userRole = await Role.findOne({ name: 'user' });
+      if (userRole) {
         await UserRole.create({
           user_id: user._id,
-          role_id: buyerRole._id
+          role_id: userRole._id
         });
       }
 
