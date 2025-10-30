@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, ImagePlus } from 'lucide-react';
 import BackButton from '../components/BackButton';
+import ImageUpload from '../components/ImageUpload';
 import { apiService, ICategory } from '../services/api';
 
 const CreateListing = () => {
   const navigate = useNavigate();
-  const [photoUrl, setPhotoUrl] = useState('');
   const [itemName, setItemName] = useState('');
   const [category, setCategory] = useState('');
   const [price, setPrice] = useState('');
   const [description, setDescription] = useState('');
-  const [addedPhoto, setAddedPhoto] = useState('');
+  const [photos, setPhotos] = useState<Array<{ url: string; alt: string }>>([]);
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,13 +31,6 @@ const CreateListing = () => {
     loadCategories();
   }, []);
 
-  const handleAddPhoto = () => {
-    if (photoUrl.trim()) {
-      setAddedPhoto(photoUrl);
-      setPhotoUrl('');
-    }
-  };
-
   const handleCreateListing = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -55,7 +47,7 @@ const CreateListing = () => {
         description: description,
         price: parseFloat(price),
         categoryId: selectedCategory._id,
-        photos: addedPhoto ? [{ url: addedPhoto, alt: itemName }] : []
+        photos: photos
       };
 
       const createdListing = await apiService.createListing(listingData);
@@ -71,12 +63,11 @@ const CreateListing = () => {
   };
 
   const handleCancel = () => {
-    setPhotoUrl('');
     setItemName('');
     setCategory('');
     setPrice('');
     setDescription('');
-    setAddedPhoto('');
+    setPhotos([]);
   };
 
   if (loading) {
@@ -114,57 +105,13 @@ const CreateListing = () => {
             {/* ---------- Photo Upload ---------- */}
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-3">
-                Item Photo
+                Item Photos (up to 5)
               </label>
-              <div className="flex gap-2 mb-4">
-                <input
-                  type="url"
-                  value={photoUrl}
-                  onChange={(e) => setPhotoUrl(e.target.value)}
-                  placeholder="Enter photo URL"
-                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddPhoto}
-                  className="px-6 py-2.5 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
-                >
-                  Add
-                </button>
-              </div>
-
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center hover:border-gray-400 transition-colors">
-                {addedPhoto ? (
-                  <div className="relative">
-                    <img
-                      src={addedPhoto}
-                      alt="Item preview"
-                      className="max-h-48 mx-auto rounded-lg object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setAddedPhoto('')}
-                      className="absolute top-2 right-2 bg-white rounded-full p-2 shadow-md hover:bg-gray-100 transition-colors"
-                    >
-                      <span className="text-xs">×</span>
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <ImagePlus className="mx-auto text-gray-400 mb-3" size={48} />
-                    <button
-                      type="button"
-                      className="flex items-center gap-2 mx-auto text-gray-700 font-medium hover:text-gray-900 transition-colors"
-                    >
-                      <Upload size={18} />
-                      Upload Photo
-                    </button>
-                    <p className="text-sm text-gray-500 mt-2">
-                      or paste image URL above
-                    </p>
-                  </>
-                )}
-              </div>
+              <ImageUpload
+                maxImages={5}
+                onImagesChange={setPhotos}
+                existingImages={photos}
+              />
             </div>
 
             {/* ---------- Item Name ---------- */}

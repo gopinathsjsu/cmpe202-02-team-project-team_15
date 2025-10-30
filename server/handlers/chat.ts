@@ -9,21 +9,32 @@ export const initiateChat = async (req: any, res: Response) => {
     const { listingId } = req.body as { listingId: string };
     const buyerId = String(req.user._id);
 
+    // Validate listingId is provided
+    if (!listingId) {
+      return res.status(400).json({ message: "Listing ID is required" });
+    }
+
     // Get the listing to find the seller
     const listing = await Listing.findById(listingId).select("userId");
-    if (!listing) return res.status(404).json({ message: "Listing not found" });
+    if (!listing) {
+      return res.status(404).json({ message: "Listing not found" });
+    }
 
     const sellerId = String(listing.userId);
-    if (sellerId === buyerId)
+    
+    if (sellerId === buyerId) {
       return res.status(400).json({ message: "Cannot chat with yourself" });
+    }
 
     const conversation = await Conversation.findOneAndUpdate(
       { listingId, buyerId, sellerId },
       { $setOnInsert: { listingId, buyerId, sellerId } },
       { new: true, upsert: true }
     );
+    
     return res.json({ conversation });
-  } catch (e) {
+  } catch (e: any) {
+    console.error('Chat initiation error:', e);
     return res.status(500).json({ message: "Server error" });
   }
 };

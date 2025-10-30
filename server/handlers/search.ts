@@ -160,12 +160,12 @@ export const getListingById = async (req: Request<{ id: string }>, res: Response
       // Find by _id (MongoDB ObjectId)
       listing = await Listing.findById(id)
         .populate('categoryId', 'name description')
-        .populate('userId', 'name email campusId');
+        .populate('userId', 'first_name last_name email campusId');
     } else if (id.match(/^LST-\d{8}-\d{4}$/)) {
       // Find by custom listingId format (LST-YYYYMMDD-XXXX)
       listing = await Listing.findOne({ listingId: id })
         .populate('categoryId', 'name description')
-        .populate('userId', 'name email campusId');
+        .populate('userId', 'first_name last_name email campusId');
     } else {
       res.status(400).json({ error: 'Invalid listing ID format. Expected MongoDB ObjectId or LST-YYYYMMDD-XXXX format' });
       return;
