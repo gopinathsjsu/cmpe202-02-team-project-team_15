@@ -48,6 +48,19 @@ api.interceptors.response.use(
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");
           localStorage.removeItem("user");
+          try {
+            // Clear all chatbot session history on auth failure
+            const keysToRemove: string[] = [];
+            for (let i = 0; i < sessionStorage.length; i++) {
+              const key = sessionStorage.key(i);
+              if (key && key.startsWith('chatbot:messages:')) {
+                keysToRemove.push(key);
+              }
+            }
+            keysToRemove.forEach((k) => sessionStorage.removeItem(k));
+          } catch (e) {
+            // ignore sessionStorage errors
+          }
           window.location.href = "/login";
         }
       }
@@ -344,6 +357,12 @@ class ApiService {
 
   async getSavedListingIds(): Promise<{ listingIds: string[] }> {
     const { data } = await api.get('/api/saved-listings/ids');
+    return data;
+  }
+
+  // Delete listing
+  async deleteListing(id: string): Promise<{ success: boolean; message: string }> {
+    const { data } = await api.delete<{ success: boolean; message: string }>(`/api/listings/${id}`);
     return data;
   }
 }

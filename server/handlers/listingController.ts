@@ -171,7 +171,18 @@ export const deleteListing = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const listing = await Listing.findByIdAndDelete(id);
+    // Ensure user is authenticated
+    const authUser = (req as any).user;
+    if (!authUser || !authUser._id) {
+      res.status(401).json({
+        success: false,
+        error: 'Authentication required'
+      });
+      return;
+    }
+
+    // Find the listing first to check ownership
+    const listing = await Listing.findById(id);
 
     if (!listing) {
       res.status(404).json({ 
@@ -180,6 +191,21 @@ export const deleteListing = async (req: Request, res: Response): Promise<void> 
       });
       return;
     }
+
+    // Check if the authenticated user owns the listing
+    const listingUserId = listing.userId.toString();
+    const authUserId = authUser._id.toString();
+
+    if (listingUserId !== authUserId) {
+      res.status(403).json({ 
+        success: false, 
+        error: 'You can only delete your own listings' 
+      });
+      return;
+    }
+
+    // Delete the listing
+    await Listing.findByIdAndDelete(id);
 
     res.json({ 
       success: true, 
