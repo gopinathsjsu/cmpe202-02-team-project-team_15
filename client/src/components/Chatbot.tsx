@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { apiService } from '../services/api';
 import { Send, X, Bot, User } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -13,12 +14,27 @@ interface ChatbotProps {
 }
 
 const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      role: 'assistant',
-      content: 'Hi! I\'m your campus marketplace assistant. I can help you find information about products, categories, and answer questions about our marketplace. What would you like to know?'
+  const { user } = useAuth();
+  const storageKey = useMemo(() => (user ? `chatbot:messages:${user.id}` : ''), [user?.id]);
+
+  // Do not render chatbot UI if user is not authenticated
+  if (!user) return null;
+
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    try {
+      const stored = storageKey ? sessionStorage.getItem(storageKey) : null;
+      if (stored) return JSON.parse(stored) as ChatMessage[];
+    } catch (e) {
+      // ignore parse errors and fall back to default greeting
     }
-  ]);
+    return [
+      {
+        role: 'assistant',
+        content:
+          'Hi! I\'m your campus marketplace assistant. I can help you find information about products, categories, and answer questions about our marketplace. What would you like to know?'
+      }
+    ];
+  });
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -31,6 +47,59 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
     scrollToBottom();
   }, [messages]);
 
+  // Persist messages to sessionStorage for the current user (clears on tab close)
+  useEffect(() => {
+    try {
+      if (storageKey) {
+        sessionStorage.setItem(storageKey, JSON.stringify(messages));
+      }
+    } catch (e) {
+      // ignore storage errors (quota, etc.)
+    }
+  }, [messages, storageKey]);
+
+  // When the user changes (login/logout), load that user's stored conversation if present
+  useEffect(() => {
+    try {
+      if (!storageKey) return;
+      const stored = sessionStorage.getItem(storageKey);
+      if (stored) {
+        setMessages(JSON.parse(stored) as ChatMessage[]);
+      } else {
+        setMessages([
+          {
+            role: 'assistant',
+            content:
+              'Hi! I\'m your campus marketplace assistant. I can help you find information about products, categories, and answer questions about our marketplace. What would you like to know?'
+          }
+        ]);
+      }
+    } catch (e) {
+      setMessages([
+        {
+          role: 'assistant',
+          content:
+            'Hi! I\'m your campus marketplace assistant. I can help you find information about products, categories, and answer questions about our marketplace. What would you like to know?'
+        }
+      ]);
+    }
+  }, [storageKey]);
+
+  // Reload messages from sessionStorage when chatbot opens (in case of navigation)
+  useEffect(() => {
+    if (!isOpen || !storageKey) return;
+    
+    try {
+      const stored = sessionStorage.getItem(storageKey);
+      if (stored) {
+        const parsedMessages = JSON.parse(stored) as ChatMessage[];
+        setMessages(parsedMessages);
+      }
+    } catch (e) {
+      // ignore errors - keep current state
+    }
+  }, [isOpen, storageKey]);
+
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
 
@@ -39,11 +108,14 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
       content: inputMessage.trim()
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    // Update state immediately with user message
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInputMessage('');
     setIsLoading(true);
 
     try {
+      // Send conversation history WITHOUT the current user message (API adds it)
       const conversationHistory = messages.map(msg => ({
         role: msg.role,
         content: msg.content
