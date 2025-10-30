@@ -41,4 +41,9 @@ router.get('/dashboard', authenticateToken, requireRole(['admin']), AdminHandler
 router.post('/cleanup', authenticateToken, requireRole(['admin']), AdminHandler
 .cleanup);
 
+// @route   GET /api/admin/reports
+// @desc    Get all reports (Admin only, with filters, search, pagination)
+// @access  Private (Admin)
+router.get('/reports', authenticateToken, requireRole(['admin']), AdminHandler.getReports);
+
 export default router;
