@@ -7,6 +7,7 @@ import ProductGrid from '../components/ProductGrid';
 import Pagination from '../components/Pagination';
 import BackButton from '../components/BackButton';
 import { apiService, IListing, ICategory, SearchParams } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 const SearchPage: React.FC = () => {
   // URL search params
@@ -315,6 +316,8 @@ const SearchPage: React.FC = () => {
     onCreateListing: () => navigate('/create-listing')
   };
 
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header with Navigation */}
@@ -343,6 +346,16 @@ const SearchPage: React.FC = () => {
                 <MessageSquare className="w-5 h-5" />
                 <span>Messages</span>
               </button>
+              {/* Admin Reports Nav Button: only for admins */}
+              {user?.roles?.includes('admin') && (
+                <button
+                  onClick={() => navigate('/admin/reports')}
+                  className="text-gray-700 hover:text-gray-900 font-medium"
+                >
+                  Admin / Reports
+                </button>
+              )}
+              {/* Profile/Avatar can remain here... */}
               <button className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
                 <span className="text-gray-700 text-sm font-medium">A</span>
               </button>
