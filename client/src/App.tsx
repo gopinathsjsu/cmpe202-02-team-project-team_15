@@ -7,6 +7,7 @@ import ViewListing from './pages/ViewListing';
 import EditListing from './pages/EditListing';
 import CreateListing from './pages/CreateListing';
 import MessagesPage from './pages/Messages';
+import SavedListings from './pages/SavedListings';
 import ProtectedRoute from './components/ProtectedRoute';
 import ChatbotButton from './components/ChatbotButton';
 import AdminReportsPage from './pages/AdminReportsPage';
@@ -77,6 +78,15 @@ function App() {
                   <AdminReportsPage />
                 </ProtectedRoute>
               }
+            />
+            
+            <Route 
+              path="/saved" 
+              element={
+                <ProtectedRoute>
+                  <SavedListings />
+                </ProtectedRoute>
+              } 
             />
             
             {/* Redirect root to login */}

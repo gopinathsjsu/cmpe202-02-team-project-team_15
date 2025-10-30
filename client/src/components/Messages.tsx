@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Send } from "lucide-react";
+import { Send, MessageSquare, Heart } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
-import Navbar from "./Navbar";
+// import Navbar from "./Navbar";
 import api from "../services/api";
+import { useNavigate } from "react-router-dom";
 
 // Types for chat functionality
 interface Conversation {
@@ -78,6 +79,7 @@ export const Messages: React.FC<MessagesProps> = ({
   initialConversationId,
 }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] =
     useState<Conversation | null>(null);
@@ -309,7 +311,45 @@ export const Messages: React.FC<MessagesProps> = ({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                CM
+              </div>
+              <h1 className="text-xl font-semibold text-gray-900">
+                Campus Market
+              </h1>
+            </div>
+            <div className="flex items-center gap-6">
+              <button
+                onClick={() => onNavigate("marketplace")}
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                Marketplace
+              </button>
+              <button
+                onClick={() => onNavigate("messages")}
+                className="text-sm font-medium text-gray-900 flex items-center gap-2"
+              >
+                <MessageSquare className="w-5 h-5" />
+                Messages
+              </button>
+              <button
+                onClick={() => navigate("/saved")}
+                className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-2"
+              >
+                <Heart className="w-5 h-5" />
+                Saved
+              </button>
+              <button className="text-sm text-gray-600 hover:text-gray-900">
+                <span className="w-5 h-5">👤</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         <h2 className="text-3xl font-semibold text-gray-900 mb-8">Messages</h2>
