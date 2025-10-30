@@ -359,6 +359,12 @@ class ApiService {
     const { data } = await api.get('/api/saved-listings/ids');
     return data;
   }
+
+  // Delete listing
+  async deleteListing(id: string): Promise<{ success: boolean; message: string }> {
+    const { data } = await api.delete<{ success: boolean; message: string }>(`/api/listings/${id}`);
+    return data;
+  }
 }
 
 export const apiService = new ApiService();
