@@ -129,8 +129,12 @@ const ViewListing = () => {
     : 'Unknown Category';
 
   const sellerName = listing.userId && typeof listing.userId === 'object' 
-    ? `${listing.userId.first_name || ''} ${listing.userId.last_name || ''}`.trim() || 'Unknown Seller'
+    ? `${listing.userId.first_name || ''} ${listing.userId.last_name || ''}`.trim() || listing.userId.email || 'Unknown Seller'
     : 'Unknown Seller';
+  
+  const sellerEmail = listing.userId && typeof listing.userId === 'object' 
+    ? listing.userId.email 
+    : '';
 
   const formattedDate = new Date(listing.createdAt).toLocaleDateString('en-US', {
     month: 'long',
@@ -226,6 +230,9 @@ const ViewListing = () => {
               <div>
                 <div className="text-sm text-gray-600 mb-1">Seller</div>
                 <div className="text-lg font-semibold text-gray-900">{sellerName}</div>
+                {sellerEmail && (
+                  <div className="text-sm text-gray-500">{sellerEmail}</div>
+                )}
               </div>
             </div>
 
