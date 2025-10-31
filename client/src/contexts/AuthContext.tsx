@@ -13,7 +13,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string, firstName: string, lastName: string) => Promise<boolean>;
+  signup: (email: string, password: string, firstName: string, lastName: string, adminKey?: string) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
 }
@@ -64,10 +64,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const signup = async (email: string, password: string, firstName: string, lastName: string): Promise<boolean> => {
+  const signup = async (email: string, password: string, firstName: string, lastName: string, adminKey?: string): Promise<boolean> => {
     try {
       console.log('Attempting signup with:', { email, firstName, lastName });
-      const response = await authAPI.signup(email, password, firstName, lastName);
+      const response = await authAPI.signup(email, password, firstName, lastName, adminKey);
       console.log('Signup response:', response.data);
       return response.data.success;
     } catch (error: any) {

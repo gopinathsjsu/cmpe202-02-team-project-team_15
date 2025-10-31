@@ -22,6 +22,9 @@ const Auth: React.FC = () => {
     password: '',
     confirmPassword: ''
   });
+
+  const [showAdmin, setShowAdmin] = useState(false);
+  const [adminKey, setAdminKey] = useState('');
   
   const { login, signup } = useAuth();
   const navigate = useNavigate();
@@ -84,7 +87,8 @@ const Auth: React.FC = () => {
         signupData.email,
         signupData.password,
         signupData.firstName,
-        signupData.lastName
+        signupData.lastName,
+        showAdmin ? adminKey : undefined
       );
       
       if (success) {
@@ -98,6 +102,8 @@ const Auth: React.FC = () => {
           password: '',
           confirmPassword: ''
         });
+        setAdminKey('');
+        setShowAdmin(false);
       } else {
         setError('Signup failed. Please try again.');
       }
@@ -200,6 +206,32 @@ const Auth: React.FC = () => {
         {/* Signup Form */}
         {activeTab === 'signup' && (
           <form onSubmit={handleSignupSubmit} className="space-y-6">
+            {/* Register as Admin toggle */}
+            <div className="flex items-center mb-2">
+              <input
+                type="checkbox"
+                id="registerAsAdmin"
+                checked={showAdmin}
+                onChange={() => setShowAdmin(!showAdmin)}
+                className="mr-2"
+              />
+              <label htmlFor="registerAsAdmin" className="text-sm text-gray-700">Register as admin</label>
+            </div>
+            {showAdmin && (
+              <div>
+                <label htmlFor="adminKey" className="block text-sm font-medium text-gray-700 mb-2">Admin Secret Key</label>
+                <input
+                  type="password"
+                  id="adminKey"
+                  name="adminKey"
+                  value={adminKey}
+                  onChange={e => setAdminKey(e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                  placeholder="Enter admin key"
+                  autoComplete="off"
+                />
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label htmlFor="signupFirstName" className="block text-sm font-medium text-gray-700 mb-2">

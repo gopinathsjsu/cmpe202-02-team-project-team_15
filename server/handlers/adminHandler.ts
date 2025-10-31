@@ -6,6 +6,9 @@ import { LoginAttempt } from '../models/LoginAttempt';
 import { AuditLog } from '../models/AuditLog';
 import { EmailVerification } from '../models/EmailVerification';
 import { PasswordReset } from '../models/PasswordReset';
+import { Report } from '../models/Report';
+import Listing from '../models/Listing';
+import { SortOrder } from 'mongoose';
 
 export class AdminHandler {
   // @desc    Get audit logs (Admin only)
@@ -355,6 +358,115 @@ export class AdminHandler {
       res.status(500).json({
         success: false,
         message: 'Cleanup failed',
+        error: error.message
+      });
+    }
+  }
+
+  // @desc Get reports with filters, search, pagination (Admin only)
+  // @access Private (Admin)
+  static async getReports(req: Request, res: Response): Promise<void> {
+    try {
+      const {
+        status,
+        category,
+        from,
+        to,
+        q,
+        page = '1',
+        pageSize = '20',
+        listingId,
+        sort = 'desc'
+      } = req.query;
+
+      const pageNum = parseInt(page as string, 10);
+      const pageSizeNum = parseInt(pageSize as string, 10);
+
+      // Query builder
+      const query: any = {};
+      if (status) query.status = { $in: Array.isArray(status) ? status : [status] };
+      if (category) query.reportCategory = { $in: Array.isArray(category) ? category : [category] };
+      if (from || to) {
+        query.createdAt = {};
+        if (from) query.createdAt.$gte = new Date(from as string);
+        if (to) query.createdAt.$lte = new Date(to as string);
+      }
+      if (listingId) {
+        query.listingId = listingId;
+      }
+
+      // Build keyword search (title, listingId, user email/name)
+      let listingIdsForTitle: any[] = [];
+      let userIdsForSearch: any[] = [];
+      if (q) {
+        const qStr = String(q);
+        // Listing title search
+        const listings = await Listing.find({
+          $or: [
+            { title: { $regex: qStr, $options: 'i' } },
+            { listingId: { $regex: qStr, $options: 'i' } }
+          ]
+        }, { _id: 1 });
+        listingIdsForTitle = listings.map(l => l._id);
+        // User (reporter/reported) search by email/name
+        const users = await User.find({
+          $or: [
+            { email: { $regex: qStr, $options: 'i' } },
+            { first_name: { $regex: qStr, $options: 'i' } },
+            { last_name: { $regex: qStr, $options: 'i' } }
+          ]
+        }, { _id: 1 });
+        userIdsForSearch = users.map(u => u._id);
+      }
+      if (q && (listingIdsForTitle.length > 0 || userIdsForSearch.length > 0)) {
+        query.$or = [];
+        if (listingIdsForTitle.length > 0) {
+          query.$or.push({ listingId: { $in: listingIdsForTitle } });
+        }
+        if (userIdsForSearch.length > 0) {
+          query.$or.push({
+            $or: [
+              { reporterId: { $in: userIdsForSearch } },
+              { sellerId: { $in: userIdsForSearch } }
+            ]
+          });
+        }
+      } else if (q) {
+        // Special case if nothing is found, return no results
+        query.$or = [{ _id: null }]; // will return []
+      }
+
+      // Sorting
+      const sortBy: SortOrder = sort === 'asc' ? 1 : -1;
+      const sortObj: { [key: string]: SortOrder } = { createdAt: sortBy };
+
+      // Query & paginate
+      const total = await Report.countDocuments(query);
+      const reports = await Report.find(query)
+        .populate({ path: 'listingId', select: 'title listingId' })
+        .populate({ path: 'reporterId', select: 'first_name last_name email' })
+        .populate({ path: 'sellerId', select: 'first_name last_name email' })
+        .sort(sortObj)
+        .skip((pageNum - 1) * pageSizeNum)
+        .limit(pageSizeNum);
+
+      res.json({
+        success: true,
+        data: {
+          reports,
+          pagination: {
+            current_page: pageNum,
+            total_pages: Math.ceil(total / pageSizeNum),
+            total_reports: total,
+            per_page: pageSizeNum
+          }
+        }
+      });
+    } catch (error: any) {
+      console.error('Get reports error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get reports',
         error: error.message
       });
     }
