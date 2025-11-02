@@ -12,6 +12,8 @@ const Signup: React.FC = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showAdmin, setShowAdmin] = useState(false);
+  const [adminKey, setAdminKey] = useState('');
   
   const { signup } = useAuth();
   const navigate = useNavigate();
@@ -40,7 +42,8 @@ const Signup: React.FC = () => {
         formData.email,
         formData.password,
         formData.firstName,
-        formData.lastName
+        formData.lastName,
+        showAdmin ? adminKey : undefined
       );
       
       if (success) {
@@ -72,6 +75,34 @@ const Signup: React.FC = () => {
 
         {/* Signup Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Register as Admin toggle */}
+          <div className="flex items-center mb-2">
+            <input
+              type="checkbox"
+              id="registerAsAdmin"
+              checked={showAdmin}
+              onChange={() => setShowAdmin(!showAdmin)}
+              className="mr-2"
+            />
+            <label htmlFor="registerAsAdmin" className="text-sm text-gray-700">Register as admin</label>
+          </div>
+          {showAdmin && (
+            <div>
+              <label htmlFor="adminKey" className="block text-sm font-medium text-gray-700 mb-2">
+                Admin Secret Key
+              </label>
+              <input
+                type="password"
+                id="adminKey"
+                name="adminKey"
+                value={adminKey}
+                onChange={e => setAdminKey(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-100 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all duration-300 placeholder-gray-500 text-gray-900 shadow-inner input-enhanced"
+                placeholder="Enter admin key"
+                autoComplete="off"
+              />
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">

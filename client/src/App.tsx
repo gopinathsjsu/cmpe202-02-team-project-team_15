@@ -10,6 +10,7 @@ import MessagesPage from './pages/Messages';
 import SavedListings from './pages/SavedListings';
 import ProtectedRoute from './components/ProtectedRoute';
 import ChatbotButton from './components/ChatbotButton';
+import AdminReportsPage from './pages/AdminReportsPage';
 
 function App() {
   return (
@@ -68,6 +69,15 @@ function App() {
                   <MessagesPage />
                 </ProtectedRoute>
               } 
+            />
+
+            <Route
+              path="/admin/reports"
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <AdminReportsPage />
+                </ProtectedRoute>
+              }
             />
             
             <Route 

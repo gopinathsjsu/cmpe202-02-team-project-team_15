@@ -77,8 +77,15 @@ export const authAPI = {
     email: string,
     password: string,
     firstName: string,
-    lastName: string
-  ) => api.post("/api/auth/signup", { email, password, firstName, lastName }),
+    lastName: string,
+    adminKey?: string
+  ) =>
+    api.post(
+      "/api/auth/signup",
+      adminKey
+        ? { email, password, firstName, lastName, adminKey }
+        : { email, password, firstName, lastName }
+    ),
 
   logout: (refreshToken: string) =>
     api.post("/api/auth/logout", { refreshToken }),
@@ -190,22 +197,27 @@ class ApiService {
     return data;
   }
 
-  async sendMessage(conversationId: string, body: string): Promise<{ message: any }> {
-    const { data } = await api.post(`/api/chats/${conversationId}/messages`, { body });
+  async sendMessage(
+    conversationId: string,
+    body: string
+  ): Promise<{ message: any }> {
+    const { data } = await api.post(`/api/chats/${conversationId}/messages`, {
+      body,
+    });
     return data;
   }
 
   // Chatbot API methods
   async chatWithBot(message: string, conversationHistory: any[] = []) {
-    const { data } = await api.post('/api/chatbot/chat', {
+    const { data } = await api.post("/api/chatbot/chat", {
       message,
-      conversationHistory
+      conversationHistory,
     });
     return data;
   }
 
   async getChatbotCategories() {
-    const { data } = await api.get('/api/chatbot/categories');
+    const { data } = await api.get("/api/chatbot/categories");
     return data;
   }
 
@@ -215,17 +227,29 @@ class ApiService {
   }
 
   // Report functionality
-  async createReport(listingId: string, reportCategory: string, details?: string): Promise<{ report: any }> {
-    const { data } = await api.post("/api/reports", { listingId, reportCategory, details });
+  async createReport(
+    listingId: string,
+    reportCategory: string,
+    details?: string
+  ): Promise<{ report: any }> {
+    const { data } = await api.post("/api/reports", {
+      listingId,
+      reportCategory,
+      details,
+    });
     return data;
   }
 
-  async getUserReports(status?: string, page = 1, limit = 20): Promise<{ reports: any[], pagination: any }> {
+  async getUserReports(
+    status?: string,
+    page = 1,
+    limit = 20
+  ): Promise<{ reports: any[]; pagination: any }> {
     const params = new URLSearchParams();
-    if (status) params.append('status', status);
-    params.append('page', page.toString());
-    params.append('limit', limit.toString());
-    
+    if (status) params.append("status", status);
+    params.append("page", page.toString());
+    params.append("limit", limit.toString());
+
     const { data } = await api.get(`/api/reports?${params.toString()}`);
     return data;
   }
@@ -240,24 +264,24 @@ class ApiService {
     fileName: string,
     fileType: string,
     fileSize: number,
-    folder: 'listings' | 'profiles' = 'listings'
+    folder: "listings" | "profiles" = "listings"
   ): Promise<{ uploadUrl: string; fileUrl: string; key: string }> {
-    const { data } = await api.post<{ success: boolean; data: { uploadUrl: string; fileUrl: string; key: string } }>(
-      '/api/upload/presigned-url',
-      { fileName, fileType, fileSize, folder }
-    );
+    const { data } = await api.post<{
+      success: boolean;
+      data: { uploadUrl: string; fileUrl: string; key: string };
+    }>("/api/upload/presigned-url", { fileName, fileType, fileSize, folder });
     return data.data;
   }
 
   // Upload functionality - Generate presigned URLs for multiple files
   async getBatchPresignedUploadUrls(
     files: Array<{ fileName: string; fileType: string; fileSize: number }>,
-    folder: 'listings' | 'profiles' = 'listings'
+    folder: "listings" | "profiles" = "listings"
   ): Promise<Array<{ uploadUrl: string; fileUrl: string; key: string }>> {
-    const { data } = await api.post<{ success: boolean; data: Array<{ uploadUrl: string; fileUrl: string; key: string }> }>(
-      '/api/upload/presigned-urls/batch',
-      { files, folder }
-    );
+    const { data } = await api.post<{
+      success: boolean;
+      data: Array<{ uploadUrl: string; fileUrl: string; key: string }>;
+    }>("/api/upload/presigned-urls/batch", { files, folder });
     return data.data;
   }
 
@@ -266,15 +290,15 @@ class ApiService {
     try {
       const response = await axios.put(presignedUrl, file, {
         headers: {
-          'Content-Type': file.type,
+          "Content-Type": file.type,
         },
         // Don't send auth headers to S3
         transformRequest: [(data) => data],
       });
-      
+
       return response.data;
     } catch (error: any) {
-      console.error('S3 upload failed:', error.message);
+      console.error("S3 upload failed:", error.message);
       throw error;
     }
   }
@@ -282,15 +306,15 @@ class ApiService {
   // Delete file from S3
   async deleteFileFromS3(key: string): Promise<void> {
     // Send key in request body
-    await api.delete('/api/upload/delete', {
-      data: { key }
+    await api.delete("/api/upload/delete", {
+      data: { key },
     });
   }
 
   // Complete upload flow: Get presigned URL and upload file
   async uploadImage(
     file: File,
-    folder: 'listings' | 'profiles' = 'listings'
+    folder: "listings" | "profiles" = "listings"
   ): Promise<{ fileUrl: string; key: string }> {
     // Step 1: Get presigned URL
     const { uploadUrl, fileUrl, key } = await this.getPresignedUploadUrl(
@@ -309,10 +333,10 @@ class ApiService {
   // Complete upload flow for multiple files
   async uploadMultipleImages(
     files: File[],
-    folder: 'listings' | 'profiles' = 'listings'
+    folder: "listings" | "profiles" = "listings"
   ): Promise<Array<{ fileUrl: string; key: string }>> {
     // Step 1: Get presigned URLs for all files
-    const fileDetails = files.map(file => ({
+    const fileDetails = files.map((file) => ({
       fileName: file.name,
       fileType: file.type,
       fileSize: file.size,
@@ -328,15 +352,17 @@ class ApiService {
     await Promise.all(uploadPromises);
 
     // Return file URLs and keys
-    return urlData.map(data => ({
+    return urlData.map((data) => ({
       fileUrl: data.fileUrl,
       key: data.key,
     }));
   }
 
   // Saved Listings functionality
-  async saveListing(listingId: string): Promise<{ message: string; savedListing: any }> {
-    const { data } = await api.post('/api/saved-listings', { listingId });
+  async saveListing(
+    listingId: string
+  ): Promise<{ message: string; savedListing: any }> {
+    const { data } = await api.post("/api/saved-listings", { listingId });
     return data;
   }
 
@@ -345,8 +371,15 @@ class ApiService {
     return data;
   }
 
-  async getSavedListings(): Promise<{ savedListings: Array<{ savedId: string; savedAt: string; listing: IListing }>; count: number }> {
-    const { data } = await api.get('/api/saved-listings');
+  async getSavedListings(): Promise<{
+    savedListings: Array<{
+      savedId: string;
+      savedAt: string;
+      listing: IListing;
+    }>;
+    count: number;
+  }> {
+    const { data } = await api.get("/api/saved-listings");
     return data;
   }
 
@@ -356,10 +389,26 @@ class ApiService {
   }
 
   async getSavedListingIds(): Promise<{ listingIds: string[] }> {
-    const { data } = await api.get('/api/saved-listings/ids');
+    const { data } = await api.get("/api/saved-listings/ids");
     return data;
   }
 
+  // Admin: Get all reports with filters
+  async getAdminReports(params?: {
+    page?: number;
+    pageSize?: number;
+    status?: string;
+    category?: string;
+    from?: string;
+    to?: string;
+    q?: string;
+    listingId?: string;
+    sort?: string;
+  }): Promise<{ reports: any[]; pagination: any }> {
+    const { data } = await api.get("/api/admin/reports", { params });
+    return data.data; // Backend wraps in { success, data: { reports, pagination } }
+  }
+  
   // Delete listing
   async deleteListing(id: string): Promise<{ success: boolean; message: string }> {
     const { data } = await api.delete<{ success: boolean; message: string }>(`/api/listings/${id}`);

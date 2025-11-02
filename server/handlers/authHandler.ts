@@ -35,7 +35,7 @@ class AuthHandler {
   static async register(req, res) {
     try {
       // Handle both field name formats (frontend sends firstName/lastName, backend expects first_name/last_name)
-      const { email, password, first_name, last_name, firstName, lastName } = req.body;
+      const { email, password, first_name, last_name, firstName, lastName, adminKey } = req.body;
       const finalFirstName = first_name || firstName;
       const finalLastName = last_name || lastName;
 
@@ -49,17 +49,27 @@ class AuthHandler {
         return;
       }
 
-      // Verify email domain is .edu (for San Jose State University)
-      const emailDomain = email.split('@')[1];
-      if (!emailDomain.endsWith('.edu')) {
-        res.status(400).json({
-          success: false,
-          message: 'Email must be from an educational institution (.edu domain)'
-        });
-        return;
+      let roleName = 'user';
+      let relaxEdu = false;
+
+      if (adminKey && adminKey === 'cmpe202') {
+        roleName = 'admin';
+        relaxEdu = true;
       }
 
-      // Create user with active status and verified email
+      // If not admin, check .edu domain
+      if (!relaxEdu) {
+        const emailDomain = email.split('@')[1];
+        if (!emailDomain.endsWith('.edu')) {
+          res.status(400).json({
+            success: false,
+            message: 'Email must be from an educational institution (.edu domain)'
+          });
+          return;
+        }
+      }
+
+      // Create user
       const user = new User({
         email,
         password_hash: password, // Will be hashed by pre-save middleware
@@ -68,34 +78,23 @@ class AuthHandler {
         status: 'active',
         email_verified_at: new Date()
       });
-
       try {
         await user.save();
       } catch (saveError) {
-        console.error("Error saving user:", saveError);
-        return res.status(400).json({ 
-          success: false, 
-          message: saveError.message || "Invalid signup data" 
-        });
+        return res.status(400).json({ success: false, message: saveError.message || "Invalid signup data" });
       }
 
-      // Assign default buyer role
-      const buyerRole = await Role.findOne({ name: 'buyer' });
-      if (buyerRole) {
-        await UserRole.create({
-          user_id: user._id,
-          role_id: buyerRole._id
-        });
+      // Assign role
+      const foundRole = await Role.findOne({ name: roleName });
+      if (foundRole) {
+        await UserRole.create({ user_id: user._id, role_id: foundRole._id });
+        console.log(`Assigned role '${roleName}' to user ${user.email}`);
+      } else {
+        console.error('Role not found:', roleName);
       }
-
-      // User is automatically verified, no email verification needed
 
       // Log audit event
-      await AuditLog.create({
-        user_id: user._id,
-        action: 'SIGN_UP',
-        metadata: { email }
-      });
+      await AuditLog.create({ user_id: user._id, action: 'SIGN_UP', metadata: { email, admin: roleName === 'admin' } });
 
       res.status(201).json({
         success: true,
