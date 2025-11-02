@@ -6,6 +6,7 @@ import {
   Flag,
   ChevronLeft,
   ChevronRight,
+  Trash2
 } from "lucide-react";
 import BackButton from "../components/BackButton";
 import Navbar from '../components/Navbar';
@@ -22,7 +23,9 @@ const ViewListing = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [contacting, setContacting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
@@ -86,6 +89,24 @@ const ViewListing = () => {
   const handleReportSubmitted = () => {
     // You could show a success message here
     console.log("Report submitted successfully");
+  };
+
+  const handleDelete = async () => {
+    if (!listing || !id) return;
+
+    try {
+      setDeleting(true);
+      await apiService.deleteListing(id);
+      // Navigate to search page after successful deletion
+      navigate('/search');
+    } catch (err: any) {
+      console.error('Error deleting listing:', err);
+      const errorMessage = err.response?.data?.error || 'Failed to delete listing. Please try again.';
+      alert(errorMessage);
+    } finally {
+      setDeleting(false);
+      setShowDeleteConfirm(false);
+    }
   };
 
   if (loading) {
@@ -156,6 +177,33 @@ const ViewListing = () => {
       year: "numeric",
     }
   );
+
+  // Check if current user owns this listing
+  // Handle both populated (object) and non-populated (string) userId formats
+  let listingUserId: string | null = null;
+  if (listing.userId) {
+    if (typeof listing.userId === 'object') {
+      // When populated, userId can be an object with _id or id field
+      listingUserId = listing.userId._id || (listing.userId as any).id || null;
+    } else {
+      // When not populated, userId is a string
+      listingUserId = listing.userId;
+    }
+  }
+  
+  const isOwner = user && listingUserId && String(listingUserId) === String(user.id);
+  
+  // Debug logging (can be removed later)
+  if (listing && user) {
+    console.log('Ownership check:', {
+      user_id: user.id,
+      listing_userId: listingUserId,
+      listing_userId_raw: listing.userId,
+      isOwner,
+      userObject: user,
+      listingUserIdObject: typeof listing.userId === 'object' ? listing.userId : null
+    });
+  }
 
   // Get all valid photos
   const validPhotos = listing.photos?.filter((p) => p.url) || [];
@@ -266,23 +314,42 @@ const ViewListing = () => {
             </div>
 
             <div className="space-y-3">
-              <button
-                onClick={handleContactSeller}
-                disabled={contacting}
-                className="w-full bg-gray-900 hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
-              >
-                <MessageSquare className="w-5 h-5" />
-                <span>
-                  {contacting ? "Starting conversation..." : "Contact Seller"}
-                </span>
-              </button>
-              <button
-                onClick={() => setShowReportModal(true)}
-                className="w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-lg border border-gray-300 transition-colors flex items-center justify-center space-x-2"
-              >
-                <Flag className="w-5 h-5" />
-                <span>Report</span>
-              </button>
+              {isOwner ? (
+                <>
+                  <button 
+                    onClick={() => navigate(`/listing/${id}/edit`)}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <span>Edit Listing</span>
+                  </button>
+                  <button 
+                    onClick={() => setShowDeleteConfirm(true)}
+                    disabled={deleting}
+                    className="w-full bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                    <span>{deleting ? 'Deleting...' : 'Delete Listing'}</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button 
+                    onClick={handleContactSeller}
+                    disabled={contacting}
+                    className="w-full bg-gray-900 hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <MessageSquare className="w-5 h-5" />
+                    <span>{contacting ? 'Starting conversation...' : 'Contact Seller'}</span>
+                  </button>
+                  <button 
+                    onClick={() => setShowReportModal(true)}
+                    className="w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-lg border border-gray-300 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <Flag className="w-5 h-5" />
+                    <span>Report</span>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -304,6 +371,34 @@ const ViewListing = () => {
           listingTitle={listing.title}
           onReportSubmitted={handleReportSubmitted}
         />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Delete Listing</h2>
+            <p className="text-gray-700 mb-6">
+              Are you sure you want to delete this listing? This action cannot be undone.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                className="flex-1 bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

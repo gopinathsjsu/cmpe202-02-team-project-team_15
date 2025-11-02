@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import { MessageCircle, X } from 'lucide-react';
 import Chatbot from './Chatbot';
+import { useAuth } from '../contexts/AuthContext';
 
 const ChatbotButton: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user } = useAuth();
+
+  if (!user) return null;
 
   return (
     <>

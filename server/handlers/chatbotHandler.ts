@@ -35,15 +35,18 @@ When answering questions about listings or categories, provide helpful, accurate
 
 IMPORTANT RULES:
 1. When mentioning specific listings, ALWAYS include clickable links using this format:
-   <a href="/listing/[LISTING_ID]" target="_blank">[LISTING_TITLE]</a>
-   For example: <a href="/listing/507f1f77bcf86cd799439011" target="_blank">MacBook Pro 13"</a>
+   <a href="/listing/[LISTING_ID]" target="_self">[LISTING_TITLE]</a>
+   For example: <a href="/listing/507f1f77bcf86cd799439011" target="_self">MacBook Pro 13"</a>
 
 2. ONLY mention items that actually exist in the listings provided. Do not assume items exist based on category names alone.
 
 3. If a category has 0 active listings, clearly state that there are currently no items available in that category.
 
+4. When there are matching listings available, ALWAYS list them for the user to pick from. Show up to 10 items in a formatted list (numbered or bulleted) with clickable links, so users can easily choose from the available options.
 
-This allows users to click directly on the listing to view more details.`;
+5. If there are multiple listings that match the user's query, present them as a clear list with each item having a clickable link.
+
+This allows users to click directly on the listing to view more details and choose from available options.`;
 
 export const chatWithBot = async (req: Request, res: Response) => {
   try {
@@ -67,6 +70,9 @@ export const chatWithBot = async (req: Request, res: Response) => {
     // Get relevant context from database
     const context = await getRelevantContext(message);
 
+    // Get the number of listings in context to help the AI understand what to display
+    const listingCount = context.match(/Listing ID:/g)?.length || 0;
+    
     // Prepare the prompt for Gemini
     const prompt = `${SYSTEM_PROMPT}
 
@@ -77,6 +83,8 @@ Conversation history:
 ${conversationHistory.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
 
 User question: ${message}
+
+${listingCount > 0 ? `IMPORTANT: There ${listingCount === 1 ? 'is' : 'are'} ${listingCount} matching listing${listingCount === 1 ? '' : 's'} available. Please list ${listingCount <= 10 ? 'all' : 'up to 10'} of them for the user with clickable links so they can choose from the available options.` : ''}
 
 Please provide a helpful response based on the context and conversation history.`;
 
@@ -119,12 +127,16 @@ async function getRelevantContext(query: string): Promise<string> {
     const categoryInfoText = categoryInfo.join('\n');
 
     // Search for relevant listings
+    // Strategy: Search ALL listings in database first, then sort by most recent
+    // MongoDB will: 1) Search all matching listings, 2) Sort by most recent, 3) Return top results
     let listings: IListing[] = [];
     
     if (searchTerms.length > 0) {
-      // Create search regex for title and description
+      // Create search regex for comprehensive matching
       const searchRegex = new RegExp(searchTerms.join('|'), 'i');
       
+      // Search ALL listings in the database that match the query
+      // Then sort by most recent, then limit to top results
       listings = await Listing.find({
         $or: [
           { title: searchRegex },
@@ -134,15 +146,15 @@ async function getRelevantContext(query: string): Promise<string> {
       })
       .populate('categoryId', 'name')
       .populate('userId', 'username')
-      .limit(5)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 }) // Sort by most recent first (applied to ALL matching results)
+      .limit(10); // Return top 10 most recent matches from entire database
     } else {
-      // If no specific search terms, get recent listings
+      // If no specific search terms, get the most recent listings from entire database
       listings = await Listing.find({ status: 'ACTIVE' })
         .populate('categoryId', 'name')
         .populate('userId', 'username')
-        .limit(5)
-        .sort({ createdAt: -1 });
+        .sort({ createdAt: -1 }) // Sort by most recent first
+        .limit(10); // Get top 10 most recent listings from entire database
     }
 
     const listingInfo = listings.map(listing => {

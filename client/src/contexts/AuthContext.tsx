@@ -78,9 +78,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
+    const currentUserId = user?.id;
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
+    try {
+      // Remove all chatbot messages from localStorage on logout
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('chatbot:messages:')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+      // Backward compatibility: clear specific keys if present
+      if (currentUserId) localStorage.removeItem(`chatbot:messages:${currentUserId}`);
+      localStorage.removeItem('chatbot:messages:guest');
+    } catch (e) {
+      // ignore localStorage errors
+    }
     setUser(null);
   };
 
