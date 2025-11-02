@@ -414,6 +414,21 @@ class ApiService {
     const { data } = await api.delete<{ success: boolean; message: string }>(`/api/listings/${id}`);
     return data;
   }
+
+  // Admin: Warn seller about listing violation
+  async warnSeller(
+    listingId: string,
+    message?: string
+  ): Promise<{ success: boolean; message: string; data: any }> {
+    const { data } = await api.post<{
+      success: boolean;
+      message: string;
+      data: any;
+    }>(`/api/admin/listings/${listingId}/warn`, {
+      message,
+    });
+    return data;
+  }
 }
 
 export const apiService = new ApiService();
