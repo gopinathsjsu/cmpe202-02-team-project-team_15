@@ -22,7 +22,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
 
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     try {
-      const stored = storageKey ? sessionStorage.getItem(storageKey) : null;
+      const stored = storageKey ? localStorage.getItem(storageKey) : null;
       if (stored) return JSON.parse(stored) as ChatMessage[];
     } catch (e) {
       // ignore parse errors and fall back to default greeting
@@ -47,11 +47,11 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
     scrollToBottom();
   }, [messages]);
 
-  // Persist messages to sessionStorage for the current user (clears on tab close)
+  // Persist messages to localStorage for the current user (persists across tab closes, clears on logout)
   useEffect(() => {
     try {
       if (storageKey) {
-        sessionStorage.setItem(storageKey, JSON.stringify(messages));
+        localStorage.setItem(storageKey, JSON.stringify(messages));
       }
     } catch (e) {
       // ignore storage errors (quota, etc.)
@@ -62,7 +62,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
   useEffect(() => {
     try {
       if (!storageKey) return;
-      const stored = sessionStorage.getItem(storageKey);
+      const stored = localStorage.getItem(storageKey);
       if (stored) {
         setMessages(JSON.parse(stored) as ChatMessage[]);
       } else {
@@ -85,12 +85,12 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
     }
   }, [storageKey]);
 
-  // Reload messages from sessionStorage when chatbot opens (in case of navigation)
+  // Reload messages from localStorage when chatbot opens (in case of navigation)
   useEffect(() => {
     if (!isOpen || !storageKey) return;
     
     try {
-      const stored = sessionStorage.getItem(storageKey);
+      const stored = localStorage.getItem(storageKey);
       if (stored) {
         const parsedMessages = JSON.parse(stored) as ChatMessage[];
         setMessages(parsedMessages);

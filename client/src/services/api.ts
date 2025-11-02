@@ -49,17 +49,17 @@ api.interceptors.response.use(
           localStorage.removeItem("refreshToken");
           localStorage.removeItem("user");
           try {
-            // Clear all chatbot session history on auth failure
+            // Clear all chatbot conversation history on auth failure
             const keysToRemove: string[] = [];
-            for (let i = 0; i < sessionStorage.length; i++) {
-              const key = sessionStorage.key(i);
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
               if (key && key.startsWith('chatbot:messages:')) {
                 keysToRemove.push(key);
               }
             }
-            keysToRemove.forEach((k) => sessionStorage.removeItem(k));
+            keysToRemove.forEach((k) => localStorage.removeItem(k));
           } catch (e) {
-            // ignore sessionStorage errors
+            // ignore localStorage errors
           }
           window.location.href = "/login";
         }
