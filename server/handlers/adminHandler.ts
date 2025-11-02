@@ -10,7 +10,7 @@ import { Report } from '../models/Report';
 import Listing from '../models/Listing';
 import { Conversation } from '../models/Conversation';
 import { Message } from '../models/Message';
-import mongoose, { SortOrder } from 'mongoose';
+import mongoose, { SortOrder, Types } from 'mongoose';
 
 export class AdminHandler {
   // @desc    Get audit logs (Admin only)
@@ -526,13 +526,57 @@ export class AdminHandler {
         return;
       }
 
+      // Convert IDs to ObjectIds for the conversation query
+      const listingObjectId = listing._id; // Already an ObjectId from the query
+      const adminObjectId = new Types.ObjectId(adminId);
+      const sellerObjectId = new Types.ObjectId(sellerId);
+
       // Create or find conversation between admin and seller for this listing
       // Admin acts as buyerId, seller is sellerId
-      const conversation = await Conversation.findOneAndUpdate(
-        { listingId, buyerId: adminId, sellerId },
-        { $setOnInsert: { listingId, buyerId: adminId, sellerId } },
-        { new: true, upsert: true }
-      );
+      let conversation;
+      try {
+        conversation = await Conversation.findOneAndUpdate(
+          { 
+            listingId: listingObjectId, 
+            buyerId: adminObjectId, 
+            sellerId: sellerObjectId 
+          },
+          { 
+            $setOnInsert: { 
+              listingId: listingObjectId, 
+              buyerId: adminObjectId, 
+              sellerId: sellerObjectId 
+            } 
+          },
+          { new: true, upsert: true }
+        );
+      } catch (error: any) {
+        // If duplicate key error, the conversation should exist - try to find it
+        if (error.code === 11000) {
+          // Try to find the conversation for this specific listing
+          // Duplicate key means it exists, so this should succeed
+          conversation = await Conversation.findOne({
+            listingId: listingObjectId,
+            buyerId: adminObjectId,
+            sellerId: sellerObjectId
+          });
+          
+          if (!conversation) {
+            // This shouldn't happen - duplicate key means conversation exists
+            // But if it does, it's likely an index conflict issue
+            console.error('Duplicate key error but conversation not found - index issue:', error.message);
+            res.status(500).json({
+              success: false,
+              message: 'Database index conflict. Please contact administrator to remove old productId index.',
+              error: 'Duplicate key error - conversation should exist but was not found'
+            });
+            return;
+          }
+          // Conversation found - we'll use it to send the warning message
+        } else {
+          throw error;
+        }
+      }
 
       // Create default warning message if custom message not provided
       const defaultMessage = `⚠️ WARNING: Your listing "${listing.title}" has been flagged for violating marketplace rules. Please review and update your listing to comply with our guidelines.`;

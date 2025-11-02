@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Send } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import Navbar from "./Navbar";
+import { ListingPreview } from "./ListingPreview";
 import api from "../services/api";
 
 // Types for chat functionality
@@ -11,8 +12,10 @@ interface Conversation {
     | string
     | {
         _id: string;
+        listingId?: string;
         title: string;
         price: number;
+        photos?: Array<{ url: string; alt: string }>;
       };
   buyerId:
     | string
@@ -36,8 +39,10 @@ interface Conversation {
   createdAt: string;
   listing?: {
     _id: string;
+    listingId?: string;
     title: string;
     price: number;
+    photos?: Array<{ url: string; alt: string }>;
   };
   buyer?: {
     _id: string;
@@ -434,6 +439,30 @@ export const Messages: React.FC<MessagesProps> = ({
                   ) : (
                     messages.map((message) => {
                       const isCurrentUser = message.senderId === user?.id;
+                      // Check if this is a warning message (starts with warning emoji or contains "WARNING")
+                      const isWarningMessage = message.body.includes("⚠️") || message.body.toUpperCase().includes("WARNING");
+                      
+                      // Get listing data from conversation
+                      let listingData;
+                      if (
+                        typeof selectedConversation.listingId === "object" &&
+                        selectedConversation.listingId !== null
+                      ) {
+                        listingData = selectedConversation.listingId;
+                      } else {
+                        listingData = selectedConversation.listing;
+                      }
+
+                      // Get the listing ID - prefer _id (MongoDB ObjectId) or custom listingId
+                      let listingIdForPreview: string = "";
+                      if (listingData && typeof listingData === "object") {
+                        listingIdForPreview = listingData._id || listingData.listingId || "";
+                      } else if (typeof selectedConversation.listingId === "string") {
+                        listingIdForPreview = selectedConversation.listingId;
+                      } else if (selectedConversation.listingId && typeof selectedConversation.listingId === "object") {
+                        listingIdForPreview = selectedConversation.listingId._id || selectedConversation.listingId.listingId || "";
+                      }
+
                       return (
                         <div
                           key={message._id}
@@ -454,6 +483,16 @@ export const Messages: React.FC<MessagesProps> = ({
                               <p className="text-sm leading-relaxed">
                                 {message.body}
                               </p>
+                              
+                              {/* Show listing preview for warning messages with listing info */}
+                              {isWarningMessage && listingData && typeof listingData === "object" && listingIdForPreview && (
+                                <ListingPreview
+                                  listingId={listingIdForPreview}
+                                  listingTitle={listingData.title}
+                                  listingPrice={listingData.price}
+                                  listingImage={listingData.photos?.[0]?.url}
+                                />
+                              )}
                             </div>
                             <p className="text-xs text-gray-500 mt-1 px-2">
                               {formatTime(message.createdAt)}
