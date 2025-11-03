@@ -6,11 +6,16 @@ import {
   Flag,
   ChevronLeft,
   ChevronRight,
-  Trash2
+  Trash2,
+  AlertTriangle,
+  Eye,
+  Edit,
+  UserCog
 } from "lucide-react";
 import BackButton from "../components/BackButton";
 import Navbar from '../components/Navbar';
 import { ReportModal } from "../components/ReportModal";
+import { WarnUserModal } from "../components/WarnUserModal";
 import ReportedDetailsPanel from "../components/ReportedDetailsPanel";
 import { useAuth } from "../contexts/AuthContext";
 import { apiService, IListing } from "../services/api";
@@ -25,6 +30,7 @@ const ViewListing = () => {
   const [contacting, setContacting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showWarnModal, setShowWarnModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -87,8 +93,7 @@ const ViewListing = () => {
   };
 
   const handleReportSubmitted = () => {
-    // You could show a success message here
-    console.log("Report submitted successfully");
+    // Report submitted successfully
   };
 
   const handleDelete = async () => {
@@ -192,18 +197,6 @@ const ViewListing = () => {
   }
   
   const isOwner = user && listingUserId && String(listingUserId) === String(user.id);
-  
-  // Debug logging (can be removed later)
-  if (listing && user) {
-    console.log('Ownership check:', {
-      user_id: user.id,
-      listing_userId: listingUserId,
-      listing_userId_raw: listing.userId,
-      isOwner,
-      userObject: user,
-      listingUserIdObject: typeof listing.userId === 'object' ? listing.userId : null
-    });
-  }
 
   // Get all valid photos
   const validPhotos = listing.photos?.filter((p) => p.url) || [];
@@ -354,9 +347,66 @@ const ViewListing = () => {
           </div>
         </div>
 
-        {/* Admin: Reported Details Panel */}
-        {user?.roles?.includes("admin") && listing && (
-          <div className="mt-8">
+        {/* Admin: Actions and Reported Details Panel */}
+        {user?.roles?.includes("admin") && listing && !isOwner && (
+          <div className="mt-8 space-y-6">
+            {/* Admin Actions Section - Horizontal Layout */}
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <h3 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">
+                Admin Actions
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                <button
+                  onClick={() => setShowWarnModal(true)}
+                  className="bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                >
+                  <AlertTriangle className="w-5 h-5" />
+                  <span>Warn User</span>
+                </button>
+                <button
+                  onClick={() => {
+                    // TODO: Implement delete listing functionality
+                    alert("Delete listing functionality coming soon");
+                  }}
+                  className="bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                >
+                  <Trash2 className="w-5 h-5" />
+                  <span>Delete Listing</span>
+                </button>
+                <button
+                  onClick={() => {
+                    // TODO: Implement hide/show listing functionality
+                    alert("Hide/Show listing functionality coming soon");
+                  }}
+                  className="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                >
+                  <Eye className="w-5 h-5" />
+                  <span>Hide/Show Listing</span>
+                </button>
+                <button
+                  onClick={() => {
+                    // TODO: Implement edit categories functionality
+                    alert("Edit categories functionality coming soon");
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                >
+                  <Edit className="w-5 h-5" />
+                  <span>Edit Categories</span>
+                </button>
+                <button
+                  onClick={() => {
+                    // TODO: Implement manage user account functionality
+                    alert("Manage user account functionality coming soon");
+                  }}
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                >
+                  <UserCog className="w-5 h-5" />
+                  <span>Manage User Account</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Reported Details Panel */}
             <ReportedDetailsPanel listingId={listing._id} />
           </div>
         )}
@@ -370,6 +420,19 @@ const ViewListing = () => {
           listingId={listing._id}
           listingTitle={listing.title}
           onReportSubmitted={handleReportSubmitted}
+        />
+      )}
+
+      {/* Warn User Modal */}
+      {listing && (
+        <WarnUserModal
+          isOpen={showWarnModal}
+          onClose={() => setShowWarnModal(false)}
+          listingId={listing._id}
+          listingTitle={listing.title}
+          onWarningSent={() => {
+            // Warning sent successfully
+          }}
         />
       )}
 

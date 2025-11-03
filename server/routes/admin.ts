@@ -46,4 +46,9 @@ router.post('/cleanup', authenticateToken, requireRole(['admin']), AdminHandler
 // @access  Private (Admin)
 router.get('/reports', authenticateToken, requireRole(['admin']), AdminHandler.getReports);
 
+// @route   POST /api/admin/listings/:listingId/warn
+// @desc    Warn seller about listing violation (Admin only)
+// @access  Private (Admin)
+router.post('/listings/:listingId/warn', authenticateToken, requireRole(['admin']), AdminHandler.warnSeller);
+
 export default router;

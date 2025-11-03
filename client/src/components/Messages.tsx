@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Send } from "lucide-react";
+import { Send, AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import Navbar from "./Navbar";
+import { ListingPreview } from "./ListingPreview";
 import api from "../services/api";
 
 // Types for chat functionality
@@ -11,8 +12,10 @@ interface Conversation {
     | string
     | {
         _id: string;
+        listingId?: string;
         title: string;
         price: number;
+        photos?: Array<{ url: string; alt: string }>;
       };
   buyerId:
     | string
@@ -36,8 +39,10 @@ interface Conversation {
   createdAt: string;
   listing?: {
     _id: string;
+    listingId?: string;
     title: string;
     price: number;
+    photos?: Array<{ url: string; alt: string }>;
   };
   buyer?: {
     _id: string;
@@ -84,6 +89,7 @@ export const Messages: React.FC<MessagesProps> = ({
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [adminConversationsExpanded, setAdminConversationsExpanded] = useState(true);
 
   // Load conversations on component mount
   useEffect(() => {
@@ -241,6 +247,50 @@ export const Messages: React.FC<MessagesProps> = ({
     });
   };
 
+  // Helper function to check if conversation is from admin
+  const isAdminConversation = (conv: Conversation): boolean => {
+    const userId = String(user?.id);
+    let buyerId: string;
+    let sellerId: string;
+
+    // Check if buyerId is an object (populated) or string (ID)
+    if (typeof conv.buyerId === "object" && conv.buyerId !== null) {
+      buyerId = String(conv.buyerId._id);
+    } else {
+      buyerId = String(conv.buyerId);
+    }
+
+    // Check if sellerId is an object (populated) or string (ID)
+    if (typeof conv.sellerId === "object" && conv.sellerId !== null) {
+      sellerId = String(conv.sellerId._id);
+    } else {
+      sellerId = String(conv.sellerId);
+    }
+
+    // If current user is the seller, check if buyer is admin
+    // Admin sends warnings, so admin is always the buyerId in warning conversations
+    if (sellerId === userId) {
+      let buyerData;
+      if (typeof conv.buyerId === "object" && conv.buyerId !== null) {
+        buyerData = conv.buyerId;
+      } else {
+        buyerData = conv.buyer;
+      }
+      
+      // Check if buyer has admin in name or email, or check if buyer email contains admin
+      const buyerName = buyerData?.first_name || buyerData?.name || "";
+      const buyerLastName = buyerData?.last_name || "";
+      const buyerEmail = buyerData?.email || "";
+      const fullName = `${buyerName} ${buyerLastName}`.toLowerCase();
+      
+      return fullName.includes("admin") || 
+             buyerEmail.toLowerCase().includes("admin") ||
+             buyerName.toLowerCase() === "admin";
+    }
+    
+    return false;
+  };
+
   const getOtherPartyName = (conv: Conversation) => {
     // Handle the case where buyerId and sellerId are populated objects
     const userId = String(user?.id);
@@ -331,35 +381,90 @@ export const Messages: React.FC<MessagesProps> = ({
                 <div className="p-8 text-center text-gray-500">
                   <p>No conversations yet</p>
                 </div>
-              ) : (
-                conversations.map((conv) => {
-                  const otherPartyName = getOtherPartyName(conv);
-                  return (
-                    <button
-                      key={conv._id}
-                      onClick={() => setSelectedConversation(conv)}
-                      className={`w-full p-5 border-b border-gray-100 hover:bg-gray-50 text-left transition-colors ${
-                        selectedConversation?._id === conv._id
-                          ? "bg-gray-50"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 font-semibold flex-shrink-0">
-                          {otherPartyName.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-baseline justify-between mb-1">
-                            <h4 className="font-semibold text-gray-900 truncate">
-                              {otherPartyName}
-                            </h4>
-                            <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
-                              {formatDate(conv.lastMessageAt)}
+              ) : (() => {
+                // Separate admin and regular conversations
+                const adminConvs = conversations.filter(isAdminConversation);
+                const regularConvs = conversations.filter(conv => !isAdminConversation(conv));
+                
+                return (
+                  <>
+                    {/* Regular Conversations */}
+                    {regularConvs.length > 0 && (
+                      <div>
+                        {regularConvs.map((conv) => {
+                          const otherPartyName = getOtherPartyName(conv);
+                          return (
+                            <button
+                              key={conv._id}
+                              onClick={() => setSelectedConversation(conv)}
+                              className={`w-full p-5 border-b border-gray-100 hover:bg-gray-50 text-left transition-colors ${
+                                selectedConversation?._id === conv._id ? "bg-gray-50" : ""
+                              }`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 font-semibold flex-shrink-0">
+                                  {otherPartyName.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-baseline justify-between mb-1">
+                                    <h4 className="font-semibold text-gray-900 truncate">
+                                      {otherPartyName}
+                                    </h4>
+                                    <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
+                                      {formatDate(conv.lastMessageAt)}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-gray-600 truncate">
+                                    {(() => {
+                                      let listingData;
+                                      if (
+                                        typeof conv.listingId === "object" &&
+                                        conv.listingId !== null
+                                      ) {
+                                        listingData = conv.listingId;
+                                      } else {
+                                        listingData = conv.listing;
+                                      }
+                                      return listingData
+                                        ? `${listingData.title} - $${listingData.price}`
+                                        : "Unknown listing";
+                                    })()}
+                                  </p>
+                                </div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Admin Conversations - Grouped */}
+                    {adminConvs.length > 0 && (
+                      <div className="border-t border-gray-200">
+                        <button
+                          onClick={() => setAdminConversationsExpanded(!adminConversationsExpanded)}
+                          className="w-full px-5 py-3 bg-yellow-50 hover:bg-yellow-100 border-b border-yellow-200 flex items-center justify-between transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                            <span className="font-semibold text-gray-900">
+                              Admin Warnings
+                            </span>
+                            <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded-full">
+                              {adminConvs.length}
                             </span>
                           </div>
-                          <p className="text-sm text-gray-600 truncate">
-                            {(() => {
-                              // Handle both populated listingId and separate listing field
+                          {adminConversationsExpanded ? (
+                            <ChevronDown className="w-4 h-4 text-gray-600" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4 text-gray-600" />
+                          )}
+                        </button>
+                        
+                        {adminConversationsExpanded && (
+                          <div>
+                            {adminConvs.map((conv) => {
+                              // Get listing info for display
                               let listingData;
                               if (
                                 typeof conv.listingId === "object" &&
@@ -369,17 +474,43 @@ export const Messages: React.FC<MessagesProps> = ({
                               } else {
                                 listingData = conv.listing;
                               }
-                              return listingData
-                                ? `${listingData.title} - $${listingData.price}`
-                                : "Unknown listing";
-                            })()}
-                          </p>
-                        </div>
+                              
+                              return (
+                                <button
+                                  key={conv._id}
+                                  onClick={() => setSelectedConversation(conv)}
+                                  className={`w-full p-4 pl-7 border-b border-gray-100 hover:bg-yellow-50 text-left transition-colors ${
+                                    selectedConversation?._id === conv._id ? "bg-yellow-50" : ""
+                                  }`}
+                                >
+                                  <div className="flex items-start gap-3">
+                                    <div className="w-8 h-8 bg-yellow-200 rounded-full flex items-center justify-center text-yellow-800 flex-shrink-0">
+                                      <AlertTriangle className="w-4 h-4" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-baseline justify-between mb-1">
+                                        <h4 className="font-medium text-gray-900 truncate text-sm">
+                                          {listingData?.title || "Warning"}
+                                        </h4>
+                                        <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
+                                          {formatDate(conv.lastMessageAt)}
+                                        </span>
+                                      </div>
+                                      <p className="text-xs text-gray-600 truncate">
+                                        {listingData ? `$${listingData.price}` : "Admin message"}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
-                    </button>
-                  );
-                })
-              )}
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
 
@@ -434,6 +565,30 @@ export const Messages: React.FC<MessagesProps> = ({
                   ) : (
                     messages.map((message) => {
                       const isCurrentUser = message.senderId === user?.id;
+                      // Check if this is a warning message (starts with warning emoji or contains "WARNING")
+                      const isWarningMessage = message.body.includes("⚠️") || message.body.toUpperCase().includes("WARNING");
+                      
+                      // Get listing data from conversation
+                      let listingData;
+                      if (
+                        typeof selectedConversation.listingId === "object" &&
+                        selectedConversation.listingId !== null
+                      ) {
+                        listingData = selectedConversation.listingId;
+                      } else {
+                        listingData = selectedConversation.listing;
+                      }
+
+                      // Get the listing ID - prefer _id (MongoDB ObjectId) or custom listingId
+                      let listingIdForPreview: string = "";
+                      if (listingData && typeof listingData === "object") {
+                        listingIdForPreview = listingData._id || listingData.listingId || "";
+                      } else if (typeof selectedConversation.listingId === "string") {
+                        listingIdForPreview = selectedConversation.listingId;
+                      } else if (selectedConversation.listingId && typeof selectedConversation.listingId === "object") {
+                        listingIdForPreview = selectedConversation.listingId._id || selectedConversation.listingId.listingId || "";
+                      }
+
                       return (
                         <div
                           key={message._id}
@@ -454,6 +609,16 @@ export const Messages: React.FC<MessagesProps> = ({
                               <p className="text-sm leading-relaxed">
                                 {message.body}
                               </p>
+                              
+                              {/* Show listing preview for warning messages with listing info */}
+                              {isWarningMessage && listingData && typeof listingData === "object" && listingIdForPreview && (
+                                <ListingPreview
+                                  listingId={listingIdForPreview}
+                                  listingTitle={listingData.title}
+                                  listingPrice={listingData.price}
+                                  listingImage={listingData.photos?.[0]?.url}
+                                />
+                              )}
                             </div>
                             <p className="text-xs text-gray-500 mt-1 px-2">
                               {formatTime(message.createdAt)}

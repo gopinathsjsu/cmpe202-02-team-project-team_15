@@ -46,7 +46,7 @@ export const listConversations = async (req: any, res: Response) => {
   })
     .populate({
       path: "listingId",
-      select: "title price",
+      select: "title price photos listingId",
       model: "Listing",
     })
     .populate({

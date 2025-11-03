@@ -8,7 +8,9 @@ import { EmailVerification } from '../models/EmailVerification';
 import { PasswordReset } from '../models/PasswordReset';
 import { Report } from '../models/Report';
 import Listing from '../models/Listing';
-import { SortOrder } from 'mongoose';
+import { Conversation } from '../models/Conversation';
+import { Message } from '../models/Message';
+import mongoose, { SortOrder, Types } from 'mongoose';
 
 export class AdminHandler {
   // @desc    Get audit logs (Admin only)
@@ -467,6 +469,156 @@ export class AdminHandler {
       res.status(500).json({
         success: false,
         message: 'Failed to get reports',
+        error: error.message
+      });
+    }
+  }
+
+  // @desc    Warn seller about listing violation (Admin only)
+  // @access  Private (Admin)
+  static async warnSeller(req: Request, res: Response): Promise<void> {
+    try {
+      const { listingId } = req.params;
+      const { message: customMessage } = req.body as { message?: string };
+      const adminId = String((req as any).user._id);
+
+      // Validate listingId
+      if (!listingId) {
+        res.status(400).json({
+          success: false,
+          message: 'Listing ID is required'
+        });
+        return;
+      }
+
+      // Find the listing - support both MongoDB ObjectId and custom listingId format
+      let listing;
+      if (mongoose.Types.ObjectId.isValid(listingId)) {
+        // Find by _id (MongoDB ObjectId)
+        listing = await Listing.findById(listingId);
+      } else if (listingId.match(/^LST-\d{8}-\d{4}$/)) {
+        // Find by custom listingId format (LST-YYYYMMDD-XXXX)
+        listing = await Listing.findOne({ listingId });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid listing ID format. Expected MongoDB ObjectId or LST-YYYYMMDD-XXXX format'
+        });
+        return;
+      }
+
+      if (!listing) {
+        res.status(404).json({
+          success: false,
+          message: 'Listing not found'
+        });
+        return;
+      }
+
+      const sellerId = String(listing.userId);
+
+      // Check if admin is trying to warn themselves
+      if (adminId === sellerId) {
+        res.status(400).json({
+          success: false,
+          message: 'Cannot warn yourself'
+        });
+        return;
+      }
+
+      // Convert IDs to ObjectIds for the conversation query
+      const listingObjectId = listing._id; // Already an ObjectId from the query
+      const adminObjectId = new Types.ObjectId(adminId);
+      const sellerObjectId = new Types.ObjectId(sellerId);
+
+      // Create or find conversation between admin and seller for this listing
+      // Admin acts as buyerId, seller is sellerId
+      let conversation;
+      try {
+        conversation = await Conversation.findOneAndUpdate(
+          { 
+            listingId: listingObjectId, 
+            buyerId: adminObjectId, 
+            sellerId: sellerObjectId 
+          },
+          { 
+            $setOnInsert: { 
+              listingId: listingObjectId, 
+              buyerId: adminObjectId, 
+              sellerId: sellerObjectId 
+            } 
+          },
+          { new: true, upsert: true }
+        );
+      } catch (error: any) {
+        // If duplicate key error, the conversation should exist - try to find it
+        if (error.code === 11000) {
+          // Try to find the conversation for this specific listing
+          // Duplicate key means it exists, so this should succeed
+          conversation = await Conversation.findOne({
+            listingId: listingObjectId,
+            buyerId: adminObjectId,
+            sellerId: sellerObjectId
+          });
+          
+          if (!conversation) {
+            // This shouldn't happen - duplicate key means conversation exists
+            // But if it does, it's likely an index conflict issue
+            console.error('Duplicate key error but conversation not found - index issue:', error.message);
+            res.status(500).json({
+              success: false,
+              message: 'Database index conflict. Please contact administrator to remove old productId index.',
+              error: 'Duplicate key error - conversation should exist but was not found'
+            });
+            return;
+          }
+          // Conversation found - we'll use it to send the warning message
+        } else {
+          throw error;
+        }
+      }
+
+      // Create default warning message if custom message not provided
+      const defaultMessage = `⚠️ WARNING: Your listing "${listing.title}" has been flagged for violating marketplace rules. Please review and update your listing to comply with our guidelines.`;
+      const warningMessage = customMessage?.trim() || defaultMessage;
+
+      // Create the warning message
+      const message = await Message.create({
+        conversationId: conversation._id,
+        senderId: adminId,
+        body: warningMessage,
+        readBy: [adminId], // Admin has read it, seller hasn't yet
+      });
+
+      // Update conversation last message timestamp
+      conversation.lastMessageAt = new Date();
+      await conversation.save();
+
+      res.status(201).json({
+        success: true,
+        message: 'Warning sent successfully',
+        data: {
+          conversation: {
+            _id: conversation._id,
+            listingId: conversation.listingId,
+            buyerId: conversation.buyerId,
+            sellerId: conversation.sellerId
+          },
+          message: {
+            _id: message._id,
+            conversationId: message.conversationId,
+            senderId: message.senderId,
+            body: message.body,
+            createdAt: message.createdAt
+          }
+        }
+      });
+
+    } catch (error: any) {
+      console.error('Warn seller error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to send warning',
         error: error.message
       });
     }
