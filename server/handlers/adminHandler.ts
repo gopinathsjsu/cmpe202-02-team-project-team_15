@@ -8,6 +8,7 @@ import { EmailVerification } from '../models/EmailVerification';
 import { PasswordReset } from '../models/PasswordReset';
 import { Report } from '../models/Report';
 import Listing from '../models/Listing';
+import Category from '../models/Category';
 import { Conversation } from '../models/Conversation';
 import { Message } from '../models/Message';
 import mongoose, { SortOrder, Types } from 'mongoose';
@@ -619,6 +620,303 @@ export class AdminHandler {
       res.status(500).json({
         success: false,
         message: 'Failed to send warning',
+        error: error.message
+      });
+    }
+  }
+
+  // @desc    Get all categories (Admin only)
+  // @access  Private (Admin)
+  static async getCategories(req: Request, res: Response): Promise<void> {
+    try {
+      const { page = '1', limit = '50' } = req.query;
+      
+      const pageNum = parseInt(page as string, 10);
+      const limitNum = parseInt(limit as string, 10);
+
+      const categories = await Category.find()
+        .sort({ name: 1 })
+        .skip((pageNum - 1) * limitNum)
+        .limit(limitNum);
+
+      const total = await Category.countDocuments();
+
+      // Get listing count for each category
+      const categoriesWithCount = await Promise.all(
+        categories.map(async (category) => {
+          const listingCount = await Listing.countDocuments({ categoryId: category._id });
+          return {
+            ...category.toObject(),
+            listingCount
+          };
+        })
+      );
+
+      res.json({
+        success: true,
+        data: {
+          categories: categoriesWithCount,
+          pagination: {
+            current_page: pageNum,
+            total_pages: Math.ceil(total / limitNum),
+            total_categories: total,
+            per_page: limitNum
+          }
+        }
+      });
+
+    } catch (error: any) {
+      console.error('Get categories error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get categories',
+        error: error.message
+      });
+    }
+  }
+
+  // @desc    Create new category (Admin only)
+  // @access  Private (Admin)
+  static async createCategory(req: Request, res: Response): Promise<void> {
+    try {
+      const { name, description } = req.body;
+
+      // Validate required fields
+      if (!name || !name.trim()) {
+        res.status(400).json({
+          success: false,
+          message: 'Category name is required'
+        });
+        return;
+      }
+
+      // Check if category already exists
+      const existingCategory = await Category.findOne({ 
+        name: { $regex: new RegExp(`^${name.trim()}$`, 'i') }
+      });
+
+      if (existingCategory) {
+        res.status(400).json({
+          success: false,
+          message: 'Category already exists with this name'
+        });
+        return;
+      }
+
+      // Create new category
+      const category = new Category({
+        name: name.trim(),
+        description: description?.trim() || ''
+      });
+
+      await category.save();
+
+      res.status(201).json({
+        success: true,
+        message: 'Category created successfully',
+        data: { category }
+      });
+
+    } catch (error: any) {
+      console.error('Create category error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to create category',
+        error: error.message
+      });
+    }
+  }
+
+  // @desc    Update category (Admin only)
+  // @access  Private (Admin)
+  static async updateCategory(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { name, description } = req.body;
+
+      // Validate category ID
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid category ID'
+        });
+        return;
+      }
+
+      // Find category
+      const category = await Category.findById(id);
+      if (!category) {
+        res.status(404).json({
+          success: false,
+          message: 'Category not found'
+        });
+        return;
+      }
+
+      // If name is being updated, check for duplicates
+      if (name && name.trim() !== category.name) {
+        const existingCategory = await Category.findOne({
+          name: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
+          _id: { $ne: id }
+        });
+
+        if (existingCategory) {
+          res.status(400).json({
+            success: false,
+            message: 'Another category already exists with this name'
+          });
+          return;
+        }
+
+        category.name = name.trim();
+      }
+
+      // Update description if provided
+      if (description !== undefined) {
+        category.description = description.trim();
+      }
+
+      await category.save();
+
+      res.json({
+        success: true,
+        message: 'Category updated successfully',
+        data: { category }
+      });
+
+    } catch (error: any) {
+      console.error('Update category error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update category',
+        error: error.message
+      });
+    }
+  }
+
+  // @desc    Delete category (Admin only)
+  // @access  Private (Admin)
+  static async deleteCategory(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      // Validate category ID
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid category ID'
+        });
+        return;
+      }
+
+      // Check if category exists
+      const category = await Category.findById(id);
+      if (!category) {
+        res.status(404).json({
+          success: false,
+          message: 'Category not found'
+        });
+        return;
+      }
+
+      // Check if any listings use this category
+      const listingCount = await Listing.countDocuments({ categoryId: id });
+      if (listingCount > 0) {
+        res.status(400).json({
+          success: false,
+          message: `Cannot delete category. ${listingCount} listing(s) are using this category. Please reassign or delete those listings first.`,
+          data: {
+            listingCount
+          }
+        });
+        return;
+      }
+
+      // Delete the category
+      await Category.findByIdAndDelete(id);
+
+      res.json({
+        success: true,
+        message: 'Category deleted successfully',
+        data: { 
+          deletedCategory: category 
+        }
+      });
+
+    } catch (error: any) {
+      console.error('Delete category error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to delete category',
+        error: error.message
+      });
+    }
+  }
+
+  // @desc    Update listing category (Admin only)
+  // @access  Private (Admin)
+  static async updateListingCategory(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { categoryId } = req.body;
+
+      // Validate listing ID
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid listing ID'
+        });
+        return;
+      }
+
+      // Validate category ID
+      if (!categoryId || !mongoose.Types.ObjectId.isValid(categoryId)) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid category ID'
+        });
+        return;
+      }
+
+      // Check if category exists
+      const category = await Category.findById(categoryId);
+      if (!category) {
+        res.status(404).json({
+          success: false,
+          message: 'Category not found'
+        });
+        return;
+      }
+
+      // Update listing category
+      const listing = await Listing.findByIdAndUpdate(
+        id,
+        { categoryId, updatedAt: new Date() },
+        { new: true }
+      ).populate([
+        { path: 'categoryId', select: 'name description' },
+        { path: 'userId', select: 'first_name last_name email' }
+      ]);
+
+      if (!listing) {
+        res.status(404).json({
+          success: false,
+          message: 'Listing not found'
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        message: 'Listing category updated successfully',
+        data: { listing }
+      });
+
+    } catch (error: any) {
+      console.error('Update listing category error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update listing category',
         error: error.message
       });
     }

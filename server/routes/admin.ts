@@ -51,4 +51,29 @@ router.get('/reports', authenticateToken, requireRole(['admin']), AdminHandler.g
 // @access  Private (Admin)
 router.post('/listings/:listingId/warn', authenticateToken, requireRole(['admin']), AdminHandler.warnSeller);
 
+// @route   GET /api/admin/categories
+// @desc    Get all categories with listing counts (Admin only)
+// @access  Private (Admin)
+router.get('/categories', authenticateToken, requireRole(['admin']), AdminHandler.getCategories);
+
+// @route   POST /api/admin/categories
+// @desc    Create new category (Admin only)
+// @access  Private (Admin)
+router.post('/categories', authenticateToken, requireRole(['admin']), AdminHandler.createCategory);
+
+// @route   PUT /api/admin/categories/:id
+// @desc    Update category (rename or edit description) (Admin only)
+// @access  Private (Admin)
+router.put('/categories/:id', authenticateToken, requireRole(['admin']), AdminHandler.updateCategory);
+
+// @route   DELETE /api/admin/categories/:id
+// @desc    Delete category (Admin only)
+// @access  Private (Admin)
+router.delete('/categories/:id', authenticateToken, requireRole(['admin']), AdminHandler.deleteCategory);
+
+// @route   PUT /api/admin/listings/:id/category
+// @desc    Update listing category (Admin only)
+// @access  Private (Admin)
+router.put('/listings/:id/category', authenticateToken, requireRole(['admin']), AdminHandler.updateListingCategory);
+
 export default router;
