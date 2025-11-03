@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { MessageSquare, Heart, BarChart3 } from 'lucide-react';
+import { MessageSquare, Heart, BarChart3, FolderTree } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const Navbar: React.FC = () => {
@@ -70,19 +70,32 @@ const Navbar: React.FC = () => {
               <span>Messages</span>
             </button>
 
-            {/* Admin Reports (only for admins) */}
+            {/* Admin Links (only for admins) */}
             {user?.roles?.includes('admin') && (
-              <button
-                onClick={() => navigate('/admin/reports')}
-                className={`flex items-center space-x-1 font-medium transition-colors ${
-                  isActive('/admin/reports') 
-                    ? 'text-blue-600' 
-                    : 'text-gray-700 hover:text-gray-900'
-                }`}
-              >
-                <BarChart3 className="w-5 h-5" />
-                <span>Reports</span>
-              </button>
+              <>
+                <button
+                  onClick={() => navigate('/admin/reports')}
+                  className={`flex items-center space-x-1 font-medium transition-colors ${
+                    isActive('/admin/reports') 
+                      ? 'text-blue-600' 
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
+                >
+                  <BarChart3 className="w-5 h-5" />
+                  <span>Reports</span>
+                </button>
+                <button
+                  onClick={() => navigate('/admin/categories')}
+                  className={`flex items-center space-x-1 font-medium transition-colors ${
+                    isActive('/admin/categories') 
+                      ? 'text-blue-600' 
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
+                >
+                  <FolderTree className="w-5 h-5" />
+                  <span>Categories</span>
+                </button>
+              </>
             )}
 
             {/* User Avatar */}

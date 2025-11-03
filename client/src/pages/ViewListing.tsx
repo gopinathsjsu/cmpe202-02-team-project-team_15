@@ -10,7 +10,8 @@ import {
   AlertTriangle,
   Eye,
   Edit,
-  UserCog
+  UserCog,
+  X
 } from "lucide-react";
 import BackButton from "../components/BackButton";
 import Navbar from '../components/Navbar';
@@ -18,12 +19,15 @@ import { ReportModal } from "../components/ReportModal";
 import { WarnUserModal } from "../components/WarnUserModal";
 import ReportedDetailsPanel from "../components/ReportedDetailsPanel";
 import { useAuth } from "../contexts/AuthContext";
-import { apiService, IListing } from "../services/api";
+import { useToast } from "../contexts/ToastContext";
+import { apiService, IListing, ICategory } from "../services/api";
+import api from "../services/api";
 
 const ViewListing = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showLoading, showSuccess, showError, hideToast } = useToast();
   const [listing, setListing] = useState<IListing | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +37,10 @@ const ViewListing = () => {
   const [showWarnModal, setShowWarnModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showEditCategoryModal, setShowEditCategoryModal] = useState(false);
+  const [categories, setCategories] = useState<ICategory[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState('');
+  const [updatingCategory, setUpdatingCategory] = useState(false);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -57,6 +65,21 @@ const ViewListing = () => {
 
     fetchListing();
   }, [id]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const categoriesData = await apiService.getCategories();
+        setCategories(categoriesData);
+      } catch (err) {
+        console.error('Failed to load categories:', err);
+      }
+    };
+
+    if (user?.roles?.includes('admin')) {
+      fetchCategories();
+    }
+  }, [user]);
 
   const handleContactSeller = async () => {
     if (!listing) return;
@@ -85,8 +108,10 @@ const ViewListing = () => {
           console.error("Error fetching conversations:", convErr);
         }
       }
-      // You could show a toast notification here
-      alert("Failed to start conversation. Please try again.");
+      showError(
+        "Failed to Start Conversation",
+        "Unable to contact the seller. Please try again later."
+      );
     } finally {
       setContacting(false);
     }
@@ -99,18 +124,82 @@ const ViewListing = () => {
   const handleDelete = async () => {
     if (!listing || !id) return;
 
+    const loadingToastId = showLoading(
+      "Deleting Listing",
+      "Please wait while we delete the listing..."
+    );
+
     try {
       setDeleting(true);
       await apiService.deleteListing(id);
+      
+      // Hide loading and show success
+      hideToast(loadingToastId);
+      showSuccess(
+        "Listing Deleted Successfully!",
+        "The listing has been removed from the marketplace."
+      );
+      
       // Navigate to search page after successful deletion
-      navigate('/search');
+      setTimeout(() => navigate('/search'), 1000);
     } catch (err: any) {
       console.error('Error deleting listing:', err);
-      const errorMessage = err.response?.data?.error || 'Failed to delete listing. Please try again.';
-      alert(errorMessage);
+      
+      // Hide loading and show error
+      hideToast(loadingToastId);
+      showError(
+        "Failed to Delete Listing",
+        err.response?.data?.error || 'Please try again later.'
+      );
     } finally {
       setDeleting(false);
       setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleOpenEditCategory = () => {
+    // Set the current category as selected
+    if (listing?.categoryId && typeof listing.categoryId === 'object') {
+      setSelectedCategoryId(listing.categoryId._id);
+    }
+    setShowEditCategoryModal(true);
+  };
+
+  const handleUpdateCategory = async () => {
+    if (!listing || !selectedCategoryId) return;
+
+    const loadingToastId = showLoading(
+      "Updating Category",
+      "Please wait while we update the listing category..."
+    );
+
+    try {
+      setUpdatingCategory(true);
+      const response = await api.put(`/api/admin/listings/${listing._id}/category`, {
+        categoryId: selectedCategoryId
+      });
+
+      // Update the listing in state with the new category
+      setListing(response.data.data.listing);
+      setShowEditCategoryModal(false);
+      
+      // Hide loading and show success
+      hideToast(loadingToastId);
+      showSuccess(
+        "Category Updated Successfully!",
+        "The listing category has been changed."
+      );
+    } catch (err: any) {
+      console.error('Error updating category:', err);
+      
+      // Hide loading and show error
+      hideToast(loadingToastId);
+      showError(
+        "Failed to Update Category",
+        err.response?.data?.message || 'Please try again later.'
+      );
+    } finally {
+      setUpdatingCategory(false);
     }
   };
 
@@ -384,10 +473,7 @@ const ViewListing = () => {
                   <span>Hide/Show Listing</span>
                 </button>
                 <button
-                  onClick={() => {
-                    // TODO: Implement edit categories functionality
-                    alert("Edit categories functionality coming soon");
-                  }}
+                  onClick={handleOpenEditCategory}
                   className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
                 >
                   <Edit className="w-5 h-5" />
@@ -458,6 +544,60 @@ const ViewListing = () => {
                 className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-lg transition-colors"
               >
                 {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Category Modal */}
+      {showEditCategoryModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Edit Category</h2>
+              <button onClick={() => setShowEditCategoryModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-gray-600 mb-4">
+              Change the category for "{listing?.title}"
+            </p>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Category
+              </label>
+              <select
+                value={selectedCategoryId}
+                onChange={(e) => setSelectedCategoryId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select a category</option>
+                {categories.map((cat) => (
+                  <option key={cat._id} value={cat._id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex space-x-3">
+              <button
+                onClick={handleUpdateCategory}
+                disabled={updatingCategory || !selectedCategoryId}
+                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              >
+                {updatingCategory ? 'Updating...' : 'Update Category'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowEditCategoryModal(false)}
+                disabled={updatingCategory}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
               </button>
             </div>
           </div>

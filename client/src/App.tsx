@@ -11,6 +11,7 @@ import SavedListings from './pages/SavedListings';
 import ProtectedRoute from './components/ProtectedRoute';
 import ChatbotButton from './components/ChatbotButton';
 import AdminReportsPage from './pages/AdminReportsPage';
+import AdminCategoriesPage from './pages/AdminCategoriesPage';
 
 function App() {
   return (
@@ -76,6 +77,15 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={["admin"]}>
                   <AdminReportsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/categories"
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <AdminCategoriesPage />
                 </ProtectedRoute>
               }
             />
