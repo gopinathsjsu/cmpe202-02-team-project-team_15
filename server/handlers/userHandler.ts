@@ -61,13 +61,129 @@ export class UserHandler {
     try {
       const { first_name, last_name, email, bio, contactNumber, socialLinks } = req.body;
       
+      // Validation
+      const errors: string[] = [];
+
+      // Validate first name
+      if (first_name !== undefined) {
+        const trimmedFirstName = first_name.trim();
+        if (trimmedFirstName.length === 0) {
+          errors.push('First name cannot be empty');
+        } else if (trimmedFirstName.length < 2) {
+          errors.push('First name must be at least 2 characters');
+        } else if (trimmedFirstName.length > 50) {
+          errors.push('First name must be less than 50 characters');
+        } else if (!/^[a-zA-Z\s'-]+$/.test(trimmedFirstName)) {
+          errors.push('First name can only contain letters, spaces, hyphens, and apostrophes');
+        }
+      }
+
+      // Validate last name
+      if (last_name !== undefined) {
+        const trimmedLastName = last_name.trim();
+        if (trimmedLastName.length === 0) {
+          errors.push('Last name cannot be empty');
+        } else if (trimmedLastName.length < 2) {
+          errors.push('Last name must be at least 2 characters');
+        } else if (trimmedLastName.length > 50) {
+          errors.push('Last name must be less than 50 characters');
+        } else if (!/^[a-zA-Z\s'-]+$/.test(trimmedLastName)) {
+          errors.push('Last name can only contain letters, spaces, hyphens, and apostrophes');
+        }
+      }
+
+      // Validate email
+      if (email !== undefined) {
+        const trimmedEmail = email.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(trimmedEmail)) {
+          errors.push('Invalid email format');
+        }
+      }
+
+      // Validate bio
+      if (bio !== undefined && bio.trim().length > 500) {
+        errors.push('Bio must be less than 500 characters');
+      }
+
+      // Validate contact number
+      if (contactNumber !== undefined && contactNumber.trim().length > 0) {
+        const phoneRegex = /^[\d\s\-\+\(\)]+$/;
+        const trimmedPhone = contactNumber.trim();
+        if (!phoneRegex.test(trimmedPhone)) {
+          errors.push('Contact number can only contain digits, spaces, hyphens, plus signs, and parentheses');
+        } else if (trimmedPhone.replace(/\D/g, '').length < 10) {
+          errors.push('Contact number must have at least 10 digits');
+        } else if (trimmedPhone.length > 20) {
+          errors.push('Contact number must be less than 20 characters');
+        }
+      }
+
+      // Validate social links
+      if (socialLinks) {
+        const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+        
+        if (socialLinks.instagram && socialLinks.instagram.trim().length > 0) {
+          const trimmedUrl = socialLinks.instagram.trim();
+          if (!urlRegex.test(trimmedUrl)) {
+            errors.push('Invalid Instagram URL format');
+          } else if (trimmedUrl.length > 200) {
+            errors.push('Instagram URL must be less than 200 characters');
+          }
+        }
+
+        if (socialLinks.facebook && socialLinks.facebook.trim().length > 0) {
+          const trimmedUrl = socialLinks.facebook.trim();
+          if (!urlRegex.test(trimmedUrl)) {
+            errors.push('Invalid Facebook URL format');
+          } else if (trimmedUrl.length > 200) {
+            errors.push('Facebook URL must be less than 200 characters');
+          }
+        }
+
+        if (socialLinks.twitter && socialLinks.twitter.trim().length > 0) {
+          const trimmedUrl = socialLinks.twitter.trim();
+          if (!urlRegex.test(trimmedUrl)) {
+            errors.push('Invalid Twitter URL format');
+          } else if (trimmedUrl.length > 200) {
+            errors.push('Twitter URL must be less than 200 characters');
+          }
+        }
+
+        if (socialLinks.linkedin && socialLinks.linkedin.trim().length > 0) {
+          const trimmedUrl = socialLinks.linkedin.trim();
+          if (!urlRegex.test(trimmedUrl)) {
+            errors.push('Invalid LinkedIn URL format');
+          } else if (trimmedUrl.length > 200) {
+            errors.push('LinkedIn URL must be less than 200 characters');
+          }
+        }
+      }
+
+      // If there are validation errors, return them
+      if (errors.length > 0) {
+        res.status(400).json({
+          success: false,
+          message: 'Validation failed',
+          errors: errors
+        });
+        return;
+      }
+      
       const updateData: any = {};
       if (first_name) updateData.first_name = first_name.trim();
       if (last_name) updateData.last_name = last_name.trim();
       if (email) updateData.email = email.trim();
       if (bio !== undefined) updateData.bio = bio.trim();
       if (contactNumber !== undefined) updateData.contactNumber = contactNumber.trim();
-      if (socialLinks) updateData.socialLinks = socialLinks;
+      if (socialLinks) {
+        updateData.socialLinks = {
+          instagram: socialLinks.instagram?.trim() || '',
+          facebook: socialLinks.facebook?.trim() || '',
+          twitter: socialLinks.twitter?.trim() || '',
+          linkedin: socialLinks.linkedin?.trim() || ''
+        };
+      }
 
       const user = await User.findByIdAndUpdate(
         (req as any).user._id,

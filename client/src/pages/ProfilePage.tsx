@@ -68,11 +68,109 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  const validateForm = (): string[] => {
+    const errors: string[] = [];
+
+    // Validate first name
+    if (!form.first_name.trim()) {
+      errors.push('First name is required');
+    } else if (form.first_name.trim().length < 2) {
+      errors.push('First name must be at least 2 characters');
+    } else if (form.first_name.trim().length > 50) {
+      errors.push('First name must be less than 50 characters');
+    } else if (!/^[a-zA-Z\s'-]+$/.test(form.first_name.trim())) {
+      errors.push('First name can only contain letters, spaces, hyphens, and apostrophes');
+    }
+
+    // Validate last name
+    if (!form.last_name.trim()) {
+      errors.push('Last name is required');
+    } else if (form.last_name.trim().length < 2) {
+      errors.push('Last name must be at least 2 characters');
+    } else if (form.last_name.trim().length > 50) {
+      errors.push('Last name must be less than 50 characters');
+    } else if (!/^[a-zA-Z\s'-]+$/.test(form.last_name.trim())) {
+      errors.push('Last name can only contain letters, spaces, hyphens, and apostrophes');
+    }
+
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!form.email.trim()) {
+      errors.push('Email is required');
+    } else if (!emailRegex.test(form.email.trim())) {
+      errors.push('Invalid email format');
+    }
+
+    // Validate bio
+    if (form.bio.trim().length > 500) {
+      errors.push('Bio must be less than 500 characters');
+    }
+
+    // Validate contact number
+    if (form.contactNumber.trim().length > 0) {
+      const phoneRegex = /^[\d\s\-\+\(\)]+$/;
+      const digitsOnly = form.contactNumber.replace(/\D/g, '');
+      if (!phoneRegex.test(form.contactNumber.trim())) {
+        errors.push('Contact number can only contain digits, spaces, hyphens, plus signs, and parentheses');
+      } else if (digitsOnly.length < 10) {
+        errors.push('Contact number must have at least 10 digits');
+      } else if (form.contactNumber.trim().length > 20) {
+        errors.push('Contact number must be less than 20 characters');
+      }
+    }
+
+    // Validate social links
+    const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+    
+    if (form.socialLinks.instagram.trim().length > 0) {
+      if (!urlRegex.test(form.socialLinks.instagram.trim())) {
+        errors.push('Invalid Instagram URL format');
+      } else if (form.socialLinks.instagram.trim().length > 200) {
+        errors.push('Instagram URL must be less than 200 characters');
+      }
+    }
+
+    if (form.socialLinks.facebook.trim().length > 0) {
+      if (!urlRegex.test(form.socialLinks.facebook.trim())) {
+        errors.push('Invalid Facebook URL format');
+      } else if (form.socialLinks.facebook.trim().length > 200) {
+        errors.push('Facebook URL must be less than 200 characters');
+      }
+    }
+
+    if (form.socialLinks.twitter.trim().length > 0) {
+      if (!urlRegex.test(form.socialLinks.twitter.trim())) {
+        errors.push('Invalid Twitter URL format');
+      } else if (form.socialLinks.twitter.trim().length > 200) {
+        errors.push('Twitter URL must be less than 200 characters');
+      }
+    }
+
+    if (form.socialLinks.linkedin.trim().length > 0) {
+      if (!urlRegex.test(form.socialLinks.linkedin.trim())) {
+        errors.push('Invalid LinkedIn URL format');
+      } else if (form.socialLinks.linkedin.trim().length > 200) {
+        errors.push('LinkedIn URL must be less than 200 characters');
+      }
+    }
+
+    return errors;
+  };
+
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     setSuccess('');
+
+    // Validate form
+    const validationErrors = validateForm();
+    if (validationErrors.length > 0) {
+      setError(validationErrors.join('. '));
+      setLoading(false);
+      return;
+    }
+
     try {
       // Update profile API call
       await apiService.updateUserProfile(form);
@@ -97,7 +195,14 @@ const ProfilePage: React.FC = () => {
       setSuccess('Profile updated successfully!');
       setEditMode(false);
     } catch (err: any) {
-      setError('Failed to update profile.');
+      // Check if backend returned validation errors
+      if (err.response?.data?.errors) {
+        setError(err.response.data.errors.join('. '));
+      } else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Failed to update profile.');
+      }
     } finally {
       setLoading(false);
     }
@@ -158,6 +263,10 @@ const ProfilePage: React.FC = () => {
               value={form.first_name}
               onChange={handleChange}
               className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-200"
+              maxLength={50}
+              minLength={2}
+              pattern="[a-zA-Z\s'\-]+"
+              title="First name can only contain letters, spaces, hyphens, and apostrophes"
               required
             />
           </div>
@@ -169,6 +278,10 @@ const ProfilePage: React.FC = () => {
               value={form.last_name}
               onChange={handleChange}
               className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-200"
+              maxLength={50}
+              minLength={2}
+              pattern="[a-zA-Z\s'\-]+"
+              title="Last name can only contain letters, spaces, hyphens, and apostrophes"
               required
             />
           </div>
@@ -191,62 +304,71 @@ const ProfilePage: React.FC = () => {
               value={form.bio}
               onChange={handleChange}
               className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-200"
+              maxLength={500}
               placeholder="Tell us about yourself"
             />
+            <small className="text-gray-500">{form.bio.length}/500 characters</small>
           </div>
           <div>
             <label className="block text-gray-700 mb-1 font-semibold">Contact Number</label>
             <input
-              type="text"
+              type="tel"
               name="contactNumber"
               value={form.contactNumber}
               onChange={handleChange}
               className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-200"
+              maxLength={20}
+              pattern="[\d\s\-\+\(\)]+"
+              title="Contact number can only contain digits, spaces, hyphens, plus signs, and parentheses"
               placeholder="Your phone number"
             />
           </div>
           <div>
             <label className="block text-gray-700 mb-1 font-semibold">Instagram</label>
             <input
-              type="text"
+              type="url"
               name="socialLinks.instagram"
               value={form.socialLinks.instagram}
               onChange={handleChange}
               className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-pink-200"
-              placeholder="Instagram profile URL"
+              maxLength={200}
+              placeholder="https://instagram.com/username"
             />
           </div>
           <div>
             <label className="block text-gray-700 mb-1 font-semibold">Facebook</label>
             <input
-              type="text"
+              type="url"
               name="socialLinks.facebook"
               value={form.socialLinks.facebook}
               onChange={handleChange}
               className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-200"
-              placeholder="Facebook profile URL"
+              maxLength={200}
+              placeholder="https://facebook.com/username"
             />
           </div>
           <div>
             <label className="block text-gray-700 mb-1 font-semibold">Twitter</label>
             <input
-              type="text"
+              type="url"
               name="socialLinks.twitter"
               value={form.socialLinks.twitter}
               onChange={handleChange}
               className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-100"
-              placeholder="Twitter profile URL"
+              maxLength={200}
+              placeholder="https://twitter.com/username"
             />
           </div>
           <div>
             <label className="block text-gray-700 mb-1 font-semibold">LinkedIn</label>
             <input
-              type="text"
+              type="url"
               name="socialLinks.linkedin"
               value={form.socialLinks.linkedin}
               onChange={handleChange}
               className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-300"
-              placeholder="LinkedIn profile URL"
+              maxLength={200}
+              placeholder="https://linkedin.com/in/username"
             />
           </div>
           <div className="md:col-span-2">
