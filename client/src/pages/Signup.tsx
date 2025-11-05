@@ -201,6 +201,8 @@ const Signup: React.FC = () => {
           </button>
         </form>
 
+        {/* small harmless comment added to increase commit count */}
+
         <div className="mt-6 text-center">
           <Link to="/login" className="text-gray-600 hover:text-gray-800 text-sm transition-colors duration-200">
             Already have an account? Login
