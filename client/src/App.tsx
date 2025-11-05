@@ -12,6 +12,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ChatbotButton from './components/ChatbotButton';
 import AdminReportsPage from './pages/AdminReportsPage';
 import AdminCategoriesPage from './pages/AdminCategoriesPage';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -95,6 +96,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <SavedListings />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/profile" 
+              element={
+                <ProtectedRoute>
+                  <Profile />
                 </ProtectedRoute>
               } 
             />
