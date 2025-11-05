@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { MessageSquare, Heart, BarChart3, FolderTree } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { ProfileDropdown } from './ProfileDropdown';
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -98,12 +99,8 @@ const Navbar: React.FC = () => {
               </>
             )}
 
-            {/* User Avatar */}
-            <button className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors">
-              <span className="text-gray-700 text-sm font-medium">
-                {user?.first_name?.[0]?.toUpperCase() || 'A'}
-              </span>
-            </button>
+            {/* User Profile Dropdown */}
+            <ProfileDropdown />
           </div>
         </div>
       </div>
