@@ -8,6 +8,15 @@ interface User {
   last_name: string;
   status: string;
   roles: string[];
+  bio?: string;
+  contactNumber?: string;
+  socialLinks?: {
+    instagram?: string;
+    facebook?: string;
+    twitter?: string;
+    linkedin?: string;
+    [key: string]: string | undefined;
+  };
 }
 
 interface AuthContextType {
