@@ -254,141 +254,199 @@ const ProfilePage: React.FC = () => {
         )}
       </div>
       {editMode && (
-        <form className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6" onSubmit={handleUpdate}>
-          <div>
-            <label className="block text-gray-700 mb-1 font-semibold">First Name</label>
-            <input
-              type="text"
-              name="first_name"
-              value={form.first_name}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-200"
-              maxLength={50}
-              minLength={2}
-              pattern="[a-zA-Z\s'\-]+"
-              title="First name can only contain letters, spaces, hyphens, and apostrophes"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 mb-1 font-semibold">Last Name</label>
-            <input
-              type="text"
-              name="last_name"
-              value={form.last_name}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-200"
-              maxLength={50}
-              minLength={2}
-              pattern="[a-zA-Z\s'\-]+"
-              title="Last name can only contain letters, spaces, hyphens, and apostrophes"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 mb-1 font-semibold">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-200"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 mb-1 font-semibold">Bio</label>
-            <input
-              type="text"
-              name="bio"
-              value={form.bio}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-200"
-              maxLength={500}
-              placeholder="Tell us about yourself"
-            />
-            <small className="text-gray-500">{form.bio.length}/500 characters</small>
-          </div>
-          <div>
-            <label className="block text-gray-700 mb-1 font-semibold">Contact Number</label>
-            <input
-              type="tel"
-              name="contactNumber"
-              value={form.contactNumber}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-200"
-              maxLength={20}
-              pattern="[\d\s\-\+\(\)]+"
-              title="Contact number can only contain digits, spaces, hyphens, plus signs, and parentheses"
-              placeholder="Your phone number"
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 mb-1 font-semibold">Instagram</label>
-            <input
-              type="url"
-              name="socialLinks.instagram"
-              value={form.socialLinks.instagram}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-pink-200"
-              maxLength={200}
-              placeholder="https://instagram.com/username"
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 mb-1 font-semibold">Facebook</label>
-            <input
-              type="url"
-              name="socialLinks.facebook"
-              value={form.socialLinks.facebook}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-200"
-              maxLength={200}
-              placeholder="https://facebook.com/username"
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 mb-1 font-semibold">Twitter</label>
-            <input
-              type="url"
-              name="socialLinks.twitter"
-              value={form.socialLinks.twitter}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-100"
-              maxLength={200}
-              placeholder="https://twitter.com/username"
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 mb-1 font-semibold">LinkedIn</label>
-            <input
-              type="url"
-              name="socialLinks.linkedin"
-              value={form.socialLinks.linkedin}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-300"
-              maxLength={200}
-              placeholder="https://linkedin.com/in/username"
-            />
-          </div>
-          <div className="md:col-span-2">
-            {error && <div className="text-red-500 mb-2">{error}</div>}
-            {success && <div className="text-green-500 mb-2">{success}</div>}
-            <div className="flex gap-2 mt-2">
-              <button
-                type="submit"
-                className="px-6 py-2 bg-green-500 text-white rounded-full font-semibold shadow hover:bg-green-600 transition"
-                disabled={loading}
-              >
-                {loading ? 'Saving...' : 'Save Changes'}
-              </button>
-              <button
-                type="button"
-                className="px-6 py-2 bg-gray-300 text-gray-700 rounded-full font-semibold shadow hover:bg-gray-400 transition"
-                onClick={() => setEditMode(false)}
-              >
-                Cancel
-              </button>
+        <form className="mt-8" onSubmit={handleUpdate}>
+          <div className="space-y-6">
+            {/* Personal Information Section */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Personal Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-gray-700 mb-1 font-semibold">First Name <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    name="first_name"
+                    value={form.first_name}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
+                    maxLength={50}
+                    minLength={2}
+                    pattern="[a-zA-Z\s'\-]+"
+                    title="First name can only contain letters, spaces, hyphens, and apostrophes"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 mb-1 font-semibold">Last Name <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    name="last_name"
+                    value={form.last_name}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
+                    maxLength={50}
+                    minLength={2}
+                    pattern="[a-zA-Z\s'\-]+"
+                    title="Last name can only contain letters, spaces, hyphens, and apostrophes"
+                    required
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-gray-700 mb-1 font-semibold">Email <span className="text-red-500">*</span></label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
+                    required
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-gray-700 mb-1 font-semibold">Bio</label>
+                  <textarea
+                    name="bio"
+                    value={form.bio}
+                    onChange={(e) => setForm({ ...form, bio: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition resize-none"
+                    maxLength={500}
+                    rows={3}
+                    placeholder="Tell us about yourself"
+                  />
+                  <small className="text-gray-500 text-xs">{form.bio.length}/500 characters</small>
+                </div>
+              </div>
+            </div>
+
+            {/* Contact Information Section */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Contact Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <label className="block text-gray-700 mb-1 font-semibold">Contact Number</label>
+                  <input
+                    type="tel"
+                    name="contactNumber"
+                    value={form.contactNumber}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
+                    maxLength={20}
+                    pattern="[\d\s\-\+\(\)]+"
+                    title="Contact number can only contain digits, spaces, hyphens, plus signs, and parentheses"
+                    placeholder="e.g., +1 (555) 123-4567"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Social Media Links Section */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Social Media Links</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-gray-700 mb-1 font-semibold">
+                    <svg className="w-4 h-4 inline mr-1 text-pink-600" fill="currentColor" viewBox="0 0 24 24"><path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2z"/></svg>
+                    Instagram
+                  </label>
+                  <input
+                    type="url"
+                    name="socialLinks.instagram"
+                    value={form.socialLinks.instagram}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-400 focus:border-transparent transition"
+                    maxLength={200}
+                    placeholder="https://instagram.com/username"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 mb-1 font-semibold">
+                    <svg className="w-4 h-4 inline mr-1 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M22 12c0-5.522-4.478-10-10-10S2 6.478 2 12c0 5.019 3.676 9.163 8.438 9.877v-6.987h-2.54v-2.89h2.54V9.797c0-2.507 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562v1.875h2.773l-.443 2.89h-2.33v6.987C18.324 21.163 22 17.019 22 12z"/></svg>
+                    Facebook
+                  </label>
+                  <input
+                    type="url"
+                    name="socialLinks.facebook"
+                    value={form.socialLinks.facebook}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
+                    maxLength={200}
+                    placeholder="https://facebook.com/username"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 mb-1 font-semibold">
+                    <svg className="w-4 h-4 inline mr-1 text-blue-400" fill="currentColor" viewBox="0 0 24 24"><path d="M22.46 6c-.77.35-1.6.59-2.47.69a4.3 4.3 0 0 0 1.88-2.37c-.83.49-1.75.85-2.72 1.04A4.28 4.28 0 0 0 16.11 4c-2.37 0-4.29 1.92-4.29 4.29 0 .34.04.67.1.99C7.69 9.13 4.07 7.38 1.64 4.9c-.37.64-.58 1.38-.58 2.17 0 1.5.76 2.83 1.92 3.61-.71-.02-1.38-.22-1.97-.54v.05c0 2.1 1.49 3.85 3.47 4.25-.36.1-.74.16-1.13.16-.28 0-.54-.03-.8-.08.54 1.68 2.12 2.9 3.99 2.93A8.6 8.6 0 0 1 2 19.54c-.56 0-1.11-.03-1.65-.1A12.13 12.13 0 0 0 8.29 21c7.55 0 11.69-6.26 11.69-11.69 0-.18-.01-.36-.02-.54A8.18 8.18 0 0 0 22.46 6z"/></svg>
+                    Twitter
+                  </label>
+                  <input
+                    type="url"
+                    name="socialLinks.twitter"
+                    value={form.socialLinks.twitter}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-transparent transition"
+                    maxLength={200}
+                    placeholder="https://twitter.com/username"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 mb-1 font-semibold">
+                    <svg className="w-4 h-4 inline mr-1 text-blue-700" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.76 0-5 2.24-5 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5v-14c0-2.76-2.24-5-5-5zm-11 19h-3v-9h3v9zm-1.5-10.28c-.97 0-1.75-.79-1.75-1.75s.78-1.75 1.75-1.75 1.75.79 1.75 1.75-.78 1.75-1.75 1.75zm13.5 10.28h-3v-4.5c0-1.08-.02-2.47-1.5-2.47-1.5 0-1.73 1.17-1.73 2.38v4.59h-3v-9h2.88v1.23h.04c.4-.76 1.38-1.56 2.84-1.56 3.04 0 3.6 2 3.6 4.59v4.74z"/></svg>
+                    LinkedIn
+                  </label>
+                  <input
+                    type="url"
+                    name="socialLinks.linkedin"
+                    value={form.socialLinks.linkedin}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    maxLength={200}
+                    placeholder="https://linkedin.com/in/username"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="pt-4 border-t">
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
+              {success && (
+                <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
+                  {success}
+                </div>
+              )}
+              <div className="flex gap-3 justify-end">
+                <button
+                  type="button"
+                  className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition"
+                  onClick={() => {
+                    setEditMode(false);
+                    setError('');
+                    setSuccess('');
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-semibold shadow-md hover:from-blue-600 hover:to-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </span>
+                  ) : (
+                    'Save Changes'
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </form>
