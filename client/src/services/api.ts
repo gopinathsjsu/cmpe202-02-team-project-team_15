@@ -197,6 +197,12 @@ class ApiService {
     return data;
   }
 
+  // Update user profile
+  async updateUserProfile(profile: { first_name: string; last_name: string; email: string }) {
+    const { data } = await api.put('/api/users/profile', profile);
+    return data;
+  }
+
   async sendMessage(
     conversationId: string,
     body: string
