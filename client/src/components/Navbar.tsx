@@ -148,7 +148,7 @@ const Navbar: React.FC = () => {
                     }}
                     className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-200"
                   >
-                    Sign Out
+                    Sign Out!
                   </button>
                 </div>
               )}
