@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, User, Settings } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 import { authAPI } from '../services/auth';
 
 export const ProfileDropdown: React.FC = () => {
@@ -62,15 +62,6 @@ export const ProfileDropdown: React.FC = () => {
             >
               <User className="h-4 w-4 mr-2" />
               Your Profile
-            </a>
-            
-            <a
-              href="/settings"
-              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
-              role="menuitem"
-            >
-              <Settings className="h-4 w-4 mr-2" />
-              Settings
             </a>
 
             <button
