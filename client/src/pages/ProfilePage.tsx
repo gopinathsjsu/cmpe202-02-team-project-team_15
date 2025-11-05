@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 
 const ProfilePage: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, setUser } = useAuth();
   const [editMode, setEditMode] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [form, setForm] = useState({
     first_name: user?.first_name || '',
     last_name: user?.last_name || '',
@@ -18,6 +19,35 @@ const ProfilePage: React.FC = () => {
       linkedin: user?.socialLinks?.linkedin || '',
     }
   });
+
+  // Fetch latest user profile on mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setIsLoadingProfile(true);
+      try {
+        const profile = await apiService.getUserProfile();
+        setUser(profile);
+        setForm({
+          first_name: profile.first_name || '',
+          last_name: profile.last_name || '',
+          email: profile.email || '',
+          bio: profile.bio || '',
+          contactNumber: profile.contactNumber || '',
+          socialLinks: {
+            instagram: profile.socialLinks?.instagram || '',
+            facebook: profile.socialLinks?.facebook || '',
+            twitter: profile.socialLinks?.twitter || '',
+            linkedin: profile.socialLinks?.linkedin || '',
+          }
+        });
+      } catch (err) {
+        console.error('Failed to fetch profile:', err);
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+    fetchProfile();
+  }, []);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
@@ -46,6 +76,24 @@ const ProfilePage: React.FC = () => {
     try {
       // Update profile API call
       await apiService.updateUserProfile(form);
+      // Fetch updated profile and sync context/localStorage
+      const updatedProfile = await apiService.getUserProfile();
+      setUser(updatedProfile);
+      setForm({
+        first_name: updatedProfile.first_name || '',
+        last_name: updatedProfile.last_name || '',
+        email: updatedProfile.email || '',
+        bio: updatedProfile.bio || '',
+        contactNumber: updatedProfile.contactNumber || '',
+        socialLinks: {
+          instagram: updatedProfile.socialLinks?.instagram || '',
+          facebook: updatedProfile.socialLinks?.facebook || '',
+          twitter: updatedProfile.socialLinks?.twitter || '',
+          linkedin: updatedProfile.socialLinks?.linkedin || '',
+        }
+      });
+      // Optionally update localStorage
+      localStorage.setItem('user', JSON.stringify(updatedProfile));
       setSuccess('Profile updated successfully!');
       setEditMode(false);
     } catch (err: any) {
@@ -57,14 +105,18 @@ const ProfilePage: React.FC = () => {
 
   if (!user) return <div className="p-8">Please log in to view your profile.</div>;
 
+  if (isLoadingProfile) {
+    return <div className="p-8 text-center">Loading profile...</div>;
+  }
+
   return (
     <div className="max-w-2xl mx-auto mt-10 p-8 bg-white rounded-2xl shadow-xl">
       <div className="flex flex-col items-center gap-4">
         <div className="w-28 h-28 rounded-full border-4 border-blue-400 shadow-lg flex items-center justify-center text-5xl font-bold text-blue-600 bg-gradient-to-br from-blue-100 to-blue-300 mb-2">
-          {user.first_name[0].toUpperCase()}
+          {user.first_name?.[0]?.toUpperCase() || 'U'}
         </div>
-        <h2 className="text-3xl font-bold mb-1 text-gray-900">{user.first_name} {user.last_name}</h2>
-        <p className="text-lg text-gray-500 mb-2">{user.email}</p>
+        <h2 className="text-3xl font-bold mb-1 text-gray-900">{user.first_name || ''} {user.last_name || ''}</h2>
+        <p className="text-lg text-gray-500 mb-2">{user.email || ''}</p>
         <div className="w-full flex flex-col md:flex-row gap-6 justify-between mt-4">
           <div className="flex-1">
             <div className="mb-2">

@@ -36,6 +36,9 @@ export class UserHandler {
             status: user.status,
             email_verified_at: user.email_verified_at,
             roles: roles,
+            bio: user.bio,
+            contactNumber: user.contactNumber,
+            socialLinks: user.socialLinks,
             created_at: user.created_at,
             updated_at: user.updated_at
           }
@@ -56,11 +59,15 @@ export class UserHandler {
   // @access  Private
   static async updateProfile(req: Request, res: Response): Promise<void> {
     try {
-      const { first_name, last_name } = req.body;
+      const { first_name, last_name, email, bio, contactNumber, socialLinks } = req.body;
       
       const updateData: any = {};
       if (first_name) updateData.first_name = first_name.trim();
       if (last_name) updateData.last_name = last_name.trim();
+      if (email) updateData.email = email.trim();
+      if (bio !== undefined) updateData.bio = bio.trim();
+      if (contactNumber !== undefined) updateData.contactNumber = contactNumber.trim();
+      if (socialLinks) updateData.socialLinks = socialLinks;
 
       const user = await User.findByIdAndUpdate(
         (req as any).user._id,
@@ -68,10 +75,32 @@ export class UserHandler {
         { new: true, runValidators: true }
       ).select('-password_hash');
 
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+        return;
+      }
+
+      // Get user roles
+      const userRoles = await UserRole.find({ user_id: user._id }).populate('role_id');
+      const roles = userRoles.map((ur: any) => ur.role_id.name);
+
       res.json({
         success: true,
         message: 'Profile updated successfully',
-        data: { user }
+        data: {
+          id: user._id,
+          email: user.email,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          status: user.status,
+          roles: roles,
+          bio: user.bio,
+          contactNumber: user.contactNumber,
+          socialLinks: user.socialLinks
+        }
       });
 
     } catch (error: any) {
