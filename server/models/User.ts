@@ -11,6 +11,15 @@ export interface IUser extends Document {
   created_at: Date;
   updated_at: Date;
   full_name: string;
+  bio?: string;
+  contactNumber?: string;
+  socialLinks?: {
+    instagram?: string;
+    facebook?: string;
+    twitter?: string;
+    linkedin?: string;
+    [key: string]: string | undefined;
+  };
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -44,6 +53,21 @@ const userSchema = new Schema<IUser>({
   email_verified_at: {
     type: Date,
     default: null
+  },
+  bio: {
+    type: String,
+    default: '',
+    trim: true
+  },
+  contactNumber: {
+    type: String,
+    default: '',
+    trim: true
+  },
+  socialLinks: {
+    type: Map,
+    of: String,
+    default: {}
   }
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
