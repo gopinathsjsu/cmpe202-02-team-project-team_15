@@ -139,7 +139,7 @@ const Navbar: React.FC = () => {
                     }}
                     className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    Your Profile
+                    Your profile
                   </button>
                   <button
                     onClick={() => {
