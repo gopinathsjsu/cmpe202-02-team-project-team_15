@@ -11,17 +11,6 @@ export interface IUser extends Document {
   created_at: Date;
   updated_at: Date;
   full_name: string;
-  photo_url?: string;
-  bio?: string;
-  contact_info?: {
-    phone?: string;
-    address?: string;
-    social_media?: {
-      linkedin?: string;
-      twitter?: string;
-      instagram?: string;
-    };
-  };
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -55,39 +44,6 @@ const userSchema = new Schema<IUser>({
   email_verified_at: {
     type: Date,
     default: null
-  },
-  photo_url: {
-    type: String,
-    default: null
-  },
-  bio: {
-    type: String,
-    default: '',
-    maxlength: 500
-  },
-  contact_info: {
-    phone: {
-      type: String,
-      default: null
-    },
-    address: {
-      type: String,
-      default: null
-    },
-    social_media: {
-      linkedin: {
-        type: String,
-        default: null
-      },
-      twitter: {
-        type: String,
-        default: null
-      },
-      instagram: {
-        type: String,
-        default: null
-      }
-    }
   }
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
@@ -120,4 +76,3 @@ userSchema.virtual('full_name').get(function() {
 });
 
 export const User = mongoose.model<IUser>('User', userSchema);
-
