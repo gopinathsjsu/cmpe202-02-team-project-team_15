@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getProfile, updateProfile, ProfileData } from '../services/profile';
+import Navbar from '../components/Navbar';
 
 const Profile: React.FC = () => {
   const { user } = useAuth();
@@ -88,6 +89,7 @@ const Profile: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
+      <Navbar />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
