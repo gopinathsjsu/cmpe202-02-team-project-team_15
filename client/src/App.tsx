@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import Auth from './components/Auth';
-import ProfilePage from './pages/ProfilePage';
 import SearchPage from './pages/SearchPage';
 import ViewListing from './pages/ViewListing';
 import EditListing from './pages/EditListing';
@@ -13,6 +12,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ChatbotButton from './components/ChatbotButton';
 import AdminReportsPage from './pages/AdminReportsPage';
 import AdminCategoriesPage from './pages/AdminCategoriesPage';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -22,7 +22,6 @@ function App() {
           <div className="App">
             <ChatbotButton />
           <Routes>
-            <Route path="/profile" element={<ProfilePage />} />
             {/* Authentication routes */}
             <Route path="/login" element={<Auth />} />
             <Route path="/signup" element={<Auth />} />
@@ -97,6 +96,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <SavedListings />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/profile" 
+              element={
+                <ProtectedRoute>
+                  <Profile />
                 </ProtectedRoute>
               } 
             />

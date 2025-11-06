@@ -30,6 +30,7 @@ import listingsRoutes from './routes/listings';
 import chatbotRoutes from './routes/chatbot';
 import uploadRoutes from './routes/upload';
 import savedListingsRoutes from './routes/savedListings';
+import profileRoutes from './routes/profile';
 
 export const app = express();
 
@@ -40,7 +41,9 @@ app.use(cors({
     'http://127.0.0.1:3000',
     'http://localhost:3000',
     'http://localhost:3002',
-    'http://127.0.0.1:3002','http://localhost:3001'
+    'http://127.0.0.1:3002',
+    'http://localhost:3001',
+    'http://127.0.0.1:3001'
   ],
   credentials: true
 }));
@@ -152,6 +155,9 @@ app.use('/api/listings', searchRoutes);
 app.use('/api/listings', listingsRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/saved-listings', savedListingsRoutes);
+
+// Profile routes
+app.use('/api/profile', profileRoutes);
 
 // Chatbot routes
 app.use('/api/chatbot', chatbotRoutes);

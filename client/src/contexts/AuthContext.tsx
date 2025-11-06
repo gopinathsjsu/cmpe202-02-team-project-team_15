@@ -8,15 +8,6 @@ interface User {
   last_name: string;
   status: string;
   roles: string[];
-  bio?: string;
-  contactNumber?: string;
-  socialLinks?: {
-    instagram?: string;
-    facebook?: string;
-    twitter?: string;
-    linkedin?: string;
-    [key: string]: string | undefined;
-  };
 }
 
 interface AuthContextType {
@@ -25,7 +16,6 @@ interface AuthContextType {
   signup: (email: string, password: string, firstName: string, lastName: string, adminKey?: string) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
-    setUser: React.Dispatch<React.SetStateAction<User | null>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -112,12 +102,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const value = {
-  user,
-  setUser,
-  login,
-  signup,
-  logout,
-  loading
+    user,
+    login,
+    signup,
+    logout,
+    loading
   };
 
   return (

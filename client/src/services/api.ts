@@ -168,12 +168,8 @@ class ApiService {
     const { data } = await api.get<IListing>(`/api/listings/${id}`);
     return data;
   }
-  
-  // Get current user's profile
-  async getUserProfile(): Promise<any> {
-    const { data } = await api.get('/api/users/profile');
-    return data.data.user;
-  }  // Create new listing
+
+  // Create new listing
   async createListing(listingData: {
     title: string;
     description: string;
@@ -198,24 +194,6 @@ class ApiService {
 
   async getMessages(conversationId: string): Promise<{ messages: any[] }> {
     const { data } = await api.get(`/api/chats/${conversationId}/messages`);
-    return data;
-  }
-
-  // Update user profile
-  async updateUserProfile(profile: { 
-    first_name: string; 
-    last_name: string; 
-    email: string;
-    bio?: string;
-    contactNumber?: string;
-    socialLinks?: {
-      instagram?: string;
-      facebook?: string;
-      twitter?: string;
-      linkedin?: string;
-    };
-  }) {
-    const { data } = await api.put('/api/users/profile', profile);
     return data;
   }
 
