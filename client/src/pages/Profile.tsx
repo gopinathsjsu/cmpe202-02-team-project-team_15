@@ -141,7 +141,7 @@ const Profile: React.FC = () => {
               <div className="h-40 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 rounded-t-lg"></div>
               
               {/* Profile Section */}
-              <div className="px-4 sm:px-6 lg:px-8 pb-8 -mt-6">
+              <div className="px-4 sm:px-6 lg:px-8 pb-8 pt-2">
             {/* Profile Photo */}
             <div className="-mt-12 flex items-end space-x-5">
               <div className="flex">
