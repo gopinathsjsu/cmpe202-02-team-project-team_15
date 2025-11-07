@@ -177,10 +177,10 @@ const Profile: React.FC = () => {
               <div className="h-40 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 rounded-t-lg"></div>
               
               {/* Profile Section */}
-              <div className="px-4 sm:px-6 lg:px-8 pb-8 pt-2">
-            {/* Profile Photo */}
-            <div className="-mt-12 flex items-end space-x-5">
-              <div className="flex">
+              <div className="px-4 sm:px-6 lg:px-8 pb-6 pt-0">
+            {/* Profile Photo and Info */}
+            <div className="-mt-12 flex items-start gap-5">
+              <div className="flex-shrink-0">
                 <div className="h-24 w-24 rounded-full ring-4 ring-white bg-gray-200 flex items-center justify-center overflow-hidden">
                   {formData.photo_url ? (
                     <img src={formData.photo_url} alt="Profile" className="h-24 w-24 rounded-full object-cover" />
@@ -190,15 +190,69 @@ const Profile: React.FC = () => {
                 </div>
               </div>
               
-              <div className="flex-1 min-w-0 flex flex-col justify-end pb-1">
-                <h2 className="text-2xl font-bold text-gray-900 truncate">
+              {/* Name, Email and Social Links */}
+              <div className="flex-1 pt-16">
+                <h2 className="text-2xl font-bold text-gray-900">
                   {formData.first_name} {formData.last_name}
                 </h2>
-                <p className="text-sm text-gray-500">{formData.email}</p>
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  <p className="text-sm text-gray-500">{formData.email}</p>
+                  
+                  {/* Social Media Links - Inline with email */}
+                  {(formData.contact_info?.social_media?.linkedin || 
+                    formData.contact_info?.social_media?.twitter || 
+                    formData.contact_info?.social_media?.instagram) && (
+                    <>
+                      <span className="text-gray-300">•</span>
+                      <div className="flex items-center gap-2">
+                        {formData.contact_info?.social_media?.linkedin && (
+                          <a
+                            href={formData.contact_info.social_media.linkedin}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-600 hover:text-blue-700 transition-all duration-200 transform hover:scale-110"
+                            title="LinkedIn"
+                          >
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M17.04 17.043h-2.962v-4.64c0-1.107-.023-2.531-1.544-2.531-1.544 0-1.78 1.204-1.78 2.449v4.722H7.793V7.5h2.844v1.3h.039c.397-.75 1.37-1.54 2.818-1.54 3.014 0 3.572 1.984 3.572 4.564v5.22zM4.448 6.194c-.954 0-1.727-.773-1.727-1.727s.773-1.727 1.727-1.727 1.727.773 1.727 1.727-.773 1.727-1.727 1.727zm1.482 10.849h-2.96V7.5h2.96v9.543z" />
+                            </svg>
+                          </a>
+                        )}
+                        
+                        {formData.contact_info?.social_media?.twitter && (
+                          <a
+                            href={formData.contact_info.social_media.twitter}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center w-7 h-7 rounded-full bg-sky-100 hover:bg-sky-200 text-sky-600 hover:text-sky-700 transition-all duration-200 transform hover:scale-110"
+                            title="Twitter"
+                          >
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M6.29 18.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0020 3.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.073 4.073 0 01.8 7.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 010 16.407a11.615 11.615 0 006.29 1.84" />
+                            </svg>
+                          </a>
+                        )}
+                        
+                        {formData.contact_info?.social_media?.instagram && (
+                          <a
+                            href={formData.contact_info.social_media.instagram}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center w-7 h-7 rounded-full bg-pink-100 hover:bg-pink-200 text-pink-600 hover:text-pink-700 transition-all duration-200 transform hover:scale-110"
+                            title="Instagram"
+                          >
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M10 2.2a24.6 24.6 0 0 1 3.2.1 4.1 4.1 0 0 1 1.5.3c.4.1.7.3 1 .5.3.3.5.6.7 1 .2.3.3.7.3 1.5.1.8.1 1.1.1 3.2v2.4a24.6 24.6 0 0 1-.1 3.2c0 .8-.1 1.2-.3 1.5-.2.4-.4.7-.7 1-.3.3-.6.5-1 .7-.3.2-.7.3-1.5.3-.8.1-1.1.1-3.2.1H7.8a24.6 24.6 0 0 1-3.2-.1 4.1 4.1 0 0 1-1.5-.3c-.4-.2-.7-.4-1-.7-.3-.3-.5-.6-.7-1-.2-.3-.3-.7-.3-1.5-.1-.8-.1-1.1-.1-3.2V7.8c0-2.1 0-2.4.1-3.2 0-.8.1-1.2.3-1.5.2-.4.4-.7.7-1 .3-.2.6-.4 1-.7.3-.2.7-.3 1.5-.3.8-.1 1.1-.1 3.2-.1H10m0-1.5h-2.4c-2.2 0-2.5 0-3.3.1-.9 0-1.5.2-2 .4a4.3 4.3 0 0 0-1.6 1C.4 1.6.2 2 0 2.6-.1 3.1-.2 3.7-.2 4.6v5.2c0 2.2 0 2.5.1 3.3.1.9.2 1.5.4 2a4.3 4.3 0 0 0 1 1.6c.4.3.8.5 1.4.7.5.1 1.1.2 2 .3h5.2c2.2 0 2.5 0 3.3-.1.9-.1 1.5-.2 2-.4a4.3 4.3 0 0 0 1.6-1c.3-.4.5-.8.7-1.4.1-.5.2-1.1.3-2v-5.2c0-2.2 0-2.5-.1-3.3-.1-.9-.2-1.5-.4-2a4.3 4.3 0 0 0-1-1.6c-.4-.3-.8-.5-1.4-.7-.5-.1-1.1-.2-2-.3h-3.3zm0 4.1a5.2 5.2 0 1 1 0 10.4 5.2 5.2 0 0 1 0-10.4zm0 8.6a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8zm6.8-8.8a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0z"/>
+                            </svg>
+                          </a>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
         </div>
 
         {/* Personal Information Card */}
@@ -347,7 +401,7 @@ const Profile: React.FC = () => {
                       </svg>
                     </div>
                     <input
-                      type="url"
+                      type="text"
                       name="contact_info.social_media.linkedin"
                       id="contact_info.social_media.linkedin"
                       value={formData.contact_info?.social_media?.linkedin || ''}
@@ -369,7 +423,7 @@ const Profile: React.FC = () => {
                         </svg>
                       </div>
                       <input
-                        type="url"
+                        type="text"
                         name="contact_info.social_media.twitter"
                         id="contact_info.social_media.twitter"
                         value={formData.contact_info?.social_media?.twitter || ''}
@@ -392,7 +446,7 @@ const Profile: React.FC = () => {
                         </svg>
                       </div>
                       <input
-                        type="url"
+                        type="text"
                         name="contact_info.social_media.instagram"
                         id="contact_info.social_media.instagram"
                         value={formData.contact_info?.social_media?.instagram || ''}
@@ -407,6 +461,7 @@ const Profile: React.FC = () => {
               </div>
             </div>
           </div>
+        </div>
 
           {/* Form Actions */}
           <div className="bg-white shadow rounded-lg overflow-hidden">
