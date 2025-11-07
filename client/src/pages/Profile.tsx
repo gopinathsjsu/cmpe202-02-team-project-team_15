@@ -24,6 +24,22 @@ const Profile: React.FC = () => {
       }
     }
   });
+  const [originalData, setOriginalData] = useState<ProfileData>({
+    first_name: '',
+    last_name: '',
+    email: '',
+    photo_url: null,
+    bio: '',
+    contact_info: {
+      phone: null,
+      address: null,
+      social_media: {
+        linkedin: null,
+        twitter: null,
+        instagram: null
+      }
+    }
+  });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -32,6 +48,7 @@ const Profile: React.FC = () => {
       try {
         const data = await getProfile();
         setFormData(data);
+        setOriginalData(data); // Store original data
       } catch (err) {
         setError('Failed to load profile');
         console.error('Profile load error:', err);
@@ -50,11 +67,28 @@ const Profile: React.FC = () => {
       const { email, ...updateData } = formData;
       await updateProfile(updateData);
       setSuccess('Profile updated successfully');
+      setOriginalData(formData); // Update original data after successful save
       setIsEditing(false);
     } catch (err) {
       setError('Failed to update profile');
       console.error('Profile update error:', err);
     }
+  };
+
+  const handleCancel = () => {
+    // Deep copy to ensure proper reset
+    setFormData({
+      ...originalData,
+      contact_info: {
+        ...originalData.contact_info,
+        social_media: {
+          ...originalData.contact_info?.social_media
+        }
+      }
+    });
+    setIsEditing(false);
+    setError('');
+    setSuccess('');
   };
 
   const handleChange = (
@@ -162,55 +196,7 @@ const Profile: React.FC = () => {
                 </h2>
                 <p className="text-sm text-gray-500">{formData.email}</p>
               </div>
-
-              <div className="flex flex-col sm:flex-row sm:space-x-3 gap-3">
-                {!isEditing ? (
-                  <button
-                    type="button"
-                    onClick={() => setIsEditing(true)}
-                    className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    Edit Profile
-                  </button>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setIsEditing(false)}
-                      className="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                    >
-                      Save Changes
-                    </button>
-                  </>
-                )}
-              </div>
             </div>
-
-            {/* Photo URL Input (when editing) */}
-            {isEditing && (
-              <div className="mt-6">
-                <label className="block text-sm font-medium text-gray-700">
-                  Profile Photo URL
-                </label>
-                <div className="mt-1">
-                  <input
-                    type="text"
-                    name="photo_url"
-                    value={formData.photo_url || ''}
-                    onChange={handleChange}
-                    placeholder="Enter photo URL"
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                  />
-                  <p className="mt-1 text-sm text-gray-500">Provide a URL for your profile photo</p>
-                </div>
-              </div>
-            )}
           </div>
         </div>
         </div>
@@ -235,7 +221,7 @@ const Profile: React.FC = () => {
                 onChange={handleChange}
                 disabled={!isEditing}
                 required
-                className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors duration-200"
+                className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors duration-200 px-3 py-2"
               />
             </div>
 
@@ -252,7 +238,7 @@ const Profile: React.FC = () => {
                 onChange={handleChange}
                 disabled={!isEditing}
                 required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 px-3 py-2"
               />
             </div>
 
@@ -267,7 +253,7 @@ const Profile: React.FC = () => {
                 id="email"
                 value={formData.email || ''}
                 disabled={true}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-50 text-gray-500"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-50 text-gray-500 px-3 py-2"
               />
               <p className="mt-1 text-sm text-gray-500">Your email address cannot be changed</p>
             </div>
@@ -293,7 +279,7 @@ const Profile: React.FC = () => {
               disabled={!isEditing}
               maxLength={500}
               placeholder={isEditing ? "Tell us about yourself..." : "No bio provided"}
-              className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors duration-200 resize-none"
+              className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors duration-200 resize-none px-3 py-2"
             />
             <div className="flex justify-between items-center mt-2">
               <p className="text-sm text-gray-500">Write a short introduction about yourself</p>
@@ -325,7 +311,7 @@ const Profile: React.FC = () => {
                   onChange={handleChange}
                   disabled={!isEditing}
                   placeholder={isEditing ? "(123) 456-7890" : "No phone number provided"}
-                  className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors duration-200"
+                  className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors duration-200 px-3 py-2"
                 />
               </div>
 
@@ -341,7 +327,7 @@ const Profile: React.FC = () => {
                   onChange={handleChange}
                   disabled={!isEditing}
                   placeholder={isEditing ? "Your address" : "No address provided"}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 px-3 py-2"
                 />
               </div>
             </div>
@@ -368,7 +354,7 @@ const Profile: React.FC = () => {
                       onChange={handleChange}
                       disabled={!isEditing}
                       placeholder={isEditing ? "LinkedIn URL" : "No LinkedIn profile"}
-                      className="pl-10 mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors duration-200"
+                      className="pl-10 pr-3 py-2 mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors duration-200"
                     />
                   </div>
                 </div>
@@ -390,7 +376,7 @@ const Profile: React.FC = () => {
                         onChange={handleChange}
                         disabled={!isEditing}
                         placeholder={isEditing ? "Twitter URL" : "No Twitter profile"}
-                        className="pl-10 mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors duration-200"
+                        className="pl-10 pr-3 py-2 mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors duration-200"
                       />
                     </div>
                   </div>
@@ -413,7 +399,7 @@ const Profile: React.FC = () => {
                         onChange={handleChange}
                         disabled={!isEditing}
                         placeholder={isEditing ? "Instagram URL" : "No Instagram profile"}
-                        className="pl-10 mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors duration-200"
+                        className="pl-10 pr-3 py-2 mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors duration-200"
                       />
                     </div>
                   </div>
@@ -442,7 +428,7 @@ const Profile: React.FC = () => {
                   <>
                     <button
                       type="button"
-                      onClick={() => setIsEditing(false)}
+                      onClick={handleCancel}
                       className="inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
                     >
                       <svg className="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
