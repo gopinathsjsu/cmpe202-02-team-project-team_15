@@ -62,7 +62,7 @@ const userSchema = new Schema<IUser>({
   },
   bio: {
     type: String,
-    default: '',
+    default: null,
     maxlength: 500
   },
   contact_info: {
