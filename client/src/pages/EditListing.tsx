@@ -74,7 +74,13 @@ const EditListing = () => {
       });
 
       alert('Listing updated successfully!');
-      navigate(`/listing/${id}`);
+      
+      // Redirect based on status
+      if (formData.status === 'SOLD') {
+        navigate('/my-listings?filter=SOLD');
+      } else {
+        navigate(`/listing/${id}`);
+      }
     } catch (err: any) {
       console.error('Failed to update listing:', err);
       alert(err.response?.data?.error || 'Failed to update listing. Please try again.');

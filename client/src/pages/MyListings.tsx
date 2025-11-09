@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2, Package, Plus } from 'lucide-react';
 import BackButton from '../components/BackButton';
 import Navbar from '../components/Navbar';
@@ -8,16 +8,26 @@ import { apiService, IListing } from '../services/api';
 
 const MyListings = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [allListings, setAllListings] = useState<IListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filterStatus, setFilterStatus] = useState<'ALL' | 'ACTIVE' | 'SOLD'>('ALL');
+  
+  // Get initial filter from URL query parameter
+  const initialFilter = (searchParams.get('filter') as 'ALL' | 'ACTIVE' | 'SOLD') || 'ALL';
+  const [filterStatus, setFilterStatus] = useState<'ALL' | 'ACTIVE' | 'SOLD'>(initialFilter);
   const [savedListingIds, setSavedListingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchMyListings();
     fetchSavedListingIds();
   }, []);
+
+  useEffect(() => {
+    // Update filter when URL parameter changes
+    const filter = (searchParams.get('filter') as 'ALL' | 'ACTIVE' | 'SOLD') || 'ALL';
+    setFilterStatus(filter);
+  }, [searchParams]);
 
   const fetchMyListings = async () => {
     try {
