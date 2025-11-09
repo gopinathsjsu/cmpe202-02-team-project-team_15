@@ -393,6 +393,25 @@ class ApiService {
     return data;
   }
 
+  // My Listings functionality - Get user's own listings
+  async getMyListings(params?: {
+    status?: "ACTIVE" | "SOLD";
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    success: boolean;
+    listings: IListing[];
+    pagination: {
+      current: number;
+      pageSize: number;
+      total: number;
+      totalPages: number;
+    };
+  }> {
+    const { data } = await api.get("/api/listings/my-listings", { params });
+    return data;
+  }
+
   // Admin: Get all reports with filters
   async getAdminReports(params?: {
     page?: number;

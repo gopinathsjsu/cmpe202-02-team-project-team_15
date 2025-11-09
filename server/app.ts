@@ -149,8 +149,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/campus', campusRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/listings', searchRoutes);
 app.use('/api/listings', listingsRoutes);
+app.use('/api/listings', searchRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/saved-listings', savedListingsRoutes);
 

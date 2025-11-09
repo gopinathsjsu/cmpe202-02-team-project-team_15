@@ -157,6 +157,56 @@ export const markAsSold = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
+// GET /api/listings/my-listings - Get all listings for the authenticated user
+export const getMyListings = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Ensure user is authenticated
+    const authUser = (req as any).user;
+    if (!authUser || !authUser._id) {
+      res.status(401).json({
+        success: false,
+        error: 'Authentication required'
+      });
+      return;
+    }
+
+    const { status, page = 1, limit = 20 } = req.query;
+    
+    const filter: any = { userId: authUser._id };
+    if (status && (status === 'ACTIVE' || status === 'SOLD')) {
+      filter.status = status;
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+    
+    const [listings, total] = await Promise.all([
+      Listing.find(filter)
+        .populate('categoryId', 'name description')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit)),
+      Listing.countDocuments(filter)
+    ]);
+
+    res.json({ 
+      success: true, 
+      listings,
+      pagination: {
+        current: Number(page),
+        pageSize: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error: any) {
+    console.error('Get my listings error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+};
+
 // DELETE /api/listings/:id - Delete a listing
 export const deleteListing = async (req: Request, res: Response): Promise<void> => {
   try {
