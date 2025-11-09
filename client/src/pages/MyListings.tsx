@@ -8,7 +8,7 @@ import { apiService, IListing } from '../services/api';
 
 const MyListings = () => {
   const navigate = useNavigate();
-  const [myListings, setMyListings] = useState<IListing[]>([]);
+  const [allListings, setAllListings] = useState<IListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'ACTIVE' | 'SOLD'>('ALL');
@@ -17,15 +17,14 @@ const MyListings = () => {
   useEffect(() => {
     fetchMyListings();
     fetchSavedListingIds();
-  }, [filterStatus]);
+  }, []);
 
   const fetchMyListings = async () => {
     try {
       setLoading(true);
       setError(null);
-      const params = filterStatus !== 'ALL' ? { status: filterStatus as 'ACTIVE' | 'SOLD' } : {};
-      const response = await apiService.getMyListings(params);
-      setMyListings(response.listings);
+      const response = await apiService.getMyListings();
+      setAllListings(response.listings);
     } catch (err: any) {
       console.error('Failed to fetch my listings:', err);
       setError('Failed to load your listings. Please try again.');
@@ -65,9 +64,12 @@ const MyListings = () => {
     }
   };
 
-  const filteredListings = myListings;
-  const activeCount = myListings.filter(l => l.status === 'ACTIVE').length;
-  const soldCount = myListings.filter(l => l.status === 'SOLD').length;
+  const filteredListings = filterStatus === 'ALL' 
+    ? allListings 
+    : allListings.filter(listing => listing.status === filterStatus);
+  
+  const activeCount = allListings.filter(listing => listing.status === 'ACTIVE').length;
+  const soldCount = allListings.filter(listing => listing.status === 'SOLD').length;
 
   if (loading) {
     return (
@@ -133,7 +135,7 @@ const MyListings = () => {
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              All ({myListings.length})
+              All ({allListings.length})
             </button>
             <button
               onClick={() => setFilterStatus('ACTIVE')}
