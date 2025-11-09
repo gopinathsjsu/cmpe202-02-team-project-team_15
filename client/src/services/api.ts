@@ -181,6 +181,25 @@ class ApiService {
     return data;
   }
 
+  // Update existing listing
+  async updateListing(
+    id: string,
+    listingData: {
+      title?: string;
+      description?: string;
+      price?: number;
+      categoryId?: string;
+      photos?: Array<{ url: string; alt: string }>;
+      status?: "ACTIVE" | "SOLD";
+    }
+  ): Promise<{ success: boolean; listing: IListing }> {
+    const { data } = await api.put<{ success: boolean; listing: IListing }>(
+      `/api/listings/${id}`,
+      listingData
+    );
+    return data;
+  }
+
   // Chat functionality
   async initiateChat(listingId: string): Promise<{ conversation: any }> {
     const { data } = await api.post("/api/chats/initiate", { listingId });

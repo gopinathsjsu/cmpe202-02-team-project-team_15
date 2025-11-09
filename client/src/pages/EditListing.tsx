@@ -59,14 +59,25 @@ const EditListing = () => {
     setSaving(true);
 
     try {
-      // Note: You'll need to implement updateListing in the API service
-      // For now, this is a placeholder
-      console.log('Update listing:', formData);
-      alert('Edit functionality not yet implemented on backend. Photos are uploaded and ready!');
-      navigate('/search');
-    } catch (err) {
+      if (!id) {
+        throw new Error('No listing ID');
+      }
+
+      // Update the listing
+      await apiService.updateListing(id, {
+        title: formData.title,
+        description: formData.description,
+        price: Number(formData.price),
+        categoryId: formData.categoryId,
+        photos: formData.photos,
+        status: formData.status,
+      });
+
+      alert('Listing updated successfully!');
+      navigate(`/listing/${id}`);
+    } catch (err: any) {
       console.error('Failed to update listing:', err);
-      alert('Failed to update listing. Please try again.');
+      alert(err.response?.data?.error || 'Failed to update listing. Please try again.');
     } finally {
       setSaving(false);
     }
