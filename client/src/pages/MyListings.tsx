@@ -192,13 +192,15 @@ const MyListings = () => {
                   : 'You have no sold listings yet'
                 }
               </p>
-              <button
-                onClick={() => navigate('/create-listing')}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
-              >
-                <Plus className="w-5 h-5" />
-                Create New Listing
-              </button>
+              {filterStatus !== 'SOLD' && (
+                <button
+                  onClick={() => navigate('/create-listing')}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+                >
+                  <Plus className="w-5 h-5" />
+                  Create New Listing
+                </button>
+              )}
             </div>
           ) : (
             <div className="product-grid">
