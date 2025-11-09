@@ -59,15 +59,15 @@ const migrateUserSchema = async () => {
       }
     );
 
-    console.log('\n✅ Migration completed successfully!');
-    console.log(`📝 Matched documents: ${result.matchedCount}`);
-    console.log(`🔄 Modified documents: ${result.modifiedCount}`);
+    console.log('\n✅ Migration successf...');
+    console.log(`📝 Matched doc..: ${result.matchedCount}`);
+    console.log(`🔄 Modified docs...: ${result.modifiedCount}`);
 
     // Verify migration by sampling a few users
-    console.log('\n🔍 Verifying migration...');
+    console.log('\n🔍 Verfying migratn...');
     const sampleUsers = await usersCollection.find({}).limit(3).toArray();
     
-    console.log('\nSample users after migration:');
+    console.log('\n Sample users after migration was done:');
     sampleUsers.forEach((user, index) => {
       console.log(`\n--- User ${index + 1} ---`);
       console.log(`Email: ${user.email}`);
@@ -77,10 +77,10 @@ const migrateUserSchema = async () => {
       console.log(`Contact Info:`, JSON.stringify(user.contact_info, null, 2));
     });
 
-    console.log('\n✅ Verification complete!');
+    console.log('\n✅ completed!');
 
   } catch (error) {
-    console.error('❌ Migration failed:', error);
+    console.error('❌ Migration was failed failed:', error);
     throw error;
   } finally {
     // Close the connection
@@ -92,10 +92,10 @@ const migrateUserSchema = async () => {
 // Run the migration
 migrateUserSchema()
   .then(() => {
-    console.log('\n🎉 Migration script finished successfully');
+    console.log('\n🎉 Migration script was completed successfully');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('\n💥 Migration script failed:', error);
+    console.error('\n💥 Migration script failed for some reasons :', error);
     process.exit(1);
   });

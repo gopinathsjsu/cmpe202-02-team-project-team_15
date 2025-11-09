@@ -76,16 +76,8 @@ const Profile: React.FC = () => {
   };
 
   const handleCancel = () => {
-    // Deep copy to ensure proper reset
-    setFormData({
-      ...originalData,
-      contact_info: {
-        ...originalData.contact_info,
-        social_media: {
-          ...originalData.contact_info?.social_media
-        }
-      }
-    });
+    // Deep copy to ensure proper reset, handling null/undefined values
+    setFormData(JSON.parse(JSON.stringify(originalData)));
     setIsEditing(false);
     setError('');
     setSuccess('');
@@ -100,7 +92,8 @@ const Profile: React.FC = () => {
     if (name.includes('.')) {
       const parts = name.split('.');
       setFormData(prev => {
-        let newData = { ...prev };
+        // Deep clone to prevent mutation of originalData
+        let newData = JSON.parse(JSON.stringify(prev));
         let current: any = newData;
         
         for (let i = 0; i < parts.length - 1; i++) {
