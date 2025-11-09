@@ -60,8 +60,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
     ? listing.photos[0].url 
     : '/placeholder-image.svg';
 
+  const isSold = listing.status === 'SOLD';
+
   return (
-    <div className="product-card" onClick={handleClick}>
+    <div 
+      className={`product-card ${isSold ? 'opacity-60 cursor-not-allowed' : ''}`} 
+      onClick={handleClick}
+    >
       <div className="product-image-container">
         <img
           src={imageUrl}
@@ -72,6 +77,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
             (e.target as HTMLImageElement).src = '/placeholder-image.svg';
           }}
         />
+        {isSold && (
+          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <span className="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold text-lg">
+              SOLD
+            </span>
+          </div>
+        )}
         <button
           onClick={handleSaveClick}
           disabled={isSaving}
