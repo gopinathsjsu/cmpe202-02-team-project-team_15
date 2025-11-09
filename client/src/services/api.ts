@@ -146,6 +146,23 @@ export interface SearchResponse {
   };
 }
 
+export interface ProfileData {
+  first_name: string;
+  last_name: string;
+  email: string;
+  photo_url?: string | null;
+  bio?: string | null;
+  contact_info?: {
+    phone?: string | null;
+    address?: string | null;
+    social_media?: {
+      linkedin?: string | null;
+      twitter?: string | null;
+      instagram?: string | null;
+    };
+  };
+}
+
 class ApiService {
   // Search listings with filters
   async searchListings(params: SearchParams = {}): Promise<SearchResponse> {
@@ -465,6 +482,17 @@ class ApiService {
     }>(`/api/admin/listings/${listingId}/warn`, {
       message,
     });
+    return data;
+  }
+
+  // Profile methods
+  async getProfile(): Promise<ProfileData> {
+    const { data } = await api.get<ProfileData>("/api/profile");
+    return data;
+  }
+
+  async updateProfile(profileData: Partial<ProfileData>): Promise<ProfileData> {
+    const { data } = await api.put<ProfileData>("/api/profile", profileData);
     return data;
   }
 }

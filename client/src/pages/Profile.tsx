@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getProfile, updateProfile, ProfileData } from '../services/profile';
+import { apiService, ProfileData } from '../services/api';
 import Navbar from '../components/Navbar';
 
 const Profile: React.FC = () => {
@@ -46,7 +46,7 @@ const Profile: React.FC = () => {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const data = await getProfile();
+        const data = await apiService.getProfile();
         setFormData(data);
         setOriginalData(data); // Store original data
       } catch (err) {
@@ -65,7 +65,7 @@ const Profile: React.FC = () => {
     try {
       // Send all form data except email (which is read-only)
       const { email, ...updateData } = formData;
-      await updateProfile(updateData);
+      await apiService.updateProfile(updateData);
       setSuccess('Profile updated successfully');
       setOriginalData(formData); // Update original data after successful save
       setIsEditing(false);
