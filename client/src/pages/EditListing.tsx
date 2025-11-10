@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import BackButton from '../components/BackButton';
 import ImageUpload from '../components/ImageUpload';
 import { apiService, ICategory, IListing } from '../services/api';
 
@@ -119,8 +118,6 @@ const EditListing = () => {
       </header>
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <BackButton />
-
         <div className="bg-white rounded-lg shadow-sm p-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Edit Listing</h1>
 

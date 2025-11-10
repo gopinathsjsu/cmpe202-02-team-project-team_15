@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import BackButton from '../components/BackButton';
 import ImageUpload from '../components/ImageUpload';
 import { apiService, ICategory } from '../services/api';
 
@@ -68,6 +67,7 @@ const CreateListing = () => {
     setPrice('');
     setDescription('');
     setPhotos([]);
+    navigate('/search');
   };
 
   if (loading) {
@@ -96,8 +96,6 @@ const CreateListing = () => {
 
       {/* ---------- Body ---------- */}
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <BackButton />
-
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Create New Listing</h1>
 

@@ -4,7 +4,6 @@ import SearchBar from "../components/SearchBar";
 import FilterMenu from "../components/FilterMenu";
 import ProductGrid from "../components/ProductGrid";
 import Pagination from "../components/Pagination";
-import BackButton from "../components/BackButton";
 import Navbar from '../components/Navbar';
 import { apiService, IListing, ICategory, SearchParams } from "../services/api";
 
@@ -408,11 +407,6 @@ const SearchPage: React.FC = () => {
       <Navbar />
 
       <div className="max-w-7xl mx-auto p-4 lg:p-5">
-        {/* Back Button */}
-        <div className="mb-4">
-          <BackButton />
-        </div>
-
         {/* Mobile Filter Toggle Button */}
         <div className="lg:hidden mb-4">
           <button

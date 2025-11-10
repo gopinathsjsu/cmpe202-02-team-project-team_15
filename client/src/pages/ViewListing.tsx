@@ -13,7 +13,6 @@ import {
   UserCog,
   X
 } from "lucide-react";
-import BackButton from "../components/BackButton";
 import Navbar from '../components/Navbar';
 import { ReportModal } from "../components/ReportModal";
 import { WarnUserModal } from "../components/WarnUserModal";
@@ -308,8 +307,6 @@ const ViewListing = () => {
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <BackButton />
-
         <div className="grid lg:grid-cols-2 gap-8">
           <div className="bg-white rounded-lg overflow-hidden shadow-sm relative">
             {validPhotos.length > 0 ? (
