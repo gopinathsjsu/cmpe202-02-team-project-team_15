@@ -354,14 +354,15 @@ const ViewListing = () => {
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid lg:grid-cols-2 gap-8">
-          <div className="bg-white rounded-lg overflow-hidden shadow-sm relative">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Image Container - Consistent Height */}
+          <div className="flex-1 h-[400px] sm:h-[500px] lg:h-[650px] bg-white rounded-xl overflow-hidden shadow-md relative p-6">
             {validPhotos.length > 0 ? (
               <>
                 <img
                   src={validPhotos[currentImageIndex].url}
                   alt={validPhotos[currentImageIndex].alt || listing.title}
-                  className="w-full h-[500px] object-contain bg-gray-50"
+                  className="w-full h-full object-contain"
                   onError={(e) => {
                     // Fallback to placeholder if image fails to load
                     (e.target as HTMLImageElement).src =
@@ -411,13 +412,15 @@ const ViewListing = () => {
                 )}
               </>
             ) : (
-              <div className="w-full h-[500px] bg-gray-200 flex items-center justify-center">
-                <span className="text-gray-400">No image available</span>
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-gray-400 text-lg">No image available</span>
               </div>
             )}
           </div>
 
-          <div className="space-y-6">
+          {/* Description Container - Matching Height */}
+          <div className="flex-1 h-[400px] sm:h-[500px] lg:h-[650px] bg-white rounded-xl shadow-md overflow-y-auto p-6">
+            <div className="space-y-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
                 {listing.title}
@@ -505,6 +508,7 @@ const ViewListing = () => {
                   </button>
                 </>
               )}
+            </div>
             </div>
           </div>
         </div>
