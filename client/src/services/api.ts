@@ -146,6 +146,23 @@ export interface SearchResponse {
   };
 }
 
+export interface ProfileData {
+  first_name: string;
+  last_name: string;
+  email: string;
+  photo_url?: string | null;
+  bio?: string | null;
+  contact_info?: {
+    phone?: string | null;
+    address?: string | null;
+    social_media?: {
+      linkedin?: string | null;
+      twitter?: string | null;
+      instagram?: string | null;
+    };
+  };
+}
+
 class ApiService {
   // Search listings with filters
   async searchListings(params: SearchParams = {}): Promise<SearchResponse> {
@@ -178,6 +195,25 @@ class ApiService {
     photos?: Array<{ url: string; alt: string }>;
   }): Promise<IListing> {
     const { data } = await api.post<IListing>("/api/listings", listingData);
+    return data;
+  }
+
+  // Update existing listing
+  async updateListing(
+    id: string,
+    listingData: {
+      title?: string;
+      description?: string;
+      price?: number;
+      categoryId?: string;
+      photos?: Array<{ url: string; alt: string }>;
+      status?: "ACTIVE" | "SOLD";
+    }
+  ): Promise<{ success: boolean; listing: IListing }> {
+    const { data } = await api.put<{ success: boolean; listing: IListing }>(
+      `/api/listings/${id}`,
+      listingData
+    );
     return data;
   }
 
@@ -393,6 +429,25 @@ class ApiService {
     return data;
   }
 
+  // My Listings functionality - Get user's own listings
+  async getMyListings(params?: {
+    status?: "ACTIVE" | "SOLD";
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    success: boolean;
+    listings: IListing[];
+    pagination: {
+      current: number;
+      pageSize: number;
+      total: number;
+      totalPages: number;
+    };
+  }> {
+    const { data } = await api.get("/api/listings/my-listings", { params });
+    return data;
+  }
+
   // Admin: Get all reports with filters
   async getAdminReports(params?: {
     page?: number;
@@ -427,6 +482,17 @@ class ApiService {
     }>(`/api/admin/listings/${listingId}/warn`, {
       message,
     });
+    return data;
+  }
+
+  // Profile methods
+  async getProfile(): Promise<ProfileData> {
+    const { data } = await api.get<ProfileData>("/api/profile");
+    return data;
+  }
+
+  async updateProfile(profileData: Partial<ProfileData>): Promise<ProfileData> {
+    const { data } = await api.put<ProfileData>("/api/profile", profileData);
     return data;
   }
 }

@@ -157,6 +157,153 @@ export const markAsSold = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
+// GET /api/listings/my-listings - Get all listings for the authenticated user
+export const getMyListings = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Ensure user is authenticated
+    const authUser = (req as any).user;
+    if (!authUser || !authUser._id) {
+      res.status(401).json({
+        success: false,
+        error: 'Authentication required'
+      });
+      return;
+    }
+
+    const { status, page = 1, limit = 20 } = req.query;
+    
+    const filter: any = { userId: authUser._id };
+    if (status && (status === 'ACTIVE' || status === 'SOLD')) {
+      filter.status = status;
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+    
+    const [listings, total] = await Promise.all([
+      Listing.find(filter)
+        .populate('categoryId', 'name description')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit)),
+      Listing.countDocuments(filter)
+    ]);
+
+    res.json({ 
+      success: true, 
+      listings,
+      pagination: {
+        current: Number(page),
+        pageSize: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error: any) {
+    console.error('Get my listings error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+};
+
+// PUT /api/listings/:id - Update a listing
+export const updateListing = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { title, description, price, categoryId, photos, status } = req.body;
+
+    // Validate ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ 
+        success: false, 
+        error: 'Invalid listing ID format' 
+      });
+      return;
+    }
+
+    // Ensure user is authenticated
+    const authUser = (req as any).user;
+    if (!authUser || !authUser._id) {
+      res.status(401).json({
+        success: false,
+        error: 'Authentication required'
+      });
+      return;
+    }
+
+    // Find the listing first to check ownership
+    const listing = await Listing.findById(id);
+
+    if (!listing) {
+      res.status(404).json({ 
+        success: false, 
+        error: 'Listing not found' 
+      });
+      return;
+    }
+
+    // Check if the authenticated user owns the listing
+    const listingUserId = listing.userId.toString();
+    const authUserId = authUser._id.toString();
+
+    if (listingUserId !== authUserId) {
+      res.status(403).json({ 
+        success: false, 
+        error: 'You can only edit your own listings' 
+      });
+      return;
+    }
+
+    // Validate category if provided
+    if (categoryId && categoryId !== listing.categoryId.toString()) {
+      const category = await Category.findById(categoryId);
+      if (!category) {
+        res.status(400).json({ 
+          success: false, 
+          error: 'Category not found' 
+        });
+        return;
+      }
+    }
+
+    // Update listing fields
+    const updateData: any = {};
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (price !== undefined) updateData.price = Number(price);
+    if (categoryId !== undefined) updateData.categoryId = categoryId;
+    if (status !== undefined) updateData.status = status;
+    if (photos !== undefined) {
+      updateData.photos = photos.map((photo: any) => ({
+        url: photo.url || '',
+        alt: photo.alt || title || ''
+      }));
+    }
+
+    // Update the listing
+    const updatedListing = await Listing.findByIdAndUpdate(
+      id,
+      { ...updateData, updatedAt: new Date() },
+      { new: true }
+    ).populate([
+      { path: 'categoryId', select: 'name description' },
+      { path: 'userId', select: 'first_name last_name email' }
+    ]);
+
+    res.json({ 
+      success: true, 
+      listing: updatedListing 
+    });
+  } catch (error: any) {
+    console.error('Update listing error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+};
+
 // DELETE /api/listings/:id - Delete a listing
 export const deleteListing = async (req: Request, res: Response): Promise<void> => {
   try {

@@ -30,13 +30,14 @@ import listingsRoutes from './routes/listings';
 import chatbotRoutes from './routes/chatbot';
 import uploadRoutes from './routes/upload';
 import savedListingsRoutes from './routes/savedListings';
+import profileRoutes from './routes/profile';
 
 export const app = express();
 
 // Middleware
 app.use(cors({
   origin: [
-    process.env.CLIENT_URL || 'http://localhost:3000',
+    process.env.CLIENT_URL ||
     'http://127.0.0.1:3000',
     'http://localhost:3000',
     'http://localhost:3002',
@@ -148,10 +149,13 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/campus', campusRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/listings', searchRoutes);
 app.use('/api/listings', listingsRoutes);
+app.use('/api/listings', searchRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/saved-listings', savedListingsRoutes);
+
+// Profile routes
+app.use('/api/profile', profileRoutes);
 
 // Chatbot routes
 app.use('/api/chatbot', chatbotRoutes);

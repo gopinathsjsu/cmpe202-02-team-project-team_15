@@ -8,10 +8,12 @@ import EditListing from './pages/EditListing';
 import CreateListing from './pages/CreateListing';
 import MessagesPage from './pages/Messages';
 import SavedListings from './pages/SavedListings';
+import MyListings from './pages/MyListings';
 import ProtectedRoute from './components/ProtectedRoute';
 import ChatbotButton from './components/ChatbotButton';
 import AdminReportsPage from './pages/AdminReportsPage';
 import AdminCategoriesPage from './pages/AdminCategoriesPage';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -95,6 +97,24 @@ function App() {
               element={
                 <ProtectedRoute>
                   <SavedListings />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/my-listings" 
+              element={
+                <ProtectedRoute>
+                  <MyListings />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/profile" 
+              element={
+                <ProtectedRoute>
+                  <Profile />
                 </ProtectedRoute>
               } 
             />
