@@ -11,7 +11,8 @@ import {
   Eye,
   Edit,
   UserCog,
-  X
+  X,
+  Heart
 } from "lucide-react";
 import Navbar from '../components/Navbar';
 import { ReportModal } from "../components/ReportModal";
@@ -40,6 +41,8 @@ const ViewListing = () => {
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [updatingCategory, setUpdatingCategory] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -79,6 +82,21 @@ const ViewListing = () => {
       fetchCategories();
     }
   }, [user]);
+
+  useEffect(() => {
+    const checkIfSaved = async () => {
+      if (!id || !user) return;
+      
+      try {
+        const response = await apiService.getSavedListingIds();
+        setIsSaved(response.listingIds.includes(id));
+      } catch (err) {
+        console.error('Failed to check if listing is saved:', err);
+      }
+    };
+
+    checkIfSaved();
+  }, [id, user]);
 
   const handleContactSeller = async () => {
     if (!listing) return;
@@ -199,6 +217,35 @@ const ViewListing = () => {
       );
     } finally {
       setUpdatingCategory(false);
+    }
+  };
+
+  const handleSaveToggle = async () => {
+    if (isSaving || !id) return;
+
+    try {
+      setIsSaving(true);
+
+      if (isSaved) {
+        await apiService.unsaveListing(id);
+        setIsSaved(false);
+      } else {
+        await apiService.saveListing(id);
+        setIsSaved(true);
+      }
+    } catch (error: any) {
+      console.error('Error toggling save:', error);
+      // If already saved error, just update the state
+      if (error.response?.status === 400 && error.response?.data?.error?.includes('already saved')) {
+        setIsSaved(true);
+      } else {
+        showError(
+          "Failed to Save Listing",
+          error.response?.data?.error || 'Please try again later.'
+        );
+      }
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -345,6 +392,22 @@ const ViewListing = () => {
                       {currentImageIndex + 1} / {validPhotos.length}
                     </div>
                   </>
+                )}
+                {/* Heart button - only for non-owners */}
+                {!isOwner && (
+                  <button
+                    onClick={handleSaveToggle}
+                    disabled={isSaving}
+                    className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-all hover:scale-110 disabled:opacity-50 z-20"
+                    aria-label={isSaved ? 'Unsave listing' : 'Save listing'}
+                    title={isSaved ? 'Remove from saved' : 'Save for later'}
+                  >
+                    <Heart
+                      className={`w-6 h-6 transition-colors ${
+                        isSaved ? 'fill-red-500 text-red-500' : 'text-gray-600'
+                      }`}
+                    />
+                  </button>
                 )}
               </>
             ) : (
