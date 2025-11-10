@@ -43,6 +43,7 @@ const ViewListing = () => {
   const [updatingCategory, setUpdatingCategory] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -362,7 +363,8 @@ const ViewListing = () => {
                 <img
                   src={validPhotos[currentImageIndex].url}
                   alt={validPhotos[currentImageIndex].alt || listing.title}
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => setShowImageModal(true)}
                   onError={(e) => {
                     // Fallback to placeholder if image fails to load
                     (e.target as HTMLImageElement).src =
@@ -677,6 +679,68 @@ const ViewListing = () => {
                 Cancel
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Modal - Fullscreen View */}
+      {showImageModal && validPhotos.length > 0 && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-95 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowImageModal(false)}
+        >
+          {/* Image container with controls - Fixed consistent size */}
+          <div className="relative w-[90vw] h-[85vh] flex items-center justify-center">
+            {/* Full size image */}
+            <img
+              src={validPhotos[currentImageIndex].url}
+              alt={validPhotos[currentImageIndex].alt || listing.title}
+              className="w-full h-full object-contain"
+              onClick={(e) => e.stopPropagation()}
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "/placeholder-image.svg";
+              }}
+            />
+
+            {/* Close button - On top right of image */}
+            <button
+              onClick={() => setShowImageModal(false)}
+              className="absolute top-4 right-4 p-2 bg-white/90 hover:bg-white rounded-full transition-colors shadow-lg"
+              aria-label="Close image"
+            >
+              <X className="w-6 h-6 text-gray-900" />
+            </button>
+
+            {/* Navigation arrows - On the image */}
+            {hasMultipleImages && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePreviousImage();
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-900 rounded-full p-3 transition-all shadow-lg"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleNextImage();
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-900 rounded-full p-3 transition-all shadow-lg"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+                
+                {/* Image counter */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/90 text-gray-900 px-4 py-2 rounded-full text-sm font-medium shadow-lg">
+                  {currentImageIndex + 1} / {validPhotos.length}
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
