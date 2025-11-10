@@ -410,6 +410,19 @@ const ViewListing = () => {
                     <span>{deleting ? 'Deleting...' : 'Delete Listing'}</span>
                   </button>
                 </>
+              ) : listing.status === 'SOLD' ? (
+                <>
+                  <div className="w-full bg-gray-100 text-gray-800 font-bold py-3 px-4 rounded-lg border-2 border-gray-300 flex items-center justify-center cursor-not-allowed">
+                    <span className="text-xl">SOLD</span>
+                  </div>
+                  <button 
+                    onClick={() => setShowReportModal(true)}
+                    className="w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-lg border border-gray-300 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <Flag className="w-5 h-5" />
+                    <span>Report</span>
+                  </button>
+                </>
               ) : (
                 <>
                   <button 

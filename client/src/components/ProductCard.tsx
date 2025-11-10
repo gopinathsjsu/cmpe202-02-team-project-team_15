@@ -64,7 +64,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <div 
-      className={`product-card ${isSold ? 'opacity-60 cursor-not-allowed' : ''}`} 
+      className={`product-card ${isSold ? 'opacity-60' : ''}`} 
       onClick={handleClick}
     >
       <div className="product-image-container">

@@ -52,10 +52,6 @@ const MyListings = () => {
   };
 
   const handleListingClick = (listing: IListing) => {
-    // Don't navigate if listing is sold
-    if (listing.status === 'SOLD') {
-      return;
-    }
     navigate(`/listing/${listing._id}`);
   };
 
