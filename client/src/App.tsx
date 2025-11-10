@@ -10,7 +10,6 @@ import MessagesPage from './pages/Messages';
 import SavedListings from './pages/SavedListings';
 import MyListings from './pages/MyListings';
 import ProtectedRoute from './components/ProtectedRoute';
-import ChatbotButton from './components/ChatbotButton';
 import AdminReportsPage from './pages/AdminReportsPage';
 import AdminCategoriesPage from './pages/AdminCategoriesPage';
 import Profile from './pages/Profile';
@@ -21,7 +20,6 @@ function App() {
       <ToastProvider>
         <Router>
           <div className="App">
-            <ChatbotButton />
           <Routes>
             {/* Authentication routes */}
             <Route path="/login" element={<Auth />} />

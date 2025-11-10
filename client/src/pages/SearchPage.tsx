@@ -6,6 +6,7 @@ import ProductGrid from "../components/ProductGrid";
 import Pagination from "../components/Pagination";
 import BackButton from "../components/BackButton";
 import Navbar from '../components/Navbar';
+import ChatbotButton from '../components/ChatbotButton';
 import { apiService, IListing, ICategory, SearchParams } from "../services/api";
 
 const SearchPage: React.FC = () => {
@@ -404,6 +405,9 @@ const SearchPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Chatbot Button - only visible on search page */}
+      <ChatbotButton />
+      
       {/* Header with Navigation */}
       <Navbar />
 
