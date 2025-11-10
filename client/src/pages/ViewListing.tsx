@@ -534,7 +534,10 @@ const ViewListing = () => {
                 <button
                   onClick={() => {
                     // TODO: Implement delete listing functionality
-                    alert("Delete listing functionality coming soon");
+                    showError(
+                      "Feature Not Available",
+                      "Delete listing functionality is coming soon."
+                    );
                   }}
                   className="bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
                 >
@@ -544,7 +547,10 @@ const ViewListing = () => {
                 <button
                   onClick={() => {
                     // TODO: Implement hide/show listing functionality
-                    alert("Hide/Show listing functionality coming soon");
+                    showError(
+                      "Feature Not Available",
+                      "Hide/Show listing functionality is coming soon."
+                    );
                   }}
                   className="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
                 >
@@ -561,7 +567,10 @@ const ViewListing = () => {
                 <button
                   onClick={() => {
                     // TODO: Implement manage user account functionality
-                    alert("Manage user account functionality coming soon");
+                    showError(
+                      "Feature Not Available",
+                      "Manage user account functionality is coming soon."
+                    );
                   }}
                   className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
                 >

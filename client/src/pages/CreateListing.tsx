@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ImageUpload from '../components/ImageUpload';
 import { apiService, ICategory } from '../services/api';
+import { useToast } from '../contexts/ToastContext';
 
 const CreateListing = () => {
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
   const [itemName, setItemName] = useState('');
   const [category, setCategory] = useState('');
   const [price, setPrice] = useState('');
@@ -50,12 +52,19 @@ const CreateListing = () => {
       };
 
       const createdListing = await apiService.createListing(listingData);
-      console.log('New Listing Created:', createdListing);
-
+      
+      showSuccess(
+        'Listing Created Successfully!',
+        'Your listing has been posted to the marketplace.'
+      );
+      
       navigate('/search'); // ✅ Navigate back to search
     } catch (err) {
       console.error('Error creating listing:', err);
-      alert('Failed to create listing. Please try again.');
+      showError(
+        'Failed to Create Listing',
+        'Please try again later.'
+      );
     } finally {
       setSaving(false);
     }

@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ImageUpload from '../components/ImageUpload';
 import { apiService, ICategory, IListing } from '../services/api';
+import { useToast } from '../contexts/ToastContext';
 
 const EditListing = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { showSuccess, showError } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<ICategory[]>([]);
@@ -43,7 +45,10 @@ const EditListing = () => {
         });
       } catch (err) {
         console.error('Failed to load listing:', err);
-        alert('Failed to load listing. Redirecting...');
+        showError(
+          'Failed to Load Listing',
+          'Unable to load listing details. Redirecting to search page.'
+        );
         navigate('/search');
       } finally {
         setLoading(false);
@@ -72,7 +77,10 @@ const EditListing = () => {
         status: formData.status,
       });
 
-      alert('Listing updated successfully!');
+      showSuccess(
+        'Listing Updated Successfully!',
+        'Your changes have been saved.'
+      );
       
       // Redirect based on status
       if (formData.status === 'SOLD') {
@@ -82,7 +90,10 @@ const EditListing = () => {
       }
     } catch (err: any) {
       console.error('Failed to update listing:', err);
-      alert(err.response?.data?.error || 'Failed to update listing. Please try again.');
+      showError(
+        'Failed to Update Listing',
+        err.response?.data?.error || 'Please try again later.'
+      );
     } finally {
       setSaving(false);
     }
