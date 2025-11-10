@@ -228,6 +228,13 @@ class ApiService {
     return data;
   }
 
+  async getUnreadMessagesCount(): Promise<{ unreadCount: number }> {
+    const { data } = await api.get<{ unreadCount: number }>(
+      "/api/chats/unread-count"
+    );
+    return data;
+  }
+
   async getMessages(conversationId: string): Promise<{ messages: any[] }> {
     const { data } = await api.get(`/api/chats/${conversationId}/messages`);
     return data;
