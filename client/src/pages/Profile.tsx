@@ -43,8 +43,9 @@ const Profile: React.FC = () => {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [activeListings, setActiveListings] = useState<IListing[]>([]);
+  const [listings, setListings] = useState<IListing[]>([]);
   const [loadingListings, setLoadingListings] = useState(true);
+  const [listingFilter, setListingFilter] = useState<'ACTIVE' | 'SOLD'>('ACTIVE');
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -61,19 +62,19 @@ const Profile: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const loadActiveListings = async () => {
+    const loadListings = async () => {
       try {
         setLoadingListings(true);
-        const response = await apiService.getMyListings({ status: 'ACTIVE' });
-        setActiveListings(response.listings);
+        const response = await apiService.getMyListings({ status: listingFilter });
+        setListings(response.listings);
       } catch (err) {
-        console.error('Failed to load active listings:', err);
+        console.error('Failed to load listings:', err);
       } finally {
         setLoadingListings(false);
       }
     };
-    loadActiveListings();
-  }, []);
+    loadListings();
+  }, [listingFilter]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -518,20 +519,47 @@ const Profile: React.FC = () => {
           </div>
         </form>
 
-        {/* Active Listings Section */}
+        {/* Listings Section */}
         <div className="mt-8 bg-white shadow rounded-lg overflow-hidden">
           <div className="px-8 py-6 border-b border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-900">My Active Listings</h2>
-            <p className="mt-1 text-sm text-gray-600">
-              Listings you've posted that are currently active
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">My Listings</h2>
+                <p className="mt-1 text-sm text-gray-600">
+                  View and manage your listings
+                </p>
+              </div>
+              {/* Toggle Filter */}
+              <div className="flex rounded-lg border border-gray-300 overflow-hidden">
+                <button
+                  onClick={() => setListingFilter('ACTIVE')}
+                  className={`px-4 py-2 text-sm font-medium transition-colors ${
+                    listingFilter === 'ACTIVE'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Active
+                </button>
+                <button
+                  onClick={() => setListingFilter('SOLD')}
+                  className={`px-4 py-2 text-sm font-medium transition-colors border-l border-gray-300 ${
+                    listingFilter === 'SOLD'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Sold
+                </button>
+              </div>
+            </div>
           </div>
           <div className="px-8 py-6">
             {loadingListings ? (
               <div className="flex justify-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
               </div>
-            ) : activeListings.length === 0 ? (
+            ) : listings.length === 0 ? (
               <div className="text-center py-12">
                 <svg
                   className="mx-auto h-12 w-12 text-gray-400"
@@ -546,34 +574,40 @@ const Profile: React.FC = () => {
                     d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                   />
                 </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">No active listings</h3>
+                <h3 className="mt-2 text-sm font-medium text-gray-900">
+                  No {listingFilter.toLowerCase()} listings
+                </h3>
                 <p className="mt-1 text-sm text-gray-500">
-                  Get started by creating a new listing
+                  {listingFilter === 'ACTIVE' 
+                    ? 'Get started by creating a new listing' 
+                    : 'You have no sold listings yet'}
                 </p>
-                <div className="mt-6">
-                  <button
-                    onClick={() => navigate('/create-listing')}
-                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    <svg
-                      className="-ml-1 mr-2 h-5 w-5"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
+                {listingFilter === 'ACTIVE' && (
+                  <div className="mt-6">
+                    <button
+                      onClick={() => navigate('/create-listing')}
+                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    Create New Listing
-                  </button>
-                </div>
+                      <svg
+                        className="-ml-1 mr-2 h-5 w-5"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      Create New Listing
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {activeListings.map((listing) => (
+                {listings.map((listing) => (
                   <ProductCard
                     key={listing._id}
                     listing={listing}
