@@ -262,6 +262,15 @@ const Profile: React.FC = () => {
                     </>
                   )}
                 </div>
+                
+                {/* Bio Section */}
+                {formData.bio && (
+                  <div className="mt-3">
+                    <p className="text-sm text-gray-700 leading-relaxed">
+                      {formData.bio}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
