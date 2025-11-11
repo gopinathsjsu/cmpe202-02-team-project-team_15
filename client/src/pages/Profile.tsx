@@ -210,6 +210,14 @@ const Profile: React.FC = () => {
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
                   <p className="text-sm text-gray-500">{formData.email}</p>
                   
+                  {/* Phone Number - Inline with email */}
+                  {formData.contact_info?.phone && (
+                    <>
+                      <span className="text-gray-300">•</span>
+                      <p className="text-sm text-gray-500">{formData.contact_info.phone}</p>
+                    </>
+                  )}
+                  
                   {/* Social Media Links - Inline with email */}
                   {(formData.contact_info?.social_media?.linkedin || 
                     formData.contact_info?.social_media?.twitter || 
