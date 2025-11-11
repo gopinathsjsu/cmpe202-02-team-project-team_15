@@ -446,7 +446,7 @@ export class AdminHandler {
       // Query & paginate
       const total = await Report.countDocuments(query);
       const reports = await Report.find(query)
-        .populate({ path: 'listingId', select: 'title listingId' })
+        .populate({ path: 'listingId', select: 'title listingId isHidden' })
         .populate({ path: 'reporterId', select: 'first_name last_name email' })
         .populate({ path: 'sellerId', select: 'first_name last_name email' })
         .sort(sortObj)
