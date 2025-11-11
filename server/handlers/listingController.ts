@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import mongoose from 'mongoose';
 import Listing, { IListing } from '../models/Listing';
 import Category from '../models/Category';
+import { Report } from '../models/Report';
+import { SavedListing } from '../models/SavedListing';
 
 // POST /api/listings - Create a new listing
 export const createListing = async (req: Request, res: Response): Promise<void> => {
@@ -80,6 +82,15 @@ export const getListings = async (req: Request, res: Response): Promise<void> =>
     const filter: any = {};
     if (status) {
       filter.status = status;
+    }
+
+    // Check if user is admin
+    const authUser = (req as any).user;
+    const isAdmin = authUser?.roles?.includes('admin');
+    
+    // Hide hidden listings from non-admin users
+    if (!isAdmin) {
+      filter.isHidden = { $ne: true };
     }
 
     const skip = (Number(page) - 1) * Number(limit);
@@ -339,11 +350,12 @@ export const deleteListing = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    // Check if the authenticated user owns the listing
+    // Check if the authenticated user owns the listing or is an admin
     const listingUserId = listing.userId.toString();
     const authUserId = authUser._id.toString();
+    const isAdmin = authUser.roles?.includes('admin');
 
-    if (listingUserId !== authUserId) {
+    if (listingUserId !== authUserId && !isAdmin) {
       res.status(403).json({ 
         success: false, 
         error: 'You can only delete your own listings' 
@@ -353,6 +365,12 @@ export const deleteListing = async (req: Request, res: Response): Promise<void> 
 
     // Delete the listing
     await Listing.findByIdAndDelete(id);
+
+    // Also delete all reports associated with this listing
+    await Report.deleteMany({ listingId: id });
+
+    // Delete all saved listings references
+    await SavedListing.deleteMany({ listingId: id });
 
     res.json({ 
       success: true, 

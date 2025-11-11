@@ -61,11 +61,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
     : '/placeholder-image.svg';
 
   const isSold = listing.status === 'SOLD';
+  const isHidden = listing.isHidden;
 
   return (
     <div 
-      className={`product-card ${isSold ? 'opacity-60 cursor-not-allowed' : ''}`} 
-      onClick={handleClick}
+      className={`product-card ${isSold || isHidden ? 'opacity-60 cursor-not-allowed' : ''}`} 
+      onClick={!isHidden ? handleClick : undefined}
     >
       <div className="product-image-container">
         <img
@@ -81,6 +82,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
           <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
             <span className="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold text-lg">
               SOLD
+            </span>
+          </div>
+        )}
+        {isHidden && (
+          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <span className="bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold text-lg">
+              HIDDEN
             </span>
           </div>
         )}

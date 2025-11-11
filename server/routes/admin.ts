@@ -76,4 +76,9 @@ router.delete('/categories/:id', authenticateToken, requireRole(['admin']), Admi
 // @access  Private (Admin)
 router.put('/listings/:id/category', authenticateToken, requireRole(['admin']), AdminHandler.updateListingCategory);
 
+// @route   PATCH /api/admin/listings/:id/visibility
+// @desc    Hide or restore a listing (Admin only)
+// @access  Private (Admin)
+router.patch('/listings/:id/visibility', authenticateToken, requireRole(['admin']), AdminHandler.toggleListingVisibility);
+
 export default router;

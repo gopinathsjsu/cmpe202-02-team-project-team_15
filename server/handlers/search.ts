@@ -62,6 +62,15 @@ export const searchListings = async (req: Request<{}, SearchResponse, {}, Search
     // Build filter object - only show ACTIVE listings (unless admin)
     const filter: any = { status: 'ACTIVE' };
 
+    // Check if user is admin
+    const authUser = (req as any).user;
+    const isAdmin = authUser?.roles?.includes('admin');
+    
+    // Hide hidden listings from non-admin users
+    if (!isAdmin) {
+      filter.isHidden = { $ne: true };
+    }
+
     // Text search on title and description - partial matching
     if (q && q.trim()) {
       const searchRegex = new RegExp(q.trim(), 'i'); // Case-insensitive partial matching
