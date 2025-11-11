@@ -453,10 +453,7 @@ const ViewListing = () => {
                   <span>Warn User</span>
                 </button>
                 <button
-                  onClick={() => {
-                    // TODO: Implement delete listing functionality
-                    alert("Delete listing functionality coming soon");
-                  }}
+                  onClick={() => setShowDeleteConfirm(true)}
                   className="bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
                 >
                   <Trash2 className="w-5 h-5" />
