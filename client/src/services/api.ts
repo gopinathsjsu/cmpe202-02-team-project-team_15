@@ -102,6 +102,7 @@ export interface IListing {
   description: string;
   price: number;
   status: "ACTIVE" | "SOLD";
+  isHidden: boolean;
   userId: {
     _id: string;
     first_name: string;
@@ -493,6 +494,21 @@ class ApiService {
 
   async updateProfile(profileData: Partial<ProfileData>): Promise<ProfileData> {
     const { data } = await api.put<ProfileData>("/api/profile", profileData);
+    return data;
+  }
+
+  // Admin: Toggle listing visibility (hide/restore)
+  async toggleListingVisibility(
+    listingId: string,
+    isHidden: boolean
+  ): Promise<{ success: boolean; message: string; data: { listing: IListing } }> {
+    const { data } = await api.patch<{
+      success: boolean;
+      message: string;
+      data: { listing: IListing };
+    }>(`/api/admin/listings/${listingId}/visibility`, {
+      isHidden,
+    });
     return data;
   }
 }

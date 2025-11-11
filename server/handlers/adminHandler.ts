@@ -921,4 +921,61 @@ export class AdminHandler {
       });
     }
   }
+
+  // @desc    Hide or restore a listing (Admin only)
+  // @access  Private (Admin)
+  static async toggleListingVisibility(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { isHidden } = req.body;
+
+      // Validate listing ID
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid listing ID'
+        });
+        return;
+      }
+
+      // Validate isHidden parameter
+      if (typeof isHidden !== 'boolean') {
+        res.status(400).json({
+          success: false,
+          message: 'isHidden must be a boolean value'
+        });
+        return;
+      }
+
+      // Find and update the listing
+      const listing = await Listing.findByIdAndUpdate(
+        id,
+        { isHidden },
+        { new: true }
+      ).populate('userId', 'first_name last_name email')
+       .populate('categoryId', 'name');
+
+      if (!listing) {
+        res.status(404).json({
+          success: false,
+          message: 'Listing not found'
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        message: `Listing ${isHidden ? 'hidden' : 'restored'} successfully`,
+        data: { listing }
+      });
+
+    } catch (error: any) {
+      console.error('Toggle listing visibility error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to toggle listing visibility',
+        error: error.message
+      });
+    }
+  }
 }

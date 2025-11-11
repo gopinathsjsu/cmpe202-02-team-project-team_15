@@ -84,6 +84,15 @@ export const getListings = async (req: Request, res: Response): Promise<void> =>
       filter.status = status;
     }
 
+    // Check if user is admin
+    const authUser = (req as any).user;
+    const isAdmin = authUser?.roles?.includes('admin');
+    
+    // Hide hidden listings from non-admin users
+    if (!isAdmin) {
+      filter.isHidden = { $ne: true };
+    }
+
     const skip = (Number(page) - 1) * Number(limit);
     
     const [listings, total] = await Promise.all([

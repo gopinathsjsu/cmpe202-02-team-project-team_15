@@ -41,6 +41,7 @@ const ViewListing = () => {
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [updatingCategory, setUpdatingCategory] = useState(false);
+  const [togglingVisibility, setTogglingVisibility] = useState(false);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -200,6 +201,44 @@ const ViewListing = () => {
       );
     } finally {
       setUpdatingCategory(false);
+    }
+  };
+
+  const handleToggleVisibility = async () => {
+    if (!listing) return;
+
+    const newHiddenState = !listing.isHidden;
+    const loadingToastId = showLoading(
+      newHiddenState ? "Hiding Listing" : "Restoring Listing",
+      `Please wait while we ${newHiddenState ? 'hide' : 'restore'} the listing...`
+    );
+
+    try {
+      setTogglingVisibility(true);
+      const response = await apiService.toggleListingVisibility(listing._id, newHiddenState);
+      
+      // Update the listing in state
+      setListing(response.data.listing);
+      
+      // Hide loading and show success
+      hideToast(loadingToastId);
+      showSuccess(
+        newHiddenState ? "Listing Hidden Successfully!" : "Listing Restored Successfully!",
+        newHiddenState 
+          ? "The listing is now hidden from users." 
+          : "The listing is now visible to users."
+      );
+    } catch (err: any) {
+      console.error('Error toggling visibility:', err);
+      
+      // Hide loading and show error
+      hideToast(loadingToastId);
+      showError(
+        "Failed to Toggle Visibility",
+        err.response?.data?.message || 'Please try again later.'
+      );
+    } finally {
+      setTogglingVisibility(false);
     }
   };
 
@@ -460,14 +499,16 @@ const ViewListing = () => {
                   <span>Delete Listing</span>
                 </button>
                 <button
-                  onClick={() => {
-                    // TODO: Implement hide/show listing functionality
-                    alert("Hide/Show listing functionality coming soon");
-                  }}
-                  className="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                  onClick={handleToggleVisibility}
+                  disabled={togglingVisibility}
+                  className={`${
+                    listing.isHidden 
+                      ? 'bg-green-600 hover:bg-green-700' 
+                      : 'bg-gray-600 hover:bg-gray-700'
+                  } disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2`}
                 >
                   <Eye className="w-5 h-5" />
-                  <span>Hide/Show Listing</span>
+                  <span>{listing.isHidden ? 'Restore Listing' : 'Hide Listing'}</span>
                 </button>
                 <button
                   onClick={handleOpenEditCategory}
