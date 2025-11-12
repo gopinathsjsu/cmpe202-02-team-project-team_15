@@ -14,6 +14,10 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AdminReportsPage from './pages/AdminReportsPage';
 import AdminCategoriesPage from './pages/AdminCategoriesPage';
 import Profile from './pages/Profile';
+import AboutUs from './pages/AboutUs';
+import FAQ from './pages/FAQ';
+import TermsOfService from './pages/TermsOfService';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 function App() {
   return (
@@ -25,6 +29,12 @@ function App() {
             {/* Authentication routes */}
             <Route path="/login" element={<Auth />} />
             <Route path="/signup" element={<Auth />} />
+            
+            {/* Public pages */}
+            <Route path="/about" element={<AboutUs />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
             
             {/* Protected search page */}
             <Route 

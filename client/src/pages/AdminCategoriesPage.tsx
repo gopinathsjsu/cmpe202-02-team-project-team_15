@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Plus, Pencil, Trash2, X } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -16,7 +15,6 @@ interface Category {
 }
 
 const AdminCategoriesPage: React.FC = () => {
-  const navigate = useNavigate();
   const { showLoading, showSuccess, showError, hideToast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
@@ -492,7 +490,7 @@ const AdminCategoriesPage: React.FC = () => {
             <div className="flex space-x-3">
               <button
                 onClick={handleDeleteCategory}
-                disabled={formLoading || (selectedCategory.listingCount && selectedCategory.listingCount > 0)}
+                disabled={formLoading || !!(selectedCategory.listingCount && selectedCategory.listingCount > 0)}
                 className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
               >
                 {formLoading ? 'Deleting...' : 'Delete Category'}

@@ -226,8 +226,8 @@ const AdminReportsPage: React.FC = () => {
             </div>
           </div>
 
-        {/* Mobile Filter Toggle Button */}
-        <div className="lg:hidden mb-4">
+          {/* Mobile Filter Toggle Button */}
+          <div className="lg:hidden mb-4">
           <button
             onClick={toggleFilterMenu}
             className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm flex items-center justify-between hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -242,9 +242,9 @@ const AdminReportsPage: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
-        </div>
+          </div>
 
-        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+          <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
           {/* Filter Menu Sidebar */}
           <div className={`${isFilterMenuOpen ? 'block lg:hidden' : 'hidden lg:block'} w-full lg:w-72 flex-shrink-0 bg-white rounded-xl p-6 h-fit shadow-lg`}>
             {/* Mobile Header */}
@@ -494,6 +494,7 @@ const AdminReportsPage: React.FC = () => {
               onPageChange={handlePageChange}
             />
           </main>
+          </div>
         </div>
       </div>
       <Footer />
