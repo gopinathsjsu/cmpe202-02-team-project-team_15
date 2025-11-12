@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import ImageUpload from '../components/ImageUpload';
+import Footer from '../components/Footer';
 import { apiService, ICategory, IListing } from '../services/api';
 
 const EditListing = () => {
@@ -238,6 +239,7 @@ const EditListing = () => {
           </form>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

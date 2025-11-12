@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService, ProfileData } from '../services/api';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const Profile: React.FC = () => {
   const { user } = useAuth();
@@ -122,7 +123,7 @@ const Profile: React.FC = () => {
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
+          <h1 className="text-3xl font-semibold text-gray-900">Profile</h1>
           <p className="mt-2 text-sm text-gray-600">
             Manage your personal information and contact details
           </p>
@@ -501,6 +502,7 @@ const Profile: React.FC = () => {
         </form>
       </div>
     </div>
+    <Footer />
     </div>
   );
 }

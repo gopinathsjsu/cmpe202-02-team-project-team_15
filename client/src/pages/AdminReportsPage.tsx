@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import BackButton from '../components/BackButton';
 import Pagination from '../components/Pagination';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import { apiService } from '../services/api';
 
 const REPORT_CATEGORIES = [
@@ -217,12 +217,15 @@ const AdminReportsPage: React.FC = () => {
       {/* Header with Navigation */}
       <Navbar />
 
-      <div className="max-w-7xl mx-auto p-4 lg:p-5">
-        {/* Back Button */}
-        <div className="mb-4">
-          <BackButton />
-        </div>
-        
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-semibold text-gray-900">Report Management</h1>
+              <p className="text-gray-600 mt-1">Review and manage user reports</p>
+            </div>
+          </div>
+
         {/* Mobile Filter Toggle Button */}
         <div className="lg:hidden mb-4">
           <button
@@ -493,6 +496,7 @@ const AdminReportsPage: React.FC = () => {
           </main>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
