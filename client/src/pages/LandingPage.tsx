@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import { ShoppingBag, Users, Shield, Zap, ArrowRight, Check } from 'lucide-react';
 import LandingHeader from '../components/LandingHeader';
 import Footer from '../components/Footer';
+import { useAuth } from '../contexts/AuthContext';
 
 const LandingPage: React.FC = () => {
+  const { user, loading } = useAuth();
 
   return (
     <div className="min-h-screen bg-white">
@@ -26,21 +28,35 @@ const LandingPage: React.FC = () => {
               </p>
               
               {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
-                <Link
-                  to="/signup"
-                  className="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-all duration-200 hover:shadow-xl transform hover:-translate-y-1"
-                >
-                  Get Started Free
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Link>
-                <Link
-                  to="/login"
-                  className="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-gray-900 bg-white border-2 border-gray-900 rounded-lg hover:bg-gray-50 transition-all duration-200"
-                >
-                  Sign In
-                </Link>
-              </div>
+              {!loading && (
+                <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
+                  {user ? (
+                    <Link
+                      to="/search"
+                      className="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-all duration-200 hover:shadow-xl transform hover:-translate-y-1"
+                    >
+                      Browse Items
+                      <ArrowRight className="ml-2 w-5 h-5" />
+                    </Link>
+                  ) : (
+                    <>
+                      <Link
+                        to="/signup"
+                        className="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-all duration-200 hover:shadow-xl transform hover:-translate-y-1"
+                      >
+                        Get Started Free
+                        <ArrowRight className="ml-2 w-5 h-5" />
+                      </Link>
+                      <Link
+                        to="/login"
+                        className="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-gray-900 bg-white border-2 border-gray-900 rounded-lg hover:bg-gray-50 transition-all duration-200"
+                      >
+                        Sign In
+                      </Link>
+                    </>
+                  )}
+                </div>
+              )}
 
               {/* Trust Indicators */}
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 text-sm text-gray-600">
@@ -136,19 +152,43 @@ const LandingPage: React.FC = () => {
       {/* CTA Section */}
       <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-gray-900 to-gray-800">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Ready to Get Started?
-          </h2>
-          <p className="text-lg md:text-xl text-gray-300 mb-8">
-            Join thousands of students buying and selling on campus
-          </p>
-          <Link
-            to="/signup"
-            className="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-gray-900 bg-white rounded-lg hover:bg-gray-100 transition-all duration-200 hover:shadow-xl transform hover:-translate-y-1"
-          >
-            Create Your Account
-            <ArrowRight className="ml-2 w-5 h-5" />
-          </Link>
+          {!loading && (
+            <>
+              {user ? (
+                <>
+                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                    Ready to Shop?
+                  </h2>
+                  <p className="text-lg md:text-xl text-gray-300 mb-8">
+                    Browse thousands of items from students on your campus
+                  </p>
+                  <Link
+                    to="/search"
+                    className="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-gray-900 bg-white rounded-lg hover:bg-gray-100 transition-all duration-200 hover:shadow-xl transform hover:-translate-y-1"
+                  >
+                    Browse Items
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                    Ready to Get Started?
+                  </h2>
+                  <p className="text-lg md:text-xl text-gray-300 mb-8">
+                    Join thousands of students buying and selling on campus
+                  </p>
+                  <Link
+                    to="/signup"
+                    className="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-gray-900 bg-white rounded-lg hover:bg-gray-100 transition-all duration-200 hover:shadow-xl transform hover:-translate-y-1"
+                  >
+                    Create Your Account
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Link>
+                </>
+              )}
+            </>
+          )}
         </div>
       </section>
 
