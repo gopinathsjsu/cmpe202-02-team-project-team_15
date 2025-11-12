@@ -1,22 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingBag, Users, Shield, Zap, ArrowRight, Check } from 'lucide-react';
 import LandingHeader from '../components/LandingHeader';
+import Footer from '../components/Footer';
 
 const LandingPage: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle form submission (e.g., send to backend or email service)
-    console.log('Email submitted:', email);
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      setEmail('');
-    }, 3000);
-  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -164,61 +152,7 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Email Capture Form Section */}
-      <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-gray-50">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-            Stay Updated
-          </h2>
-          <p className="text-lg text-gray-600 mb-8">
-            Get notified about new features and campus marketplace updates
-          </p>
-          
-          <form onSubmit={handleSubmit} className="max-w-md mx-auto">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                required
-                className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900 placeholder-gray-500"
-              />
-              <button
-                type="submit"
-                disabled={submitted}
-                className="px-6 py-3 bg-gray-900 text-white font-semibold rounded-lg hover:bg-gray-800 transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed whitespace-nowrap"
-              >
-                {submitted ? 'Subscribed!' : 'Subscribe'}
-              </button>
-            </div>
-            {submitted && (
-              <p className="mt-4 text-green-600 text-sm">
-                Thanks for subscribing! We'll keep you updated.
-              </p>
-            )}
-          </form>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="py-8 px-4 sm:px-6 lg:px-8 bg-white border-t border-gray-200">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-600 text-sm mb-4 md:mb-0">
-              © {new Date().getFullYear()} Campus Market. All rights reserved.
-            </p>
-            <div className="flex space-x-6">
-              <Link to="/login" className="text-gray-600 hover:text-gray-900 text-sm transition-colors">
-                Login
-              </Link>
-              <Link to="/signup" className="text-gray-600 hover:text-gray-900 text-sm transition-colors">
-                Sign Up
-              </Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
