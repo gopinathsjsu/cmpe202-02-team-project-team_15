@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import BackButton from "../components/BackButton";
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import { ReportModal } from "../components/ReportModal";
 import { WarnUserModal } from "../components/WarnUserModal";
 import ReportedDetailsPanel from "../components/ReportedDetailsPanel";
@@ -603,6 +604,7 @@ const ViewListing = () => {
           </div>
         </div>
       )}
+      <Footer />
     </div>
   );
 };

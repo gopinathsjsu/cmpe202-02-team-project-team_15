@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import ImageUpload from '../components/ImageUpload';
+import Footer from '../components/Footer';
 import { apiService, ICategory } from '../services/api';
 
 const CreateListing = () => {
@@ -220,6 +221,7 @@ const CreateListing = () => {
           </form>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

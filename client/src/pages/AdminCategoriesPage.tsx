@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Plus, Pencil, Trash2, X } from 'lucide-react';
-import BackButton from '../components/BackButton';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import { useToast } from '../contexts/ToastContext';
 import api from '../services/api';
 
@@ -16,7 +15,6 @@ interface Category {
 }
 
 const AdminCategoriesPage: React.FC = () => {
-  const navigate = useNavigate();
   const { showLoading, showSuccess, showError, hideToast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
@@ -238,12 +236,11 @@ const AdminCategoriesPage: React.FC = () => {
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <BackButton />
 
         <div className="mt-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Category Management</h1>
+              <h1 className="text-3xl font-semibold text-gray-900">Category Management</h1>
               <p className="text-gray-600 mt-1">Add, rename, or delete categories</p>
             </div>
             <button
@@ -493,7 +490,7 @@ const AdminCategoriesPage: React.FC = () => {
             <div className="flex space-x-3">
               <button
                 onClick={handleDeleteCategory}
-                disabled={formLoading || (selectedCategory.listingCount && selectedCategory.listingCount > 0)}
+                disabled={formLoading || !!(selectedCategory.listingCount && selectedCategory.listingCount > 0)}
                 className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
               >
                 {formLoading ? 'Deleting...' : 'Delete Category'}
@@ -509,6 +506,7 @@ const AdminCategoriesPage: React.FC = () => {
           </div>
         </div>
       )}
+      <Footer />
     </div>
   );
 };
