@@ -176,12 +176,8 @@ export const getListingById = async (req: Request<{ id: string }>, res: Response
       return;
     }
 
-    // Only show ACTIVE listings (unless admin - for future implementation)
-    if (listing.status !== 'ACTIVE') {
-      res.status(404).json({ error: 'Listing not found' });
-      return;
-    }
-
+    // Allow both ACTIVE and SOLD listings to be viewed
+    // Users should be able to view sold listings, especially if they have them saved
     res.json(listing);
   } catch (err: any) {
     console.error('Get listing error:', err);
