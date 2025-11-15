@@ -663,6 +663,7 @@ const ViewListing = () => {
           userId={listing.userId._id}
           userName={`${listing.userId.first_name} ${listing.userId.last_name}`}
           userEmail={listing.userId.email}
+          listingId={listing._id}
           onSuccess={() => {
             showSuccess('User account action completed successfully');
             // Optionally refresh the listing data

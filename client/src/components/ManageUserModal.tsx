@@ -8,6 +8,7 @@ interface ManageUserModalProps {
   userId: string;
   userName: string;
   userEmail: string;
+  listingId?: string; // Optional listing ID to hide when suspending
   onSuccess: () => void;
 }
 
@@ -19,6 +20,7 @@ const ManageUserModal: React.FC<ManageUserModalProps> = ({
   userId,
   userName,
   userEmail,
+  listingId,
   onSuccess,
 }) => {
   const [selectedAction, setSelectedAction] = useState<ActionType>(null);
@@ -48,7 +50,7 @@ const ManageUserModal: React.FC<ManageUserModalProps> = ({
 
     try {
       if (selectedAction === 'suspend') {
-        await apiService.suspendUser(userId, reason);
+        await apiService.suspendUser(userId, reason, listingId);
       } else {
         await apiService.deleteUser(userId, reason);
       }

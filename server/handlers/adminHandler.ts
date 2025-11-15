@@ -984,7 +984,7 @@ export class AdminHandler {
   static async suspendUser(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { reason } = req.body;
+      const { reason, listingId } = req.body;
 
       if (!mongoose.Types.ObjectId.isValid(id)) {
         res.status(400).json({
@@ -1021,11 +1021,16 @@ export class AdminHandler {
       user.status = 'suspended';
       await user.save();
 
+      // Hide the specific listing that caused the suspension (if provided)
+      if (listingId && mongoose.Types.ObjectId.isValid(listingId)) {
+        await Listing.findByIdAndUpdate(listingId, { isHidden: true });
+      }
+
       // Create audit log
       await AuditLog.create({
         user_id: (req as any).user?.userId,
         action: 'SUSPEND_USER',
-        details: `Suspended user ${user.email}. Reason: ${reason || 'No reason provided'}`,
+        details: `Suspended user ${user.email}. Reason: ${reason || 'No reason provided'}${listingId ? `. Listing ${listingId} hidden.` : ''}`,
         ip_address: req.ip
       });
 

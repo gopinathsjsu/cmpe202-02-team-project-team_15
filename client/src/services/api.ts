@@ -515,13 +515,15 @@ class ApiService {
   // Admin: Suspend user account
   async suspendUser(
     userId: string,
-    reason?: string
+    reason?: string,
+    listingId?: string
   ): Promise<{ success: boolean; message: string }> {
     const { data } = await api.patch<{
       success: boolean;
       message: string;
     }>(`/api/admin/users/${userId}/suspend`, {
       reason,
+      listingId,
     });
     return data;
   }
