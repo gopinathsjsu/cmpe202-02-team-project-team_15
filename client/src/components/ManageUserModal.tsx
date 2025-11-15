@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, UserX, Trash2, AlertTriangle } from 'lucide-react';
+import { apiService } from '../services/api';
 
 interface ManageUserModalProps {
   isOpen: boolean;
@@ -46,32 +47,16 @@ const ManageUserModal: React.FC<ManageUserModalProps> = ({
     setError('');
 
     try {
-      const token = localStorage.getItem('token');
-      const endpoint = selectedAction === 'suspend' 
-        ? `/api/admin/users/${userId}/suspend`
-        : `/api/admin/users/${userId}`;
-      
-      const method = selectedAction === 'suspend' ? 'PATCH' : 'DELETE';
-
-      const response = await fetch(`http://localhost:8080${endpoint}`, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ reason }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || `Failed to ${selectedAction} user`);
+      if (selectedAction === 'suspend') {
+        await apiService.suspendUser(userId, reason);
+      } else {
+        await apiService.deleteUser(userId, reason);
       }
 
       onSuccess();
       handleClose();
     } catch (err: any) {
-      setError(err.message || `Failed to ${selectedAction} user`);
+      setError(err.response?.data?.message || err.message || `Failed to ${selectedAction} user`);
     } finally {
       setIsProcessing(false);
     }
