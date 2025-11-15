@@ -14,6 +14,7 @@ import ChatbotButton from './components/ChatbotButton';
 import AdminReportsPage from './pages/AdminReportsPage';
 import AdminCategoriesPage from './pages/AdminCategoriesPage';
 import Profile from './pages/Profile';
+import PublicProfile from './pages/PublicProfile';
 
 function App() {
   return (
@@ -115,6 +116,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/profile/:userId" 
+              element={
+                <ProtectedRoute>
+                  <PublicProfile />
                 </ProtectedRoute>
               } 
             />

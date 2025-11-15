@@ -66,7 +66,61 @@ export const createListing = async (req: Request, res: Response): Promise<void> 
       listing: savedListing 
     });
   } catch (error: any) {
-    console.error('Create listing error:', error);
+    console.error('Delete listing error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+};
+
+// GET /api/listings/user/:userId - Get listings by user ID (public)
+export const getListingsByUserId = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const { status = 'ACTIVE', page = 1, limit = 20 } = req.query;
+
+    // Validate user ID
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      res.status(400).json({ 
+        success: false, 
+        error: 'Invalid user ID format' 
+      });
+      return;
+    }
+
+    const filter: any = { userId };
+    if (status) {
+      filter.status = status;
+    }
+
+    // Always hide hidden listings from public view
+    filter.isHidden = { $ne: true };
+
+    const skip = (Number(page) - 1) * Number(limit);
+    
+    const [listings, total] = await Promise.all([
+      Listing.find(filter)
+        .populate('categoryId', 'name description')
+        .populate('userId', 'first_name last_name email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit)),
+      Listing.countDocuments(filter)
+    ]);
+
+    res.json({ 
+      success: true, 
+      listings,
+      pagination: {
+        current: Number(page),
+        pageSize: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error: any) {
+    console.error('Get listings by user ID error:', error);
     res.status(500).json({ 
       success: false, 
       error: error.message 

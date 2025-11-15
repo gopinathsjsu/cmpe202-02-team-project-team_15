@@ -297,6 +297,11 @@ const ViewListing = () => {
         "Unknown Seller"
       : "Unknown Seller";
 
+  const sellerId =
+    listing.userId && typeof listing.userId === "object"
+      ? listing.userId._id
+      : null;
+
   const sellerEmail =
     listing.userId && typeof listing.userId === "object"
       ? listing.userId.email
@@ -425,9 +430,18 @@ const ViewListing = () => {
               </div>
               <div>
                 <div className="text-sm text-gray-600 mb-1">Seller</div>
-                <div className="text-lg font-semibold text-gray-900">
-                  {sellerName}
-                </div>
+                {sellerId ? (
+                  <button
+                    onClick={() => navigate(`/profile/${sellerId}`)}
+                    className="text-lg font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-colors text-left"
+                  >
+                    {sellerName}
+                  </button>
+                ) : (
+                  <div className="text-lg font-semibold text-gray-900">
+                    {sellerName}
+                  </div>
+                )}
                 {sellerEmail && (
                   <div className="text-sm text-gray-500">{sellerEmail}</div>
                 )}
