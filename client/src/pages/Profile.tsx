@@ -539,37 +539,38 @@ const Profile: React.FC = () => {
 
         {/* Listings Section */}
         <div className="mt-8 bg-white shadow rounded-lg overflow-hidden">
-          <div className="px-8 py-6 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">My Listings</h2>
-                <p className="mt-1 text-sm text-gray-600">
-                  View and manage your listings
-                </p>
-              </div>
-              {/* Toggle Filter */}
-              <div className="flex rounded-lg border border-gray-300 overflow-hidden">
+          <div className="px-8 py-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">My Listings</h2>
+              <p className="mt-1 text-sm text-gray-600">
+                View and manage your listings
+              </p>
+            </div>
+            
+            {/* Tab Navigation */}
+            <div className="border-b border-gray-200 mt-6">
+              <nav className="-mb-px flex space-x-8">
                 <button
                   onClick={() => setListingFilter('ACTIVE')}
-                  className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  className={`py-4 px-1 text-sm font-medium border-b-2 transition-colors ${
                     listingFilter === 'ACTIVE'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  Active
+                  Active Listings
                 </button>
                 <button
                   onClick={() => setListingFilter('SOLD')}
-                  className={`px-4 py-2 text-sm font-medium transition-colors border-l border-gray-300 ${
+                  className={`py-4 px-1 text-sm font-medium border-b-2 transition-colors ${
                     listingFilter === 'SOLD'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  Sold
+                  Sold Listings
                 </button>
-              </div>
+              </nav>
             </div>
           </div>
           <div className="px-8 py-6">
@@ -579,26 +580,28 @@ const Profile: React.FC = () => {
               </div>
             ) : listings.length === 0 ? (
               <div className="text-center py-12">
-                <svg
-                  className="mx-auto h-12 w-12 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-                  />
-                </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">
-                  No {listingFilter.toLowerCase()} listings
+                <div className="text-gray-400 mb-4">
+                  <svg
+                    className="w-16 h-16 mx-auto"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-1">
+                  No {listingFilter === 'ACTIVE' ? 'Active' : 'Sold'} Listings
                 </h3>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="text-gray-600">
                   {listingFilter === 'ACTIVE' 
-                    ? 'Get started by creating a new listing' 
-                    : 'You have no sold listings yet'}
+                    ? "You don't have any active listings yet!" 
+                    : "You don't have any sold listings yet!"}
                 </p>
                 {listingFilter === 'ACTIVE' && (
                   <div className="mt-6">
