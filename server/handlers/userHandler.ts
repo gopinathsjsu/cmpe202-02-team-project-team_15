@@ -89,7 +89,7 @@ export class UserHandler {
   static async getPublicProfile(req: Request, res: Response): Promise<void> {
     try {
       const user = await User.findById(req.params.id)
-        .select('first_name last_name full_name photo_url bio created_at');
+        .select('first_name last_name full_name photo_url bio contact_info created_at');
 
       if (!user) {
         res.status(404).json({
@@ -109,6 +109,7 @@ export class UserHandler {
             full_name: user.full_name,
             photo_url: user.photo_url,
             bio: user.bio,
+            contact_info: user.contact_info,
             created_at: user.created_at
           }
         }
