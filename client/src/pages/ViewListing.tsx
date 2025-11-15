@@ -18,6 +18,7 @@ import Navbar from '../components/Navbar';
 import { ReportModal } from "../components/ReportModal";
 import { WarnUserModal } from "../components/WarnUserModal";
 import ReportedDetailsPanel from "../components/ReportedDetailsPanel";
+import ManageUserModal from "../components/ManageUserModal";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { apiService, IListing, ICategory } from "../services/api";
@@ -42,6 +43,7 @@ const ViewListing = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [updatingCategory, setUpdatingCategory] = useState(false);
   const [togglingVisibility, setTogglingVisibility] = useState(false);
+  const [showManageUserModal, setShowManageUserModal] = useState(false);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -532,10 +534,7 @@ const ViewListing = () => {
                   <span>Edit Categories</span>
                 </button>
                 <button
-                  onClick={() => {
-                    // TODO: Implement manage user account functionality
-                    alert("Manage user account functionality coming soon");
-                  }}
+                  onClick={() => setShowManageUserModal(true)}
                   className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
                 >
                   <UserCog className="w-5 h-5" />
@@ -654,6 +653,22 @@ const ViewListing = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Manage User Account Modal */}
+      {listing && listing.userId && (
+        <ManageUserModal
+          isOpen={showManageUserModal}
+          onClose={() => setShowManageUserModal(false)}
+          userId={listing.userId._id}
+          userName={`${listing.userId.first_name} ${listing.userId.last_name}`}
+          userEmail={listing.userId.email}
+          onSuccess={() => {
+            showSuccess('User account action completed successfully');
+            // Optionally refresh the listing data
+            window.location.reload();
+          }}
+        />
       )}
     </div>
   );

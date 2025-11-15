@@ -978,4 +978,170 @@ export class AdminHandler {
       });
     }
   }
+
+  // @desc    Suspend user account (Admin only)
+  // @access  Private (Admin)
+  static async suspendUser(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid user ID'
+        });
+        return;
+      }
+
+      const user = await User.findById(id);
+
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+        return;
+      }
+
+      // Don't allow suspending admin users
+      const adminRole = await mongoose.model('Role').findOne({ name: 'admin' });
+      const userRoles = await mongoose.model('UserRole').find({ user_id: id });
+      const isAdmin = userRoles.some((ur: any) => ur.role_id.toString() === adminRole?._id.toString());
+
+      if (isAdmin) {
+        res.status(403).json({
+          success: false,
+          message: 'Cannot suspend admin users'
+        });
+        return;
+      }
+
+      // Update user status to suspended
+      user.status = 'suspended';
+      await user.save();
+
+      // Create audit log
+      await AuditLog.create({
+        user_id: (req as any).user?.userId,
+        action: 'SUSPEND_USER',
+        details: `Suspended user ${user.email}. Reason: ${reason || 'No reason provided'}`,
+        ip_address: req.ip
+      });
+
+      // Revoke all active sessions for this user
+      await Session.updateMany(
+        { user_id: id, revoked_at: null },
+        { revoked_at: new Date() }
+      );
+
+      res.json({
+        success: true,
+        message: 'User account suspended successfully',
+        data: {
+          user: {
+            _id: user._id,
+            email: user.email,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            status: user.status
+          }
+        }
+      });
+
+    } catch (error: any) {
+      console.error('Suspend user error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to suspend user',
+        error: error.message
+      });
+    }
+  }
+
+  // @desc    Delete user account (Admin only)
+  // @access  Private (Admin)
+  static async deleteUser(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid user ID'
+        });
+        return;
+      }
+
+      const user = await User.findById(id);
+
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+        return;
+      }
+
+      // Don't allow deleting admin users
+      const adminRole = await mongoose.model('Role').findOne({ name: 'admin' });
+      const userRoles = await mongoose.model('UserRole').find({ user_id: id });
+      const isAdmin = userRoles.some((ur: any) => ur.role_id.toString() === adminRole?._id.toString());
+
+      if (isAdmin) {
+        res.status(403).json({
+          success: false,
+          message: 'Cannot delete admin users'
+        });
+        return;
+      }
+
+      // Update user status to deleted (soft delete)
+      user.status = 'deleted';
+      await user.save();
+
+      // Create audit log
+      await AuditLog.create({
+        user_id: (req as any).user?.userId,
+        action: 'DELETE_USER',
+        details: `Deleted user ${user.email}. Reason: ${reason || 'No reason provided'}`,
+        ip_address: req.ip
+      });
+
+      // Revoke all active sessions for this user
+      await Session.updateMany(
+        { user_id: id, revoked_at: null },
+        { revoked_at: new Date() }
+      );
+
+      // Hide all listings by this user
+      await Listing.updateMany(
+        { userId: id },
+        { isHidden: true }
+      );
+
+      res.json({
+        success: true,
+        message: 'User account deleted successfully',
+        data: {
+          user: {
+            _id: user._id,
+            email: user.email,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            status: user.status
+          }
+        }
+      });
+
+    } catch (error: any) {
+      console.error('Delete user error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to delete user',
+        error: error.message
+      });
+    }
+  }
 }

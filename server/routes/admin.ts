@@ -81,4 +81,14 @@ router.put('/listings/:id/category', authenticateToken, requireRole(['admin']), 
 // @access  Private (Admin)
 router.patch('/listings/:id/visibility', authenticateToken, requireRole(['admin']), AdminHandler.toggleListingVisibility);
 
+// @route   PATCH /api/admin/users/:id/suspend
+// @desc    Suspend user account (Admin only)
+// @access  Private (Admin)
+router.patch('/users/:id/suspend', authenticateToken, requireRole(['admin']), AdminHandler.suspendUser);
+
+// @route   DELETE /api/admin/users/:id
+// @desc    Delete user account (Admin only)
+// @access  Private (Admin)
+router.delete('/users/:id', authenticateToken, requireRole(['admin']), AdminHandler.deleteUser);
+
 export default router;

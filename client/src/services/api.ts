@@ -511,6 +511,34 @@ class ApiService {
     });
     return data;
   }
+
+  // Admin: Suspend user account
+  async suspendUser(
+    userId: string,
+    reason?: string
+  ): Promise<{ success: boolean; message: string }> {
+    const { data } = await api.patch<{
+      success: boolean;
+      message: string;
+    }>(`/api/admin/users/${userId}/suspend`, {
+      reason,
+    });
+    return data;
+  }
+
+  // Admin: Delete user account
+  async deleteUser(
+    userId: string,
+    reason?: string
+  ): Promise<{ success: boolean; message: string }> {
+    const { data } = await api.delete<{
+      success: boolean;
+      message: string;
+    }>(`/api/admin/users/${userId}`, {
+      data: { reason },
+    });
+    return data;
+  }
 }
 
 export const apiService = new ApiService();
