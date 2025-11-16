@@ -239,7 +239,7 @@ class AuthHandler {
         refresh_token: refreshToken,
         user_agent: userAgent,
         ip_address: ipAddress,
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+        expires_at: new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
       });
 
       // Get user roles

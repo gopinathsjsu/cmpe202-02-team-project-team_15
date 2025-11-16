@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserX, UserCheck, Mail, Calendar } from 'lucide-react';
+import { UserX, UserCheck, Mail, Calendar, X, AlertCircle, CheckCircle } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import BackButton from '../components/BackButton';
 import Pagination from '../components/Pagination';
@@ -26,6 +26,11 @@ const SuspendedUsersPage: React.FC = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [pageSize] = useState(20);
   const [processingUserId, setProcessingUserId] = useState<string | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [selectedUser, setSelectedUser] = useState<SuspendedUser | null>(null);
 
   const fetchSuspendedUsers = async (page: number = 1) => {
     setLoading(true);
@@ -53,22 +58,28 @@ const SuspendedUsersPage: React.FC = () => {
     fetchSuspendedUsers(currentPage);
   }, []);
 
-  const handleUnsuspend = async (userId: string) => {
-    if (!window.confirm('Are you sure you want to unsuspend this user? All their listings will be restored.')) {
-      return;
-    }
+  const handleUnsuspendClick = (user: SuspendedUser) => {
+    setSelectedUser(user);
+    setShowConfirmModal(true);
+  };
 
-    setProcessingUserId(userId);
+  const handleConfirmUnsuspend = async () => {
+    if (!selectedUser) return;
+
+    setShowConfirmModal(false);
+    setProcessingUserId(selectedUser._id);
+    
     try {
-      const response = await apiService.unsuspendUser(userId);
+      const response = await apiService.unsuspendUser(selectedUser._id);
       console.log('Unsuspend response:', response);
       
       // Remove the user from the current list immediately
-      setUsers(prevUsers => prevUsers.filter(u => u._id !== userId));
+      setUsers(prevUsers => prevUsers.filter(u => u._id !== selectedUser._id));
       setTotalItems(prev => prev - 1);
       
       // Show success message
-      alert(response.message || 'User unsuspended successfully');
+      setModalMessage(response.message || 'User unsuspended successfully');
+      setShowSuccessModal(true);
       
       // If current page is now empty and not the first page, go back one page
       if (users.length === 1 && currentPage > 1) {
@@ -80,9 +91,11 @@ const SuspendedUsersPage: React.FC = () => {
     } catch (err: any) {
       console.error('Unsuspend error full:', err);
       console.error('Unsuspend error response:', err.response);
-      alert(err.response?.data?.message || 'Failed to unsuspend user');
+      setModalMessage(err.response?.data?.message || 'Failed to unsuspend user');
+      setShowErrorModal(true);
     } finally {
       setProcessingUserId(null);
+      setSelectedUser(null);
     }
   };
 
@@ -198,7 +211,7 @@ const SuspendedUsersPage: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button
-                            onClick={() => handleUnsuspend(user._id)}
+                            onClick={() => handleUnsuspendClick(user)}
                             disabled={processingUserId === user._id}
                             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                           >
@@ -250,6 +263,120 @@ const SuspendedUsersPage: React.FC = () => {
               />
             </div>
           </>
+        )}
+
+        {/* Confirmation Modal */}
+        {showConfirmModal && selectedUser && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold text-gray-900">Confirm Unsuspend</h3>
+                  <button
+                    onClick={() => {
+                      setShowConfirmModal(false);
+                      setSelectedUser(null);
+                    }}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="mb-6">
+                  <p className="text-gray-700 mb-4">
+                    Are you sure you want to unsuspend <strong>{selectedUser.first_name} {selectedUser.last_name}</strong>?
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    This will restore their account and unhide all their listings.
+                  </p>
+                </div>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={() => {
+                      setShowConfirmModal(false);
+                      setSelectedUser(null);
+                    }}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleConfirmUnsuspend}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center"
+                  >
+                    <UserCheck className="w-4 h-4 mr-2" />
+                    Unsuspend User
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Success Modal */}
+        {showSuccessModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <div className="bg-green-100 rounded-full p-2 mr-3">
+                      <CheckCircle className="w-6 h-6 text-green-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900">Success</h3>
+                  </div>
+                  <button
+                    onClick={() => setShowSuccessModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <p className="text-gray-700 mb-6">{modalMessage}</p>
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => setShowSuccessModal(false)}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                  >
+                    OK
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Error Modal */}
+        {showErrorModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <div className="bg-red-100 rounded-full p-2 mr-3">
+                      <AlertCircle className="w-6 h-6 text-red-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900">Error</h3>
+                  </div>
+                  <button
+                    onClick={() => setShowErrorModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <p className="text-gray-700 mb-6">{modalMessage}</p>
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => setShowErrorModal(false)}
+                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                  >
+                    OK
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
