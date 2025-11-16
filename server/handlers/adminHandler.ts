@@ -1021,16 +1021,17 @@ export class AdminHandler {
       user.status = 'suspended';
       await user.save();
 
-      // Hide the specific listing that caused the suspension (if provided)
-      if (listingId && mongoose.Types.ObjectId.isValid(listingId)) {
-        await Listing.findByIdAndUpdate(listingId, { isHidden: true });
-      }
+      // Hide all listings by this user
+      await Listing.updateMany(
+        { userId: id },
+        { isHidden: true }
+      );
 
       // Create audit log
       await AuditLog.create({
         user_id: (req as any).user?.userId,
         action: 'SUSPEND_USER',
-        details: `Suspended user ${user.email}. Reason: ${reason || 'No reason provided'}${listingId ? `. Listing ${listingId} hidden.` : ''}`,
+        details: `Suspended user ${user.email}. Reason: ${reason || 'No reason provided'}. All user listings hidden.`,
         ip_address: req.ip
       });
 
