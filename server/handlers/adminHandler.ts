@@ -1150,4 +1150,117 @@ export class AdminHandler {
       });
     }
   }
+
+  // @desc    Get all suspended users (Admin only)
+  // @access  Private (Admin)
+  static async getSuspendedUsers(req: Request, res: Response): Promise<void> {
+    try {
+      const { page = '1', limit = '20' } = req.query;
+      const pageNum = parseInt(page as string, 10);
+      const limitNum = parseInt(limit as string, 10);
+
+      const suspendedUsers = await User.find({ status: 'suspended' })
+        .select('first_name last_name email status created_at updated_at')
+        .limit(limitNum)
+        .skip((pageNum - 1) * limitNum)
+        .sort({ updated_at: -1 });
+
+      const total = await User.countDocuments({ status: 'suspended' });
+
+      res.json({
+        success: true,
+        data: {
+          users: suspendedUsers,
+          pagination: {
+            current_page: pageNum,
+            total_pages: Math.ceil(total / limitNum),
+            total_users: total,
+            per_page: limitNum
+          }
+        }
+      });
+
+    } catch (error: any) {
+      console.error('Get suspended users error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get suspended users',
+        error: error.message
+      });
+    }
+  }
+
+  // @desc    Unsuspend user account (restore to active) (Admin only)
+  // @access  Private (Admin)
+  static async unsuspendUser(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid user ID'
+        });
+        return;
+      }
+
+      const user = await User.findById(id);
+
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+        return;
+      }
+
+      if (user.status !== 'suspended') {
+        res.status(400).json({
+          success: false,
+          message: 'User is not suspended'
+        });
+        return;
+      }
+
+      // Update user status to active
+      user.status = 'active';
+      await user.save();
+
+      // Restore (unhide) all listings by this user
+      await Listing.updateMany(
+        { userId: id },
+        { isHidden: false }
+      );
+
+      // Create audit log
+      await AuditLog.create({
+        user_id: (req as any).user?.userId,
+        action: 'UNSUSPEND_USER',
+        details: `Unsuspended user ${user.email}. All listings restored.`,
+        ip_address: req.ip
+      });
+
+      res.json({
+        success: true,
+        message: 'User account unsuspended successfully',
+        data: {
+          user: {
+            _id: user._id,
+            email: user.email,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            status: user.status
+          }
+        }
+      });
+
+    } catch (error: any) {
+      console.error('Unsuspend user error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to unsuspend user',
+        error: error.message
+      });
+    }
+  }
 }

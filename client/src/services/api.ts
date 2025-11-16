@@ -541,6 +541,26 @@ class ApiService {
     });
     return data;
   }
+
+  // Admin: Get suspended users
+  async getSuspendedUsers(params?: {
+    page?: number;
+    limit?: number;
+  }): Promise<any> {
+    const { data } = await api.get("/api/admin/users/suspended", { params });
+    return data;
+  }
+
+  // Admin: Unsuspend user
+  async unsuspendUser(
+    userId: string
+  ): Promise<{ success: boolean; message: string }> {
+    const { data } = await api.patch<{
+      success: boolean;
+      message: string;
+    }>(`/api/admin/users/${userId}/unsuspend`);
+    return data;
+  }
 }
 
 export const apiService = new ApiService();

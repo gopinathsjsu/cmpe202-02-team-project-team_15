@@ -14,6 +14,7 @@ import RootRedirect from './components/RootRedirect';
 import ChatbotButton from './components/ChatbotButton';
 import AdminReportsPage from './pages/AdminReportsPage';
 import AdminCategoriesPage from './pages/AdminCategoriesPage';
+import SuspendedUsersPage from './pages/SuspendedUsersPage';
 import Profile from './pages/Profile';
 import PublicProfile from './pages/PublicProfile';
 
@@ -81,6 +82,15 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={["admin"]}>
                   <AdminReportsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/suspended-users"
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <SuspendedUsersPage />
                 </ProtectedRoute>
               }
             />

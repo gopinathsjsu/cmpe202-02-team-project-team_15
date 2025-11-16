@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { MessageSquare, Heart, BarChart3, FolderTree } from 'lucide-react';
+import { MessageSquare, Heart, BarChart3, FolderTree, UserX } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const Navbar: React.FC = () => {
@@ -99,6 +99,17 @@ const Navbar: React.FC = () => {
                 >
                   <BarChart3 className="w-5 h-5" />
                   <span>Reports</span>
+                </button>
+                <button
+                  onClick={() => navigate('/admin/suspended-users')}
+                  className={`flex items-center space-x-1 font-medium transition-colors ${
+                    isActive('/admin/suspended-users') 
+                      ? 'text-blue-600' 
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
+                >
+                  <UserX className="w-5 h-5" />
+                  <span>Suspended</span>
                 </button>
                 <button
                   onClick={() => navigate('/admin/categories')}

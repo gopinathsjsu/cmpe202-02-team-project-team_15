@@ -91,4 +91,14 @@ router.patch('/users/:id/suspend', authenticateToken, requireRole(['admin']), Ad
 // @access  Private (Admin)
 router.delete('/users/:id', authenticateToken, requireRole(['admin']), AdminHandler.deleteUser);
 
+// @route   GET /api/admin/users/suspended
+// @desc    Get all suspended users (Admin only)
+// @access  Private (Admin)
+router.get('/users/suspended', authenticateToken, requireRole(['admin']), AdminHandler.getSuspendedUsers);
+
+// @route   PATCH /api/admin/users/:id/unsuspend
+// @desc    Unsuspend user account (Admin only)
+// @access  Private (Admin)
+router.patch('/users/:id/unsuspend', authenticateToken, requireRole(['admin']), AdminHandler.unsuspendUser);
+
 export default router;
