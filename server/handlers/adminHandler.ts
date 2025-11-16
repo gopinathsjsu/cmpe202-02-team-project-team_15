@@ -1235,7 +1235,7 @@ export class AdminHandler {
       // Create audit log
       await AuditLog.create({
         user_id: (req as any).user?.userId,
-        action: 'UNSUSPEND_USER',
+        action: 'REACTIVATE_USER',
         details: `Unsuspended user ${user.email}. All listings restored.`,
         ip_address: req.ip
       });

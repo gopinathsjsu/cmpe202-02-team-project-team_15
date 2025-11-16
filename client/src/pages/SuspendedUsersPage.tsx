@@ -60,10 +60,26 @@ const SuspendedUsersPage: React.FC = () => {
 
     setProcessingUserId(userId);
     try {
-      await apiService.unsuspendUser(userId);
-      // Refresh the list
-      fetchSuspendedUsers(currentPage);
+      const response = await apiService.unsuspendUser(userId);
+      console.log('Unsuspend response:', response);
+      
+      // Remove the user from the current list immediately
+      setUsers(prevUsers => prevUsers.filter(u => u._id !== userId));
+      setTotalItems(prev => prev - 1);
+      
+      // Show success message
+      alert(response.message || 'User unsuspended successfully');
+      
+      // If current page is now empty and not the first page, go back one page
+      if (users.length === 1 && currentPage > 1) {
+        fetchSuspendedUsers(currentPage - 1);
+      } else if (users.length === 1 && totalPages > 1) {
+        // Last user on first page, refresh to check if there are more pages
+        fetchSuspendedUsers(1);
+      }
     } catch (err: any) {
+      console.error('Unsuspend error full:', err);
+      console.error('Unsuspend error response:', err.response);
       alert(err.response?.data?.message || 'Failed to unsuspend user');
     } finally {
       setProcessingUserId(null);
