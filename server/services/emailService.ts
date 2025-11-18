@@ -64,9 +64,9 @@ const sendVerificationEmail = async (
     console.log('Email transporter verified successfully');
 
     const mailOptions = {
-      from: `"Campus Market" <${process.env.EMAIL_USER || 'rootuser.cmp@gmail.com'}>`,
+      from: `"Campus Marketplace" <${process.env.EMAIL_USER || 'rootuser.cmp@gmail.com'}>`,
       to: email,
-      subject: 'Verify Your Campus Email - Campus Market',
+      subject: 'Verify Your Campus Email - Campus Marketplace',
       html: `
         <!DOCTYPE html>
         <html>
@@ -85,11 +85,11 @@ const sendVerificationEmail = async (
         <body>
           <div class="container">
             <div class="header">
-              <h1>Campus Market</h1>
+              <h1>Campus Marketplace</h1>
             </div>
             <div class="content">
               <h2>Verify Your Email Address</h2>
-              <p>Thank you for signing up for Campus Market! Please verify your email address to complete your registration.</p>
+              <p>Thank you for signing up for Campus Marketplace! Please verify your email address to complete your registration.</p>
               
               <div class="code-box">
                 <p style="margin: 0 0 10px 0; color: #6b7280;">Your verification code:</p>
@@ -101,18 +101,18 @@ const sendVerificationEmail = async (
               <a href="${verificationLink}" class="button">Verify Email Address</a>
 
               <p style="margin-top: 30px; font-size: 14px; color: #6b7280;">
-                If you didn't create an account with Campus Market, please ignore this email.
+                If you didn't create an account with Campus Marketplace, please ignore this email.
               </p>
             </div>
             <div class="footer">
-              <p>© ${new Date().getFullYear()} Campus Market. All rights reserved.</p>
+              <p>© ${new Date().getFullYear()} Campus Marketplace. All rights reserved.</p>
             </div>
           </div>
         </body>
         </html>
       `,
       text: `
-        Verify Your Email Address - Campus Market
+        Verify Your Email Address - Campus Marketplace
         
         Your verification code is: ${verificationCode}
         This code expires in 15 minutes.
