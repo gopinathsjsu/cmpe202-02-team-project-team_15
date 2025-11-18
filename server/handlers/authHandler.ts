@@ -50,13 +50,13 @@ class AuthHandler {
       // Check if user already exists with this email
       const existingUser = await User.findOne({ email: normalizedEmail });
       
-      // If user exists, they're already registered - don't need fresh verification
+      // If user exists, they're already registered - return error
       if (existingUser) {
         res.json({
           success: true,
           data: {
             email: normalizedEmail,
-            verified: true,
+            verified: false,
             userExists: true
           }
         });

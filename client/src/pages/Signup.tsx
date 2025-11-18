@@ -43,8 +43,14 @@ const Signup: React.FC = () => {
         authAPI.checkVerification(decodedEmail)
           .then(response => {
             console.log('Signup page: Check verification response:', response.data);
-            // Response structure: { success: true, data: { email: '...', verified: true } }
-            const isVerified = response.data?.data?.verified;
+            // Response structure: { success: true, data: { email: '...', verified: true, userExists?: true } }
+            const data = response.data?.data;
+            if (data?.userExists) {
+              setError('An account with this email already exists. Please login instead.');
+              setStep('email');
+              return;
+            }
+            const isVerified = data?.verified;
             console.log('Signup page: Is verified?', isVerified);
             if (isVerified) {
               // Automatically advance to registration step since email is verified
@@ -82,8 +88,14 @@ const Signup: React.FC = () => {
       if (email && email.includes('@')) {
         try {
           const response = await authAPI.checkVerification(email);
-          // Response structure: { success: true, data: { email: '...', verified: true } }
-          if (response.data?.data?.verified) {
+          // Response structure: { success: true, data: { email: '...', verified: true, userExists?: true } }
+          const data = response.data?.data;
+          if (data?.userExists) {
+            setError('An account with this email already exists. Please login instead.');
+            setStep('email');
+            return;
+          }
+          if (data?.verified) {
             setStep('register');
             setSuccess('Email already verified! You can now complete your registration.');
           }
@@ -128,8 +140,14 @@ const Signup: React.FC = () => {
     // First check if already verified (for cross-device scenario)
     try {
       const checkResponse = await authAPI.checkVerification(email);
-      // Response structure: { success: true, data: { email: '...', verified: true } }
-      if (checkResponse.data?.data?.verified) {
+      // Response structure: { success: true, data: { email: '...', verified: true, userExists?: true } }
+      const data = checkResponse.data?.data;
+      if (data?.userExists) {
+        setError('An account with this email already exists. Please login instead.');
+        setLoading(false);
+        return;
+      }
+      if (data?.verified) {
         setStep('register');
         setSuccess('Email already verified! You can now complete your registration.');
         setLoading(false);
