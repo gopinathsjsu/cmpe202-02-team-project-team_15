@@ -92,6 +92,15 @@ export const authAPI = {
 
   refresh: (refreshToken: string) =>
     api.post("/api/auth/refresh", { refreshToken }),
+
+  requestVerification: (email: string) =>
+    api.post("/api/auth/request-verification", { email }),
+
+  verifyCode: (email: string, code: string) =>
+    api.post("/api/auth/verify-code", { email, code }),
+
+  checkVerification: (email: string) =>
+    api.get(`/api/auth/check-verification/${encodeURIComponent(email)}`),
 };
 
 // Types based on backend API

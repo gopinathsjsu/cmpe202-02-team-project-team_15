@@ -13,6 +13,26 @@ import { authenticateToken, verifyRefreshToken } from '../middleware/auth';
 
 const router = express.Router();
 
+// @route   GET /api/auth/check-verification/:email
+// @desc    Check if email is verified
+// @access  Public
+router.get('/check-verification/:email', AuthHandler.checkVerification);
+
+// @route   POST /api/auth/request-verification
+// @desc    Request email verification (send code + link)
+// @access  Public
+router.post('/request-verification', AuthHandler.requestVerification);
+
+// @route   POST /api/auth/verify-code
+// @desc    Verify email using verification code
+// @access  Public
+router.post('/verify-code', AuthHandler.verifyCode);
+
+// @route   GET /api/auth/verify-email/:token
+// @desc    Verify email using verification link (secure token from email)
+// @access  Public
+router.get('/verify-email/:token', AuthHandler.verifyEmailLink);
+
 // @route   POST /api/auth/register
 // @desc    Register a new user
 // @access  Public
@@ -22,7 +42,7 @@ router.post('/signup', AuthHandler.register);
 
 
 // @route   POST /api/auth/verify-email
-// @desc    Verify user email
+// @desc    Verify user email (legacy endpoint)
 // @access  Public
 router.post('/verify-email', validateEmailVerification, AuthHandler.verifyEmail);
 
