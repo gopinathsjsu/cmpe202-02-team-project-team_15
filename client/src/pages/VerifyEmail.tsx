@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import api from '../services/api';
+import { useToast } from '../contexts/ToastContext';
 
 const VerifyEmail: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('Verifying your email...');
 
@@ -42,6 +44,9 @@ const VerifyEmail: React.FC = () => {
           
           console.log('Verification successful, redirecting to signup with email:', verifiedEmail);
           
+          // Show success toast
+          showSuccess('Email Verified', 'Redirecting to signup page...');
+          
           // Always redirect to signup page in the same tab
           // Use a delay to ensure backend has saved the verification
           setTimeout(() => {
@@ -58,11 +63,12 @@ const VerifyEmail: React.FC = () => {
                             error.message || 
                             'Verification failed. The link may have expired or already been used.';
         setMessage(errorMessage);
+        showError('Verification Failed', errorMessage);
       }
     };
 
     verifyEmail();
-  }, [token, navigate]);
+  }, [token, navigate, showSuccess, showError]);
 
   return (
     <div className="bg-gray-100 min-h-screen flex items-center justify-center p-4">

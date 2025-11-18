@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import { Mail, CheckCircle, Lock, Eye, EyeOff } from 'lucide-react';
+import { useToast } from '../contexts/ToastContext';
 
 type Step = 'email' | 'verify' | 'reset';
 
@@ -24,6 +25,7 @@ const ForgotPassword: React.FC = () => {
   
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { showSuccess, showError } = useToast();
 
   // Check if coming from reset link (cross-device support)
   useEffect(() => {
@@ -163,13 +165,18 @@ const ForgotPassword: React.FC = () => {
         verifiedToken || undefined
       );
       
+      // Show success toast
+      showSuccess('Password Reset Successful', 'Redirecting to login page...');
+      
       setSuccess('Password reset successfully! Redirecting to login...');
       setTimeout(() => {
         navigate('/login');
       }, 2000);
     } catch (err: any) {
       console.error('Reset password error:', err);
-      setError(err.response?.data?.message || 'Failed to reset password. Please try again.');
+      const errorMessage = err.response?.data?.message || 'Failed to reset password. Please try again.';
+      setError(errorMessage);
+      showError('Password Reset Failed', errorMessage);
     } finally {
       setLoading(false);
     }

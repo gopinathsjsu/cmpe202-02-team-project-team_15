@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { authAPI } from '../services/api';
+import { useToast } from '../contexts/ToastContext';
 
 const ResetPassword: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('Verifying reset link...');
 
@@ -37,6 +39,9 @@ const ResetPassword: React.FC = () => {
           
           console.log('Reset link verification successful, redirecting with email:', verifiedEmail);
           
+          // Show success toast
+          showSuccess('Reset Link Verified', 'Redirecting to password reset page...');
+          
           // Always redirect to forgot password page in the same tab
           // Pass the token so it can be used when resetting password
           // Use a delay to ensure backend has saved the verification
@@ -54,11 +59,12 @@ const ResetPassword: React.FC = () => {
                             error.message || 
                             'Verification failed. The link may have expired or already been used.';
         setMessage(errorMessage);
+        showError('Verification Failed', errorMessage);
       }
     };
 
     verifyResetLink();
-  }, [token, navigate]);
+  }, [token, navigate, showSuccess, showError]);
 
   return (
     <div className="bg-gray-100 min-h-screen flex items-center justify-center p-4">
