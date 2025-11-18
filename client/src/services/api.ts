@@ -101,6 +101,21 @@ export const authAPI = {
 
   checkVerification: (email: string) =>
     api.get(`/api/auth/check-verification/${encodeURIComponent(email)}`),
+
+  // Password Reset
+  forgotPassword: (email: string) =>
+    api.post("/api/auth/forgot-password", { email }),
+
+  verifyResetCode: (email: string, code: string) =>
+    api.post("/api/auth/verify-reset-code", { email, code }),
+
+  verifyResetLink: (token: string) =>
+    api.get(`/api/auth/verify-reset-link/${token}`, {
+      headers: { Accept: "application/json" },
+    }),
+
+  resetPassword: (email: string, password: string, code?: string, token?: string) =>
+    api.post("/api/auth/reset-password", { email, password, code, token }),
 };
 
 // Types based on backend API

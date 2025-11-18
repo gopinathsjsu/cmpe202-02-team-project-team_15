@@ -62,12 +62,22 @@ router.post('/refresh', verifyRefreshToken, AuthHandler.refresh);
 router.post('/logout', authenticateToken, AuthHandler.logout);
 
 // @route   POST /api/auth/forgot-password
-// @desc    Request password reset
+// @desc    Request password reset (send code + link)
 // @access  Public
 router.post('/forgot-password', validatePasswordResetRequest, AuthHandler.forgotPassword);
 
+// @route   POST /api/auth/verify-reset-code
+// @desc    Verify password reset code
+// @access  Public
+router.post('/verify-reset-code', AuthHandler.verifyResetCode);
+
+// @route   GET /api/auth/verify-reset-link/:token
+// @desc    Verify password reset link
+// @access  Public
+router.get('/verify-reset-link/:token', AuthHandler.verifyResetLink);
+
 // @route   POST /api/auth/reset-password
-// @desc    Reset password
+// @desc    Reset password (after verification)
 // @access  Public
 router.post('/reset-password', validatePasswordReset, AuthHandler.resetPassword);
 

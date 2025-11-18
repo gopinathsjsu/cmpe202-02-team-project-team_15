@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const { User, Session, EmailVerification, PasswordReset, AuditLog, UserRole, Role } = require('../models');
-const { sendVerificationEmail } = require('../services/emailService');
+const { sendVerificationEmail, sendPasswordResetEmail } = require('../services/emailService');
 
 // Helper function to generate tokens
 const generateTokens = (userId: string) => {
@@ -20,12 +20,6 @@ const generateTokens = (userId: string) => {
 // Helper function to generate 6-digit verification code
 const generateVerificationCode = (): string => {
   return Math.floor(100000 + Math.random() * 900000).toString();
-};
-
-// Helper function to send password reset email (mock implementation)
-const sendPasswordResetEmail = async (user: any, token: string): Promise<boolean> => {
-  // In a real implementation, you would use nodemailer or similar
-  return true;
 };
 
 class AuthHandler {
@@ -867,38 +861,79 @@ class AuthHandler {
   }
 
   // @route   POST /api/auth/forgot-password
-  // @desc    Request password reset
+  // @desc    Request password reset (send code + link)
   // @access  Public
   static async forgotPassword(req, res) {
     try {
       const { email } = req.body;
 
-      const user = await User.findOne({ email });
-      if (!user) {
-        // Don't reveal if user exists or not
-        res.json({
-          success: true,
-          message: 'If an account with that email exists, a password reset link has been sent.'
+      if (!email) {
+        res.status(400).json({
+          success: false,
+          message: 'Email is required'
         });
         return;
       }
 
-      // Generate reset token
+      const normalizedEmail = email.toLowerCase().trim();
+      const user = await User.findOne({ email: normalizedEmail });
+      
+      if (!user) {
+        // Don't reveal if user exists or not (security best practice)
+        res.json({
+          success: true,
+          message: 'If an account with that email exists, a password reset code and link have been sent.'
+        });
+        return;
+      }
+
+      // Generate 6-digit verification code
+      const resetCode = generateVerificationCode();
+      
+      // Generate secure token for link verification (32 bytes = 64 hex chars)
       const resetToken = crypto.randomBytes(32).toString('hex');
       const tokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
 
-      await PasswordReset.create({
+      // Expires in 1 hour
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+      // Delete any existing unused reset requests for this user
+      await PasswordReset.deleteMany({ 
         user_id: user._id,
-        token_hash: tokenHash,
-        expires_at: new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+        used_at: null 
       });
 
-      // Send reset email
-      await sendPasswordResetEmail(user, resetToken);
+      // Create new reset record with both code and token
+      await PasswordReset.create({
+        user_id: user._id,
+        verification_code: resetCode,
+        token_hash: tokenHash,
+        expires_at: expiresAt
+      });
+
+      // Generate reset link using the secure token
+      const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+      const resetLink = `${clientUrl}/reset-password/${resetToken}`;
+
+      // Send reset email with both code and link
+      const emailSent = await sendPasswordResetEmail(
+        normalizedEmail,
+        resetCode,
+        resetLink
+      );
+
+      if (!emailSent) {
+        console.error('Failed to send password reset email');
+        res.status(500).json({
+          success: false,
+          message: 'Failed to send password reset email. Please try again later.'
+        });
+        return;
+      }
 
       res.json({
         success: true,
-        message: 'If an account with that email exists, a password reset link has been sent.'
+        message: 'If an account with that email exists, a password reset code and link have been sent.'
       });
 
     } catch (error: any) {
@@ -911,29 +946,305 @@ class AuthHandler {
     }
   }
 
-  // @route   POST /api/auth/reset-password
-  // @desc    Reset password
+  // @route   POST /api/auth/verify-reset-code
+  // @desc    Verify password reset code
   // @access  Public
-  static async resetPassword(req, res) {
+  static async verifyResetCode(req, res) {
     try {
-      const { token, password } = req.body;
+      const { email, code } = req.body;
 
+      if (!email || !code) {
+        res.status(400).json({
+          success: false,
+          message: 'Email and code are required'
+        });
+        return;
+      }
+
+      const normalizedEmail = email.toLowerCase().trim();
+      const user = await User.findOne({ email: normalizedEmail });
+
+      if (!user) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid email or code'
+        });
+        return;
+      }
+
+      // Find reset request with matching code
+      const resetRequest = await PasswordReset.findOne({
+        user_id: user._id,
+        verification_code: code
+      }).populate('user_id');
+
+      if (!resetRequest || !resetRequest.isCodeValid(code)) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid or expired reset code'
+        });
+        return;
+      }
+
+      // Mark as verified (used_at will be set when password is actually reset)
+      // For now, we just confirm it's valid
+      res.json({
+        success: true,
+        message: 'Reset code verified successfully',
+        data: {
+          email: normalizedEmail,
+          verified: true
+        }
+      });
+
+    } catch (error: any) {
+      console.error('Verify reset code error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to verify reset code',
+        error: error.message
+      });
+    }
+  }
+
+  // @route   GET /api/auth/verify-reset-link/:token
+  // @desc    Verify password reset link
+  // @access  Public
+  static async verifyResetLink(req, res) {
+    try {
+      const { token } = req.params;
+
+      if (!token || token.length !== 64) {
+        if (req.headers.accept?.includes('application/json')) {
+          res.status(400).json({
+            success: false,
+            message: 'Invalid reset link'
+          });
+        } else {
+          res.status(400).send(`
+            <html>
+              <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+                <h1>Invalid Reset Link</h1>
+                <p>The password reset link is invalid or malformed.</p>
+              </body>
+            </html>
+          `);
+        }
+        return;
+      }
+
+      // Hash the token for lookup
       const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
+      // Find reset request
       const resetRequest = await PasswordReset.findOne({
         token_hash: tokenHash
       }).populate('user_id');
 
-      if (!resetRequest || !resetRequest.isValid()) {
+      if (!resetRequest) {
+        if (req.headers.accept?.includes('application/json')) {
+          res.status(400).json({
+            success: false,
+            message: 'Invalid or expired reset link'
+          });
+        } else {
+          res.status(400).send(`
+            <html>
+              <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+                <h1>Invalid Reset Link</h1>
+                <p>The password reset link is invalid or has expired.</p>
+              </body>
+            </html>
+          `);
+        }
+        return;
+      }
+
+      // Check if already used
+      if (resetRequest.used_at) {
+        const user = resetRequest.user_id;
+        const normalizedEmail = user.email.toLowerCase().trim();
+        
+        if (req.headers.accept?.includes('application/json')) {
+          res.json({
+            success: true,
+            message: 'Reset link was already used',
+            data: {
+              email: normalizedEmail,
+              alreadyUsed: true
+            }
+          });
+        } else {
+          res.send(`
+            <html>
+              <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+                <h1>Link Already Used</h1>
+                <p>This password reset link has already been used.</p>
+              </body>
+            </html>
+          `);
+        }
+        return;
+      }
+
+      // Check if expired
+      if (!resetRequest.isValid()) {
+        if (req.headers.accept?.includes('application/json')) {
+          res.status(400).json({
+            success: false,
+            message: 'Reset link has expired'
+          });
+        } else {
+          res.status(400).send(`
+            <html>
+              <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+                <h1>Link Expired</h1>
+                <p>The password reset link has expired. Please request a new one.</p>
+              </body>
+            </html>
+          `);
+        }
+        return;
+      }
+
+      // Valid reset link
+      const user = resetRequest.user_id;
+      const normalizedEmail = user.email.toLowerCase().trim();
+
+      if (req.headers.accept?.includes('application/json')) {
+        res.json({
+          success: true,
+          message: 'Reset link verified successfully',
+          data: {
+            email: normalizedEmail,
+            verified: true
+          }
+        });
+      } else {
+        // Redirect to frontend with verified status
+        const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+        res.redirect(`${clientUrl}/forgot-password?verified=true&email=${encodeURIComponent(normalizedEmail)}`);
+      }
+
+    } catch (error: any) {
+      console.error('Verify reset link error:', error);
+      if (req.headers.accept?.includes('application/json')) {
+        res.status(500).json({
+          success: false,
+          message: 'Failed to verify reset link',
+          error: error.message
+        });
+      } else {
+        res.status(500).send(`
+          <html>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+              <h1>Verification Error</h1>
+              <p>An error occurred while verifying the reset link. Please try again.</p>
+            </body>
+          </html>
+        `);
+      }
+    }
+  }
+
+  // @route   POST /api/auth/reset-password
+  // @desc    Reset password (after verification)
+  // @access  Public
+  static async resetPassword(req, res) {
+    try {
+      const { email, password, code, token } = req.body;
+
+      if (!email || !password) {
         res.status(400).json({
           success: false,
-          message: 'Invalid or expired reset token'
+          message: 'Email and password are required'
+        });
+        return;
+      }
+
+      const normalizedEmail = email.toLowerCase().trim();
+      const user = await User.findOne({ email: normalizedEmail });
+
+      if (!user) {
+        res.status(400).json({
+          success: false,
+          message: 'User not found'
+        });
+        return;
+      }
+
+      let resetRequest = null;
+
+      console.log('Reset password request:', {
+        email: normalizedEmail,
+        hasCode: !!code,
+        hasToken: !!token,
+        codeLength: code?.length,
+        tokenLength: token?.length
+      });
+
+      // Verify using either code or token
+      if (code) {
+        // Verify using code
+        resetRequest = await PasswordReset.findOne({
+          user_id: user._id,
+          verification_code: code
+        }).populate('user_id');
+
+        console.log('Reset request found by code:', {
+          found: !!resetRequest,
+          isValid: resetRequest ? resetRequest.isCodeValid(code) : false,
+          used: resetRequest?.used_at,
+          expiresAt: resetRequest?.expires_at
+        });
+
+        if (!resetRequest || !resetRequest.isCodeValid(code)) {
+          res.status(400).json({
+            success: false,
+            message: 'Invalid or expired reset code'
+          });
+          return;
+        }
+      } else if (token) {
+        // Verify using token
+        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+        resetRequest = await PasswordReset.findOne({
+          user_id: user._id,
+          token_hash: tokenHash
+        }).populate('user_id');
+
+        console.log('Reset request found by token:', {
+          found: !!resetRequest,
+          isValid: resetRequest ? resetRequest.isValid() : false,
+          used: resetRequest?.used_at,
+          expiresAt: resetRequest?.expires_at
+        });
+
+        if (!resetRequest || !resetRequest.isValid()) {
+          res.status(400).json({
+            success: false,
+            message: 'Invalid or expired reset token'
+          });
+          return;
+        }
+      } else {
+        res.status(400).json({
+          success: false,
+          message: 'Either code or token is required'
+        });
+        return;
+      }
+
+      // Check if already used
+      if (resetRequest.used_at) {
+        res.status(400).json({
+          success: false,
+          message: 'This reset link or code has already been used'
         });
         return;
       }
 
       // Update user password
-      const user = resetRequest.user_id;
       user.password_hash = password; // Will be hashed by pre-save middleware
       await user.save();
 

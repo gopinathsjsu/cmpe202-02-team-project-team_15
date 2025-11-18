@@ -88,14 +88,32 @@ const validatePasswordResetRequest = [
 
 // Password reset validation
 const validatePasswordReset = [
-  body('token')
-    .notEmpty()
-    .withMessage('Reset token is required'),
+  body('email')
+    .isEmail()
+    .normalizeEmail()
+    .withMessage('Please provide a valid email address'),
   body('password')
-    .isLength({ min: 8 })
-    .withMessage('Password must be at least 8 characters long')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
-    .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'),
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters long'),
+  // Either code or token is required, but not both
+  body('code')
+    .optional()
+    .isLength({ min: 6, max: 6 })
+    .withMessage('Reset code must be 6 digits'),
+  body('token')
+    .optional()
+    .isLength({ min: 64, max: 64 })
+    .withMessage('Reset token must be 64 characters'),
+  // Custom validation to ensure at least one of code or token is provided
+  (req, res, next) => {
+    if (!req.body.code && !req.body.token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Either reset code or token is required'
+      });
+    }
+    next();
+  },
   handleValidationErrors
 ];
 
