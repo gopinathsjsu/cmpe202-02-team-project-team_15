@@ -2,6 +2,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import Auth from './components/Auth';
+import Signup from './pages/Signup';
+import VerifyEmail from './pages/VerifyEmail';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import SearchPage from './pages/SearchPage';
 import ViewListing from './pages/ViewListing';
 import EditListing from './pages/EditListing';
@@ -23,7 +27,10 @@ function App() {
           <Routes>
             {/* Authentication routes */}
             <Route path="/login" element={<Auth />} />
-            <Route path="/signup" element={<Auth />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/verify-email/:token" element={<VerifyEmail />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
             
             {/* Protected search page */}
             <Route 
