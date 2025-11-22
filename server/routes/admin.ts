@@ -76,4 +76,29 @@ router.delete('/categories/:id', authenticateToken, requireRole(['admin']), Admi
 // @access  Private (Admin)
 router.put('/listings/:id/category', authenticateToken, requireRole(['admin']), AdminHandler.updateListingCategory);
 
+// @route   PATCH /api/admin/listings/:id/visibility
+// @desc    Hide or restore a listing (Admin only)
+// @access  Private (Admin)
+router.patch('/listings/:id/visibility', authenticateToken, requireRole(['admin']), AdminHandler.toggleListingVisibility);
+
+// @route   PATCH /api/admin/users/:id/suspend
+// @desc    Suspend user account (Admin only)
+// @access  Private (Admin)
+router.patch('/users/:id/suspend', authenticateToken, requireRole(['admin']), AdminHandler.suspendUser);
+
+// @route   DELETE /api/admin/users/:id
+// @desc    Delete user account (Admin only)
+// @access  Private (Admin)
+router.delete('/users/:id', authenticateToken, requireRole(['admin']), AdminHandler.deleteUser);
+
+// @route   GET /api/admin/users/suspended
+// @desc    Get all suspended users (Admin only)
+// @access  Private (Admin)
+router.get('/users/suspended', authenticateToken, requireRole(['admin']), AdminHandler.getSuspendedUsers);
+
+// @route   PATCH /api/admin/users/:id/unsuspend
+// @desc    Unsuspend user account (Admin only)
+// @access  Private (Admin)
+router.patch('/users/:id/unsuspend', authenticateToken, requireRole(['admin']), AdminHandler.unsuspendUser);
+
 export default router;

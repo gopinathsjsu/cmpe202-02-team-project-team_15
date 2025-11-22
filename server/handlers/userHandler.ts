@@ -84,6 +84,47 @@ export class UserHandler {
     }
   }
 
+  // @desc    Get public user profile (limited info)
+  // @access  Private
+  static async getPublicProfile(req: Request, res: Response): Promise<void> {
+    try {
+      const user = await User.findById(req.params.id)
+        .select('first_name last_name full_name photo_url bio contact_info created_at');
+
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: {
+          user: {
+            id: user._id,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            full_name: user.full_name,
+            photo_url: user.photo_url,
+            bio: user.bio,
+            contact_info: user.contact_info,
+            created_at: user.created_at
+          }
+        }
+      });
+
+    } catch (error: any) {
+      console.error('Get public profile error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get user profile',
+        error: error.message
+      });
+    }
+  }
+
   // @desc    Get all users (Admin only)
   // @access  Private (Admin)
   static async getAllUsers(req: Request, res: Response): Promise<void> {

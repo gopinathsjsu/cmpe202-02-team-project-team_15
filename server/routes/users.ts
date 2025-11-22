@@ -15,6 +15,11 @@ router.get('/profile', authenticateToken, UserHandler.getProfile);
 // @access  Private
 router.put('/profile', authenticateToken, UserHandler.updateProfile);
 
+// @route   GET /api/users/public/:id
+// @desc    Get public user profile (limited info, requires auth)
+// @access  Private
+router.get('/public/:id', authenticateToken, UserHandler.getPublicProfile);
+
 // @route   GET /api/users
 // @desc    Get all users (Admin only)
 // @access  Private (Admin)
