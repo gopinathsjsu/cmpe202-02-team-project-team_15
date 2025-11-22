@@ -259,6 +259,9 @@ const ViewListing = () => {
       );
     } finally {
       setTogglingVisibility(false);
+    }
+  };
+
   const handleSaveToggle = async () => {
     if (isSaving || !id) return;
 
@@ -746,6 +749,8 @@ const ViewListing = () => {
             window.location.reload();
           }}
         />
+      )}
+
       {/* Image Modal - Fullscreen View */}
       {showImageModal && validPhotos.length > 0 && (
         <div 
