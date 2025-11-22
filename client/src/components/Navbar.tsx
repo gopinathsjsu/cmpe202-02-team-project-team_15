@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { MessageSquare, Heart, BarChart3, FolderTree, UserX } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/api';
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   
   // Close profile dropdown when clicking outside
-  React.useEffect(() => {
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (isProfileOpen) {
         const target = event.target as HTMLElement;
@@ -23,6 +25,35 @@ const Navbar: React.FC = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isProfileOpen]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchUnread = async () => {
+      try {
+        const data = await apiService.getUnreadMessagesCount();
+        if (mounted) {
+          setUnreadCount(data.unreadCount || 0);
+        }
+      } catch (error) {
+        console.error("Failed to fetch unread messages count:", error);
+      }
+    };
+
+    fetchUnread();
+
+    const handleUnreadUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent<number>;
+      setUnreadCount(customEvent.detail || 0);
+    };
+
+    window.addEventListener("messages:unread-count", handleUnreadUpdate);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener("messages:unread-count", handleUnreadUpdate);
+    };
+  }, [location.pathname]);
 
   // Helper to determine if a route is active
   const isActive = (path: string) => {
@@ -76,13 +107,20 @@ const Navbar: React.FC = () => {
             {/* Messages */}
             <button 
               onClick={() => navigate('/messages')}
-              className={`flex items-center space-x-1 font-medium transition-colors ${
+              className={`flex items-center space-x-2 font-medium transition-colors ${
                 isActive('/messages') 
                   ? 'text-blue-600' 
                   : 'text-gray-700 hover:text-gray-900'
               }`}
             >
-              <MessageSquare className="w-5 h-5" />
+              <span className="relative flex items-center justify-center mr-1">
+                <MessageSquare className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-semibold rounded-full px-1.5 py-[1px]">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </span>
               <span>Messages</span>
             </button>
 

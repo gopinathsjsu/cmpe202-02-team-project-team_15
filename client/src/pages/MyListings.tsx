@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2, Package, Plus } from 'lucide-react';
-import BackButton from '../components/BackButton';
 import Navbar from '../components/Navbar';
 import ProductCard from '../components/ProductCard';
 import { apiService, IListing } from '../services/api';
@@ -53,10 +52,6 @@ const MyListings = () => {
   };
 
   const handleListingClick = (listing: IListing) => {
-    // Don't navigate if listing is sold
-    if (listing.status === 'SOLD') {
-      return;
-    }
     navigate(`/listing/${listing._id}`);
   };
 
@@ -105,7 +100,6 @@ const MyListings = () => {
         <Navbar />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <BackButton />
           <div className="mt-8 text-center">
             <div className="text-red-600 mb-4">{error}</div>
             <button 
@@ -125,8 +119,6 @@ const MyListings = () => {
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <BackButton />
-
         <div className="mt-8">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-3xl font-bold text-gray-900">My Listings</h1>

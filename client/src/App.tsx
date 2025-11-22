@@ -24,7 +24,6 @@ function App() {
       <ToastProvider>
         <Router>
           <div className="App">
-            <ChatbotButton />
           <Routes>
             {/* Authentication routes */}
             <Route path="/login" element={<Auth />} />

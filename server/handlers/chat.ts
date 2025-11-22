@@ -1,4 +1,5 @@
 import { Response } from "express";
+import { Types } from "mongoose";
 import { Conversation } from "../models/Conversation";
 import { Message } from "../models/Message";
 import Listing from "../models/Listing";
@@ -41,6 +42,7 @@ export const initiateChat = async (req: any, res: Response) => {
 
 export const listConversations = async (req: any, res: Response) => {
   const userId = String(req.user._id);
+  const userObjectId = new Types.ObjectId(userId);
   const conversations = await Conversation.find({
     $or: [{ buyerId: userId }, { sellerId: userId }],
   })
@@ -62,13 +64,74 @@ export const listConversations = async (req: any, res: Response) => {
     .sort({ lastMessageAt: -1 })
     .lean();
 
-  // console.log("listConversations - userId:", userId);
-  // console.log("listConversations - conversations count:", conversations.length);
-  // if (conversations.length > 0) {
-  //   console.log('listConversations - first conversation:', JSON.stringify(conversations[0], null, 2));
-  // }
+  const conversationIds = conversations.map((conv: any) => conv._id);
+  let unreadCountsMap = new Map<string, number>();
 
-  return res.json({ conversations });
+  if (conversationIds.length > 0) {
+    const unreadCounts = await Message.aggregate([
+      {
+        $match: {
+          conversationId: { $in: conversationIds },
+          readBy: { $ne: userObjectId },
+          senderId: { $ne: userObjectId },
+        },
+      },
+      {
+        $group: {
+          _id: "$conversationId",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    unreadCountsMap = new Map(
+      unreadCounts.map((item) => [
+        String(item._id),
+        item.count as number,
+      ])
+    );
+  }
+
+  const conversationsWithUnread = conversations.map((conv: any) => ({
+    ...conv,
+    unreadCount: unreadCountsMap.get(String(conv._id)) || 0,
+  }));
+
+  return res.json({ conversations: conversationsWithUnread });
+};
+
+export const getUnreadCount = async (req: any, res: Response) => {
+  const userId = String(req.user._id);
+  const userObjectId = new Types.ObjectId(userId);
+
+  const userConversations = await Conversation.find({
+    $or: [{ buyerId: userId }, { sellerId: userId }],
+  })
+    .select("_id")
+    .lean();
+
+  if (userConversations.length === 0) {
+    return res.json({ unreadCount: 0 });
+  }
+
+  const conversationIds = userConversations.map((conv: any) => conv._id);
+
+  const unreadResult = await Message.aggregate([
+    {
+      $match: {
+        conversationId: { $in: conversationIds },
+        readBy: { $ne: userObjectId },
+        senderId: { $ne: userObjectId },
+      },
+    },
+    {
+      $count: "count",
+    },
+  ]);
+
+  const unreadCount = unreadResult.length > 0 ? unreadResult[0].count : 0;
+
+  return res.json({ unreadCount });
 };
 
 export const getMessages = async (req: any, res: Response) => {
