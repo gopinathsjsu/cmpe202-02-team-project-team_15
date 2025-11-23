@@ -61,9 +61,24 @@ npm run build:css:watch  # Watch and build CSS
    MONGODB_URI=mongodb://localhost:27017/campus-market
    JWT_SECRET=your_jwt_secret_key_here
    CLIENT_URL=http://localhost:3000
+   
+   # AWS S3 Configuration (Required for image uploads)
+   AWS_REGION=us-east-1
+   AWS_ACCESS_KEY_ID=your_access_key_here
+   AWS_SECRET_ACCESS_KEY=your_secret_key_here
+   AWS_BUCKET_NAME=your-bucket-name
+   
+   # Optional: CloudFront/CDN URL
+   S3_PUBLIC_BASE_URL=https://your-cloudfront-domain.cloudfront.net
    ```
 
 2. **Database**: Make sure MongoDB is running locally or use MongoDB Atlas
+
+3. **AWS S3**: 
+   - Create S3 bucket in AWS Console
+   - Configure CORS (see `S3_SECURITY_CHECKLIST.md`)
+   - Set up AWS credentials
+   - (Optional) Configure CloudFront for CDN
 
 ## API Endpoints
 

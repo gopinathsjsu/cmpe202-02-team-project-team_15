@@ -27,6 +27,10 @@ A modern, optimized campus marketplace application built with React TypeScript f
 - Node.js (v16 or higher)
 - MongoDB
 - npm or yarn
+- AWS Account (for S3 image uploads)
+  - S3 bucket configured
+  - AWS credentials (Access Key ID & Secret Access Key)
+  - (Optional) CloudFront distribution for CDN
 
 ## Quick Start
 
@@ -387,12 +391,70 @@ The React frontend closely follows the provided Shop.png mockup with modern enha
 ### Quick Setup (Recommended)
 1. **Install all dependencies:** `npm run install-all`
 2. **Start MongoDB** (ensure it's running on default port)
-3. **Seed the database:** `npm run seed`
-4. **Start both frontend and backend:** `npm run dev`
+3. **Configure AWS S3** (see [S3 Setup](#aws-s3-setup) below)
+4. **Seed the database:** `npm run seed`
+5. **Start both frontend and backend:** `npm run dev`
 
 Your application will be running at:
 - **Frontend**: `http://localhost:3000` (React app)
 - **Backend API**: `http://localhost:5000` (Node.js server)
+
+### AWS S3 Setup
+
+The application uses AWS S3 for image uploads (profile photos and listing images).
+
+#### Required Environment Variables
+
+Create `server/.env` file:
+
+```env
+# AWS S3 Configuration (Required)
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=your_access_key_here
+AWS_SECRET_ACCESS_KEY=your_secret_key_here
+AWS_BUCKET_NAME=your-bucket-name
+
+# Optional: CloudFront/CDN URL for public access
+S3_PUBLIC_BASE_URL=https://your-cloudfront-domain.cloudfront.net
+
+# Database
+MONGO_URI=mongodb://localhost:27017/campus-market
+
+# JWT Secret
+JWT_SECRET=your_jwt_secret_key_here
+```
+
+#### S3 Bucket Configuration
+
+1. **Create S3 Bucket:**
+   - Go to AWS S3 Console
+   - Create new bucket
+   - Enable "Block all public access" (bucket is private)
+
+2. **Configure CORS:**
+   ```json
+   [
+     {
+       "AllowedHeaders": ["*"],
+       "AllowedMethods": ["PUT", "POST"],
+       "AllowedOrigins": [
+         "http://localhost:3000",
+         "https://your-production-domain.com"
+       ],
+       "ExposeHeaders": ["ETag"],
+       "MaxAgeSeconds": 3000
+     }
+   ]
+   ```
+
+3. **Optional: CloudFront Setup:**
+   - Create CloudFront distribution
+   - Origin: Your S3 bucket
+   - Set `S3_PUBLIC_BASE_URL` environment variable
+
+For detailed S3 setup instructions, see:
+- `S3_SECURITY_CHECKLIST.md` - Security configuration
+- `S3_IMPLEMENTATION.md` - Implementation details
 
 ### Manual Setup
 1. Install dependencies: `npm install` (root), then `cd server && npm install`, then `cd ../client && npm install`
@@ -418,6 +480,33 @@ npm run build
 # Type checking
 npm run typecheck
 ```
+
+## 📸 Profile Photo Upload
+
+The application supports profile photo uploads with the following features:
+
+- **Secure Upload**: Direct S3 upload using presigned URLs
+- **Client-Side Resizing**: Automatic resizing to 1024px (reduces bandwidth)
+- **Progress Tracking**: Real-time upload progress with stages
+- **Cancel/Retry**: Ability to cancel uploads and retry on failure
+- **Immediate Updates**: Avatar changes reflect across the app instantly
+- **Cache Busting**: CDN cache refresh with timestamp query parameters
+
+**API Endpoints:**
+- `POST /api/upload/presigned-url` - Get presigned URL for upload
+- `PUT /api/profile/photo` - Update profile photo
+
+**Security Features:**
+- File type whitelist (JPEG, PNG, WebP only)
+- File size limit (10MB)
+- Key pattern enforcement (`profiles/{userId}/...`)
+- S3 object validation
+- Rate limiting (1 min between updates)
+
+For more details, see:
+- `IMPLEMENTATION_TIMELINE.md` - Complete implementation guide
+- `TEST_CASES.md` - Test cases and QA
+- `SECURITY_VALIDATION_CHECKLIST.md` - Security checklist
 
 ## 🎯 Key Improvements Made
 

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { User } from '../models/User';
+import { headS3Object, constructPublicUrl } from '../utils/s3';
 
 export const getProfile = async (req: Request, res: Response) => {
   try {
@@ -43,7 +44,10 @@ export const updateProfile = async (req: Request, res: Response) => {
     user.last_name = last_name;
 
     // Update optional fields if provided
-    if (photo_url !== undefined) user.photo_url = photo_url;
+    if (photo_url !== undefined) {
+      user.photo_url = photo_url;
+      user.photoUrl = photo_url; // Also update camelCase field
+    }
     if (bio !== undefined) user.bio = bio;
     if (contact_info) {
       user.contact_info = {
@@ -60,5 +64,116 @@ export const updateProfile = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Profile update error:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * PUT /api/profile/photo
+ * Update user profile photo using S3 key
+ * 
+ * Request body: { key: string, publicUrl?: string }
+ * 
+ * Validates:
+ * - Key format matches profiles/{userId}/...
+ * - S3 object exists and is an image
+ * - Updates user.photo_url in database
+ */
+export const updateProfilePhoto = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user?._id;
+    
+    if (!userId) {
+      res.status(401).json({ 
+        success: false,
+        message: 'Authentication required' 
+      });
+      return;
+    }
+
+    const { key, publicUrl } = req.body;
+
+    // Validate key is provided
+    if (!key || typeof key !== 'string') {
+      res.status(400).json({ 
+        success: false,
+        message: 'Missing or invalid key' 
+      });
+      return;
+    }
+
+    // Basic validation: must start with profiles/{userId}/
+    const userIdStr = userId.toString();
+    const expectedPrefix = `profiles/${userIdStr}/`;
+    
+    if (!key.startsWith(expectedPrefix)) {
+      res.status(403).json({ 
+        success: false,
+        message: 'Invalid key for user. Key must start with profiles/{userId}/' 
+      });
+      return;
+    }
+
+    // Optional: verify object exists and is an image
+    try {
+      const headResult = await headS3Object(key);
+      
+      if (!headResult.exists) {
+        res.status(400).json({ 
+          success: false,
+          message: 'S3 object missing or inaccessible' 
+        });
+        return;
+      }
+
+      // Verify Content-Type is an image
+      const contentType = headResult.contentType || '';
+      if (!contentType.startsWith('image/')) {
+        res.status(400).json({ 
+          success: false,
+          message: 'Uploaded file is not an image' 
+        });
+        return;
+      }
+    } catch (error: any) {
+      console.error('S3 headObject error:', error);
+      res.status(400).json({ 
+        success: false,
+        message: 'S3 object missing or inaccessible' 
+      });
+      return;
+    }
+
+    // Build public URL (use provided publicUrl or construct from key)
+    const photoUrl = publicUrl || constructPublicUrl(key);
+
+    // Update user photoUrl and photo_url in database (both for backward compatibility)
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { 
+        photoUrl: photoUrl,
+        photo_url: photoUrl  // Maintain backward compatibility
+      },
+      { new: true }
+    ).select('-password_hash');
+
+    if (!updatedUser) {
+      res.status(404).json({ 
+        success: false,
+        message: 'User not found' 
+      });
+      return;
+    }
+
+    // Return updated user object (omit sensitive fields)
+    res.json({ 
+      success: true,
+      user: updatedUser 
+    });
+  } catch (error: any) {
+    console.error('Profile photo update error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: error.message || 'Server error' 
+    });
   }
 };

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { MessageSquare, Heart, BarChart3, FolderTree } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
+import { Avatar } from '../utils/avatar';
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -156,11 +157,16 @@ const Navbar: React.FC = () => {
             <div className="relative profile-dropdown">
               <button 
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors"
+                className="hover:opacity-80 transition-opacity"
               >
-                <span className="text-gray-700 text-sm font-medium">
-                  {user?.first_name?.[0]?.toUpperCase() || 'A'}
-                </span>
+                <Avatar
+                  photoUrl={user?.photoUrl || user?.photo_url}
+                  firstName={user?.first_name}
+                  lastName={user?.last_name}
+                  email={user?.email}
+                  size={32}
+                  showCacheBusting={true}
+                />
               </button>
 
               {/* Profile Dropdown Menu */}

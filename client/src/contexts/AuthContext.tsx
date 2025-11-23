@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authAPI } from '../services/api';
+import api from '../services/api';
 
 interface User {
   id: string;
@@ -8,10 +9,13 @@ interface User {
   last_name: string;
   status: string;
   roles: string[];
+  photoUrl?: string | null;
+  photo_url?: string | null; // Backward compatibility
 }
 
 interface AuthContextType {
   user: User | null;
+  setUser: (user: User | null) => void;
   login: (email: string, password: string) => Promise<boolean>;
   signup: (email: string, password: string, firstName: string, lastName: string, adminKey?: string) => Promise<boolean>;
   logout: () => void;
@@ -37,14 +41,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in on app start
+    // Always pull fresh user from backend on reload
     const token = localStorage.getItem('accessToken');
-    const userData = localStorage.getItem('user');
     
-    if (token && userData) {
-      setUser(JSON.parse(userData));
+    if (!token) {
+      setLoading(false);
+      return;
     }
-    setLoading(false);
+
+    // Fetch fresh user data from backend
+    api.get("/api/profile")
+      .then(res => {
+        const profileData = res.data;
+        // Map profile data to User interface
+        const userData: User = {
+          id: profileData._id || profileData.id,
+          email: profileData.email,
+          first_name: profileData.first_name,
+          last_name: profileData.last_name,
+          status: profileData.status,
+          roles: profileData.roles || [],
+          photoUrl: profileData.photoUrl || profileData.photo_url || null,
+          photo_url: profileData.photo_url || profileData.photoUrl || null,
+        };
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+      })
+      .catch(err => {
+        console.error('Failed to fetch user profile:', err);
+        // Clear invalid token
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        setUser(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -53,8 +86,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response.data.success) {
         localStorage.setItem('accessToken', response.data.data.tokens.accessToken);
         localStorage.setItem('refreshToken', response.data.data.tokens.refreshToken);
-        localStorage.setItem('user', JSON.stringify(response.data.data.user));
-        setUser(response.data.data.user);
+        
+        // Fetch fresh user data from backend after login
+        const profileResponse = await api.get("/api/profile");
+        const profileData = profileResponse.data;
+        const userData: User = {
+          id: profileData._id || profileData.id,
+          email: profileData.email,
+          first_name: profileData.first_name,
+          last_name: profileData.last_name,
+          status: profileData.status,
+          roles: profileData.roles || [],
+          photoUrl: profileData.photoUrl || profileData.photo_url || null,
+          photo_url: profileData.photo_url || profileData.photoUrl || null,
+        };
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
         return true;
       }
       return false;
@@ -103,6 +150,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const value = {
     user,
+    setUser,
     login,
     signup,
     logout,

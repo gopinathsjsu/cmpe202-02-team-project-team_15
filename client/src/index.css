@@ -442,3 +442,24 @@ code {
 .pagination-page.ellipsis {
   @apply cursor-default hover:bg-white;
 }
+
+/* Chat Avatar Styles */
+.chat-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.chat-avatar-fallback {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e5e7eb;
+  color: #4b5563;
+  font-weight: 600;
+  font-size: 14px;
+}
