@@ -59,6 +59,7 @@ interface Conversation {
     last_name?: string;
     email: string;
   };
+  unreadCount?: number;
 }
 
 interface Message {
@@ -94,27 +95,33 @@ export const Messages: React.FC<MessagesProps> = ({
 
   // Load conversations on component mount
   useEffect(() => {
-    loadConversations();
+    loadConversations({ showLoading: true });
   }, []);
 
-  // Select initial conversation
+  // Keep selected conversation in sync or select initial conversation
   useEffect(() => {
     if (conversations.length === 0) return;
 
-    // If we have an initialConversationId (from Contact Seller), find that specific conversation
+    if (selectedConversation) {
+      const updated = conversations.find(
+        (c) => c._id === selectedConversation._id
+      );
+      if (updated && updated !== selectedConversation) {
+        setSelectedConversation(updated);
+      }
+      return;
+    }
+
     if (initialConversationId) {
       const targetConv = conversations.find(
         (c) => c._id === initialConversationId
       );
       if (targetConv) {
         setSelectedConversation(targetConv);
+        return;
       }
-    } else {
-      // If no specific conversation (from navbar), don't auto-select any conversation
-      // Let the user choose from the sidebar
-      setSelectedConversation(null);
     }
-  }, [conversations, initialConversationId]);
+  }, [conversations, initialConversationId, selectedConversation]);
 
   // Load messages when conversation is selected
   useEffect(() => {
@@ -157,24 +164,41 @@ export const Messages: React.FC<MessagesProps> = ({
     }
   }, [initialConversationId, conversations.length, loading, user]);
 
-  const loadConversations = async () => {
+  const loadConversations = async ({
+    activeConversationId,
+    showLoading = false,
+  }: {
+    activeConversationId?: string;
+    showLoading?: boolean;
+  } = {}) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const response = await api.get("/api/chats/");
-      // console.log("Frontend - conversations response:", response.data);
-      // console.log(
-      //   "Frontend - conversations count:",
-      //   response.data.conversations?.length
-      // );
-      // if (response.data.conversations?.length > 0) {
-      //   console.log('Frontend - first conversation:', JSON.stringify(response.data.conversations[0], null, 2));
-      // }
-      setConversations(response.data.conversations || []);
+      const conversationData: Conversation[] =
+        response.data.conversations || [];
+      setConversations(conversationData);
+
+      const totalUnread = conversationData.reduce(
+        (sum, conv) => sum + (conv.unreadCount || 0),
+        0
+      );
+      window.dispatchEvent(
+        new CustomEvent("messages:unread-count", { detail: totalUnread })
+      );
+
+      if (activeConversationId) {
+        const updated = conversationData.find(
+          (c) => c._id === activeConversationId
+        );
+        if (updated) {
+          setSelectedConversation(updated);
+        }
+      }
     } catch (err) {
       console.error("Error loading conversations:", err);
       setError("Failed to load conversations");
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -183,6 +207,21 @@ export const Messages: React.FC<MessagesProps> = ({
       const response = await api.get(`/api/chats/${conversationId}/messages`);
       setMessages(response.data.messages || []);
       setError(null); // Clear any previous errors
+
+      // Mark conversation as read locally
+      setConversations((prev) => {
+        const updated = prev.map((conv) =>
+          conv._id === conversationId ? { ...conv, unreadCount: 0 } : conv
+        );
+        const totalUnread = updated.reduce(
+          (sum, conv) => sum + (conv.unreadCount || 0),
+          0
+        );
+        window.dispatchEvent(
+          new CustomEvent("messages:unread-count", { detail: totalUnread })
+        );
+        return updated;
+      });
     } catch (err) {
       console.error("Error loading messages:", err);
       // Don't show error for new conversations that might not have messages yet
@@ -211,18 +250,30 @@ export const Messages: React.FC<MessagesProps> = ({
 
       // Update conversation last message time
       setConversations((prev) => {
-        const updated = prev.map((c) =>
-          c._id === selectedConversation._id
-            ? { ...c, lastMessageAt: new Date().toISOString() }
-            : c
+        const updated = prev
+          .map((c) =>
+            c._id === selectedConversation._id
+              ? {
+                  ...c,
+                  lastMessageAt: new Date().toISOString(),
+                  unreadCount: 0,
+                }
+              : c
+          )
+          .sort(
+            (a, b) =>
+              new Date(b.lastMessageAt).getTime() -
+              new Date(a.lastMessageAt).getTime()
+          );
+        const totalUnread = updated.reduce(
+          (sum, conv) => sum + (conv.unreadCount || 0),
+          0
         );
-        return updated.sort(
-          (a, b) =>
-            new Date(b.lastMessageAt).getTime() -
-            new Date(a.lastMessageAt).getTime()
+        window.dispatchEvent(
+          new CustomEvent("messages:unread-count", { detail: totalUnread })
         );
+        return updated;
       });
-
       setNewMessage("");
     } catch (err) {
       console.error("Error sending message:", err);
@@ -251,15 +302,7 @@ export const Messages: React.FC<MessagesProps> = ({
   // Helper function to check if conversation is from admin
   const isAdminConversation = (conv: Conversation): boolean => {
     const userId = String(user?.id);
-    let buyerId: string;
     let sellerId: string;
-
-    // Check if buyerId is an object (populated) or string (ID)
-    if (typeof conv.buyerId === "object" && conv.buyerId !== null) {
-      buyerId = String(conv.buyerId._id);
-    } else {
-      buyerId = String(conv.buyerId);
-    }
 
     // Check if sellerId is an object (populated) or string (ID)
     if (typeof conv.sellerId === "object" && conv.sellerId !== null) {
@@ -290,6 +333,45 @@ export const Messages: React.FC<MessagesProps> = ({
     }
     
     return false;
+  };
+
+  const getListingInfo = (
+    conv: Conversation | null
+  ): { id: string; title: string; price: number; image?: string } | null => {
+    if (!conv) return null;
+
+    let listingData;
+    if (typeof conv.listingId === "object" && conv.listingId !== null) {
+      listingData = conv.listingId;
+    } else {
+      listingData = conv.listing;
+    }
+
+    if (!listingData) return null;
+
+    let listingIdValue: string | undefined;
+    if (typeof conv.listingId === "string") {
+      listingIdValue = conv.listingId;
+    } else if (listingData?._id) {
+      listingIdValue = String(listingData._id);
+    } else if (listingData?.listingId) {
+      listingIdValue = listingData.listingId;
+    }
+
+    if (!listingIdValue || !listingData?.title || listingData?.price === undefined) {
+      return null;
+    }
+
+    const image = listingData?.photos?.length
+      ? listingData.photos[0]?.url
+      : undefined;
+
+    return {
+      id: listingIdValue,
+      title: listingData.title,
+      price: listingData.price,
+      image,
+    };
   };
 
   const getOtherPartyName = (conv: Conversation) => {
@@ -349,6 +431,12 @@ export const Messages: React.FC<MessagesProps> = ({
     }
   };
 
+  const selectedListingInfo = getListingInfo(selectedConversation);
+  const showListingPreview =
+    selectedConversation &&
+    selectedListingInfo &&
+    !isAdminConversation(selectedConversation);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -397,6 +485,7 @@ export const Messages: React.FC<MessagesProps> = ({
                       <div>
                         {regularConvs.map((conv) => {
                           const otherPartyName = getOtherPartyName(conv);
+                          const hasUnread = (conv.unreadCount || 0) > 0;
                           return (
                             <button
                               key={conv._id}
@@ -406,17 +495,36 @@ export const Messages: React.FC<MessagesProps> = ({
                               }`}
                             >
                               <div className="flex items-start gap-3">
-                                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 font-semibold flex-shrink-0">
+                                <div
+                                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold flex-shrink-0 ${
+                                    hasUnread
+                                      ? "bg-blue-100 text-blue-700"
+                                      : "bg-gray-200 text-gray-600"
+                                  }`}
+                                >
                                   {otherPartyName.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-baseline justify-between mb-1">
-                                    <h4 className="font-semibold text-gray-900 truncate">
+                                    <h4
+                                      className={`truncate ${
+                                        hasUnread
+                                          ? "font-semibold text-gray-900"
+                                          : "font-medium text-gray-900"
+                                      }`}
+                                    >
                                       {otherPartyName}
                                     </h4>
-                                    <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
-                                      {formatDate(conv.lastMessageAt)}
-                                    </span>
+                                    <div className="flex items-center gap-2 ml-2">
+                                      {hasUnread && (
+                                        <span className="text-xs font-semibold text-white bg-blue-600 px-2 py-0.5 rounded-full">
+                                          {Math.min(conv.unreadCount || 0, 99)}
+                                        </span>
+                                      )}
+                                      <span className="text-xs text-gray-500 flex-shrink-0">
+                                        {formatDate(conv.lastMessageAt)}
+                                      </span>
+                                    </div>
                                   </div>
                                   <p className="text-sm text-gray-600 truncate">
                                     {(() => {
@@ -468,6 +576,7 @@ export const Messages: React.FC<MessagesProps> = ({
                         {adminConversationsExpanded && (
                           <div>
                             {adminConvs.map((conv) => {
+                              const hasUnread = (conv.unreadCount || 0) > 0;
                               // Get listing info for display
                               let listingData;
                               if (
@@ -488,17 +597,36 @@ export const Messages: React.FC<MessagesProps> = ({
                                   }`}
                                 >
                                   <div className="flex items-start gap-3">
-                                    <div className="w-8 h-8 bg-yellow-200 rounded-full flex items-center justify-center text-yellow-800 flex-shrink-0">
+                                    <div
+                                      className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                        hasUnread
+                                          ? "bg-yellow-300 text-yellow-900"
+                                          : "bg-yellow-200 text-yellow-800"
+                                      }`}
+                                    >
                                       <AlertTriangle className="w-4 h-4" />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-baseline justify-between mb-1">
-                                        <h4 className="font-medium text-gray-900 truncate text-sm">
+                                        <h4
+                                          className={`truncate text-sm ${
+                                            hasUnread
+                                              ? "font-semibold text-gray-900"
+                                              : "font-medium text-gray-900"
+                                          }`}
+                                        >
                                           {listingData?.title || "Warning"}
                                         </h4>
-                                        <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
-                                          {formatDate(conv.lastMessageAt)}
-                                        </span>
+                                        <div className="flex items-center gap-2 ml-2">
+                                          {hasUnread && (
+                                            <span className="text-xs font-semibold text-yellow-900 bg-yellow-300 px-2 py-0.5 rounded-full">
+                                              {Math.min(conv.unreadCount || 0, 99)}
+                                            </span>
+                                          )}
+                                          <span className="text-xs text-gray-500 flex-shrink-0">
+                                            {formatDate(conv.lastMessageAt)}
+                                          </span>
+                                        </div>
                                       </div>
                                       <p className="text-xs text-gray-600 truncate">
                                         {listingData ? `$${listingData.price}` : "Admin message"}
@@ -553,6 +681,17 @@ export const Messages: React.FC<MessagesProps> = ({
                     </div>
                   </div>
                 </div>
+
+                {showListingPreview && selectedListingInfo && (
+                  <div className="px-6 pt-4">
+                    <ListingPreview
+                      listingId={selectedListingInfo.id}
+                      listingTitle={selectedListingInfo.title}
+                      listingPrice={selectedListingInfo.price}
+                      listingImage={selectedListingInfo.image}
+                    />
+                  </div>
+                )}
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
                   {messages.length === 0 ? (

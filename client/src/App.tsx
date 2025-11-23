@@ -11,13 +11,17 @@ import MessagesPage from './pages/Messages';
 import SavedListings from './pages/SavedListings';
 import MyListings from './pages/MyListings';
 import ProtectedRoute from './components/ProtectedRoute';
+import RootRedirect from './components/RootRedirect';
+import ChatbotButton from './components/ChatbotButton';
 import AdminReportsPage from './pages/AdminReportsPage';
 import AdminCategoriesPage from './pages/AdminCategoriesPage';
+import SuspendedUsersPage from './pages/SuspendedUsersPage';
 import Profile from './pages/Profile';
 import AboutUs from './pages/AboutUs';
 import FAQ from './pages/FAQ';
 import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import PublicProfile from './pages/PublicProfile';
 
 function App() {
   return (
@@ -93,6 +97,15 @@ function App() {
             />
 
             <Route
+              path="/admin/suspended-users"
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <SuspendedUsersPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/admin/categories"
               element={
                 <ProtectedRoute requiredRoles={["admin"]}>
@@ -128,8 +141,17 @@ function App() {
               } 
             />
             
-            {/* Landing page */}
-            <Route path="/" element={<LandingPage />} />
+            <Route 
+              path="/profile/:userId" 
+              element={
+                <ProtectedRoute>
+                  <PublicProfile />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Redirect root based on auth status */}
+            <Route path="/" element={<RootRedirect />} />
             
             {/* Catch all route - redirect to landing page */}
             <Route path="*" element={<Navigate to="/" replace />} />

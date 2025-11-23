@@ -424,14 +424,21 @@ const AdminReportsPage: React.FC = () => {
                 {reports.map((report: any) => (
                   <div
                     key={report._id}
-                    className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.01] hover:shadow-lg"
+                    className={`bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.01] hover:shadow-lg ${
+                      report.listingId?.isHidden ? 'opacity-50' : ''
+                    }`}
                     onClick={() => navigate(`/listing/${report.listingId?._id}`)}
                   >
                     <div className="p-6">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-1 flex items-center gap-2">
                             {report.listingId?.title || 'Listing Deleted'}
+                            {report.listingId?.isHidden && (
+                              <span className="px-2 py-0.5 bg-gray-200 text-gray-700 text-xs font-medium rounded">
+                                HIDDEN
+                              </span>
+                            )}
                           </h3>
                           {report.listingId?.listingId && (
                             <p className="text-xs text-gray-500 font-mono">

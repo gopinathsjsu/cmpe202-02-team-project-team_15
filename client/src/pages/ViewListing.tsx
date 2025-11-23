@@ -11,14 +11,15 @@ import {
   Eye,
   Edit,
   UserCog,
-  X
+  X,
+  Heart
 } from "lucide-react";
-import BackButton from "../components/BackButton";
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { ReportModal } from "../components/ReportModal";
 import { WarnUserModal } from "../components/WarnUserModal";
 import ReportedDetailsPanel from "../components/ReportedDetailsPanel";
+import ManageUserModal from "../components/ManageUserModal";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { apiService, IListing, ICategory } from "../services/api";
@@ -42,6 +43,11 @@ const ViewListing = () => {
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [updatingCategory, setUpdatingCategory] = useState(false);
+  const [togglingVisibility, setTogglingVisibility] = useState(false);
+  const [showManageUserModal, setShowManageUserModal] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -81,6 +87,21 @@ const ViewListing = () => {
       fetchCategories();
     }
   }, [user]);
+
+  useEffect(() => {
+    const checkIfSaved = async () => {
+      if (!id || !user) return;
+      
+      try {
+        const response = await apiService.getSavedListingIds();
+        setIsSaved(response.listingIds.includes(id));
+      } catch (err) {
+        console.error('Failed to check if listing is saved:', err);
+      }
+    };
+
+    checkIfSaved();
+  }, [id, user]);
 
   const handleContactSeller = async () => {
     if (!listing) return;
@@ -204,6 +225,73 @@ const ViewListing = () => {
     }
   };
 
+  const handleToggleVisibility = async () => {
+    if (!listing) return;
+
+    const newHiddenState = !listing.isHidden;
+    const loadingToastId = showLoading(
+      newHiddenState ? "Hiding Listing" : "Restoring Listing",
+      `Please wait while we ${newHiddenState ? 'hide' : 'restore'} the listing...`
+    );
+
+    try {
+      setTogglingVisibility(true);
+      const response = await apiService.toggleListingVisibility(listing._id, newHiddenState);
+      
+      // Update the listing in state
+      setListing(response.data.listing);
+      
+      // Hide loading and show success
+      hideToast(loadingToastId);
+      showSuccess(
+        newHiddenState ? "Listing Hidden Successfully!" : "Listing Restored Successfully!",
+        newHiddenState 
+          ? "The listing is now hidden from users." 
+          : "The listing is now visible to users."
+      );
+    } catch (err: any) {
+      console.error('Error toggling visibility:', err);
+      
+      // Hide loading and show error
+      hideToast(loadingToastId);
+      showError(
+        "Failed to Toggle Visibility",
+        err.response?.data?.message || 'Please try again later.'
+      );
+    } finally {
+      setTogglingVisibility(false);
+    }
+  };
+
+  const handleSaveToggle = async () => {
+    if (isSaving || !id) return;
+
+    try {
+      setIsSaving(true);
+
+      if (isSaved) {
+        await apiService.unsaveListing(id);
+        setIsSaved(false);
+      } else {
+        await apiService.saveListing(id);
+        setIsSaved(true);
+      }
+    } catch (error: any) {
+      console.error('Error toggling save:', error);
+      // If already saved error, just update the state
+      if (error.response?.status === 400 && error.response?.data?.error?.includes('already saved')) {
+        setIsSaved(true);
+      } else {
+        showError(
+          "Failed to Save Listing",
+          error.response?.data?.error || 'Please try again later.'
+        );
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -259,6 +347,11 @@ const ViewListing = () => {
         "Unknown Seller"
       : "Unknown Seller";
 
+  const sellerId =
+    listing.userId && typeof listing.userId === "object"
+      ? listing.userId._id
+      : null;
+
   const sellerEmail =
     listing.userId && typeof listing.userId === "object"
       ? listing.userId.email
@@ -309,16 +402,16 @@ const ViewListing = () => {
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <BackButton />
-
-        <div className="grid lg:grid-cols-2 gap-8">
-          <div className="bg-white rounded-lg overflow-hidden shadow-sm relative">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Image Container - Consistent Height */}
+          <div className="flex-1 h-[400px] sm:h-[500px] lg:h-[650px] bg-white rounded-xl overflow-hidden shadow-md relative p-6">
             {validPhotos.length > 0 ? (
               <>
                 <img
                   src={validPhotos[currentImageIndex].url}
                   alt={validPhotos[currentImageIndex].alt || listing.title}
-                  className="w-full h-[500px] object-contain bg-gray-50"
+                  className="w-full h-full object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => setShowImageModal(true)}
                   onError={(e) => {
                     // Fallback to placeholder if image fails to load
                     (e.target as HTMLImageElement).src =
@@ -350,15 +443,33 @@ const ViewListing = () => {
                     </div>
                   </>
                 )}
+                {/* Heart button - only for non-owners */}
+                {!isOwner && (
+                  <button
+                    onClick={handleSaveToggle}
+                    disabled={isSaving}
+                    className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-all hover:scale-110 disabled:opacity-50 z-20"
+                    aria-label={isSaved ? 'Unsave listing' : 'Save listing'}
+                    title={isSaved ? 'Remove from saved' : 'Save for later'}
+                  >
+                    <Heart
+                      className={`w-6 h-6 transition-colors ${
+                        isSaved ? 'fill-red-500 text-red-500' : 'text-gray-600'
+                      }`}
+                    />
+                  </button>
+                )}
               </>
             ) : (
-              <div className="w-full h-[500px] bg-gray-200 flex items-center justify-center">
-                <span className="text-gray-400">No image available</span>
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-gray-400 text-lg">No image available</span>
               </div>
             )}
           </div>
 
-          <div className="space-y-6">
+          {/* Description Container - Matching Height */}
+          <div className="flex-1 h-[400px] sm:h-[500px] lg:h-[650px] bg-white rounded-xl shadow-md overflow-y-auto p-6">
+            <div className="space-y-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
                 {listing.title}
@@ -387,9 +498,18 @@ const ViewListing = () => {
               </div>
               <div>
                 <div className="text-sm text-gray-600 mb-1">Seller</div>
-                <div className="text-lg font-semibold text-gray-900">
-                  {sellerName}
-                </div>
+                {sellerId ? (
+                  <button
+                    onClick={() => navigate(`/profile/${sellerId}`)}
+                    className="text-lg font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-colors text-left"
+                  >
+                    {sellerName}
+                  </button>
+                ) : (
+                  <div className="text-lg font-semibold text-gray-900">
+                    {sellerName}
+                  </div>
+                )}
                 {sellerEmail && (
                   <div className="text-sm text-gray-500">{sellerEmail}</div>
                 )}
@@ -414,6 +534,19 @@ const ViewListing = () => {
                     <span>{deleting ? 'Deleting...' : 'Delete Listing'}</span>
                   </button>
                 </>
+              ) : listing.status === 'SOLD' ? (
+                <>
+                  <div className="w-full bg-gray-100 text-gray-800 font-bold py-3 px-4 rounded-lg border-2 border-gray-300 flex items-center justify-center cursor-not-allowed">
+                    <span className="text-xl">SOLD</span>
+                  </div>
+                  <button 
+                    onClick={() => setShowReportModal(true)}
+                    className="w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-lg border border-gray-300 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <Flag className="w-5 h-5" />
+                    <span>Report</span>
+                  </button>
+                </>
               ) : (
                 <>
                   <button 
@@ -433,6 +566,7 @@ const ViewListing = () => {
                   </button>
                 </>
               )}
+            </div>
             </div>
           </div>
         </div>
@@ -454,24 +588,23 @@ const ViewListing = () => {
                   <span>Warn User</span>
                 </button>
                 <button
-                  onClick={() => {
-                    // TODO: Implement delete listing functionality
-                    alert("Delete listing functionality coming soon");
-                  }}
+                  onClick={() => setShowDeleteConfirm(true)}
                   className="bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
                 >
                   <Trash2 className="w-5 h-5" />
                   <span>Delete Listing</span>
                 </button>
                 <button
-                  onClick={() => {
-                    // TODO: Implement hide/show listing functionality
-                    alert("Hide/Show listing functionality coming soon");
-                  }}
-                  className="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                  onClick={handleToggleVisibility}
+                  disabled={togglingVisibility}
+                  className={`${
+                    listing.isHidden 
+                      ? 'bg-green-600 hover:bg-green-700' 
+                      : 'bg-gray-600 hover:bg-gray-700'
+                  } disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2`}
                 >
                   <Eye className="w-5 h-5" />
-                  <span>Hide/Show Listing</span>
+                  <span>{listing.isHidden ? 'Restore Listing' : 'Hide Listing'}</span>
                 </button>
                 <button
                   onClick={handleOpenEditCategory}
@@ -481,10 +614,7 @@ const ViewListing = () => {
                   <span>Edit Categories</span>
                 </button>
                 <button
-                  onClick={() => {
-                    // TODO: Implement manage user account functionality
-                    alert("Manage user account functionality coming soon");
-                  }}
+                  onClick={() => setShowManageUserModal(true)}
                   className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
                 >
                   <UserCog className="w-5 h-5" />
@@ -605,6 +735,85 @@ const ViewListing = () => {
         </div>
       )}
       <Footer />
+
+      {/* Manage User Account Modal */}
+      {listing && listing.userId && (
+        <ManageUserModal
+          isOpen={showManageUserModal}
+          onClose={() => setShowManageUserModal(false)}
+          userId={listing.userId._id}
+          userName={`${listing.userId.first_name} ${listing.userId.last_name}`}
+          userEmail={listing.userId.email}
+          listingId={listing._id}
+          onSuccess={() => {
+            showSuccess('User account action completed successfully');
+            // Optionally refresh the listing data
+            window.location.reload();
+          }}
+        />
+      )}
+
+      {/* Image Modal - Fullscreen View */}
+      {showImageModal && validPhotos.length > 0 && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-95 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowImageModal(false)}
+        >
+          {/* Image container with controls - Fixed consistent size */}
+          <div className="relative w-[90vw] h-[85vh] flex items-center justify-center">
+            {/* Full size image */}
+            <img
+              src={validPhotos[currentImageIndex].url}
+              alt={validPhotos[currentImageIndex].alt || listing.title}
+              className="w-full h-full object-contain"
+              onClick={(e) => e.stopPropagation()}
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "/placeholder-image.svg";
+              }}
+            />
+
+            {/* Close button - On top right of image */}
+            <button
+              onClick={() => setShowImageModal(false)}
+              className="absolute top-4 right-4 p-2 bg-white/90 hover:bg-white rounded-full transition-colors shadow-lg"
+              aria-label="Close image"
+            >
+              <X className="w-6 h-6 text-gray-900" />
+            </button>
+
+            {/* Navigation arrows - On the image */}
+            {hasMultipleImages && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePreviousImage();
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-900 rounded-full p-3 transition-all shadow-lg"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleNextImage();
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-900 rounded-full p-3 transition-all shadow-lg"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+                
+                {/* Image counter */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/90 text-gray-900 px-4 py-2 rounded-full text-sm font-medium shadow-lg">
+                  {currentImageIndex + 1} / {validPhotos.length}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

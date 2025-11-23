@@ -62,6 +62,15 @@ export const searchListings = async (req: Request<{}, SearchResponse, {}, Search
     // Build filter object - only show ACTIVE listings (unless admin)
     const filter: any = { status: 'ACTIVE' };
 
+    // Check if user is admin
+    const authUser = (req as any).user;
+    const isAdmin = authUser?.roles?.includes('admin');
+    
+    // Hide hidden listings from non-admin users
+    if (!isAdmin) {
+      filter.isHidden = { $ne: true };
+    }
+
     // Text search on title and description - partial matching
     if (q && q.trim()) {
       const searchRegex = new RegExp(q.trim(), 'i'); // Case-insensitive partial matching
@@ -176,12 +185,8 @@ export const getListingById = async (req: Request<{ id: string }>, res: Response
       return;
     }
 
-    // Only show ACTIVE listings (unless admin - for future implementation)
-    if (listing.status !== 'ACTIVE') {
-      res.status(404).json({ error: 'Listing not found' });
-      return;
-    }
-
+    // Allow both ACTIVE and SOLD listings to be viewed
+    // Users should be able to view sold listings, especially if they have them saved
     res.json(listing);
   } catch (err: any) {
     console.error('Get listing error:', err);
