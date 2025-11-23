@@ -201,6 +201,7 @@ const Navbar: React.FC = () => {
                   </button>
                   <button
                     onClick={() => {
+                      navigate('/');
                       logout();
                       setIsProfileOpen(false);
                     }}
