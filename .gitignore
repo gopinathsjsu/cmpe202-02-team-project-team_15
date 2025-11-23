@@ -73,7 +73,10 @@ jspm_packages/
 
 # Gatsby files
 .cache/
-public
+# Only ignore root-level public folder (if any, for Gatsby)
+/public
+# Explicitly allow client/public/ for Vite/React static assets
+!client/public/
 
 # Storybook build outputs
 .out
