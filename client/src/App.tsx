@@ -11,7 +11,6 @@ import MessagesPage from './pages/Messages';
 import SavedListings from './pages/SavedListings';
 import MyListings from './pages/MyListings';
 import ProtectedRoute from './components/ProtectedRoute';
-import RootRedirect from './components/RootRedirect';
 import ChatbotButton from './components/ChatbotButton';
 import AdminReportsPage from './pages/AdminReportsPage';
 import AdminCategoriesPage from './pages/AdminCategoriesPage';
@@ -150,8 +149,8 @@ function App() {
               } 
             />
             
-            {/* Redirect root based on auth status */}
-            <Route path="/" element={<RootRedirect />} />
+            {/* Landing page */}
+            <Route path="/" element={<LandingPage />} />
             
             {/* Catch all route - redirect to landing page */}
             <Route path="*" element={<Navigate to="/" replace />} />
