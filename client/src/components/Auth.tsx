@@ -64,8 +64,9 @@ const Auth: React.FC = () => {
       } else {
         setError('Invalid credentials');
       }
-    } catch (err) {
-      setError('Login failed. Please try again.');
+    } catch (err: any) {
+      // Display the specific error message from the backend
+      setError(err.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }

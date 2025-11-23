@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import mongoose from 'mongoose';
 import Listing, { IListing } from '../models/Listing';
 import Category from '../models/Category';
+import { Report } from '../models/Report';
+import { SavedListing } from '../models/SavedListing';
 
 // POST /api/listings - Create a new listing
 export const createListing = async (req: Request, res: Response): Promise<void> => {
@@ -64,7 +66,61 @@ export const createListing = async (req: Request, res: Response): Promise<void> 
       listing: savedListing 
     });
   } catch (error: any) {
-    console.error('Create listing error:', error);
+    console.error('Delete listing error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+};
+
+// GET /api/listings/user/:userId - Get listings by user ID (public)
+export const getListingsByUserId = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const { status = 'ACTIVE', page = 1, limit = 20 } = req.query;
+
+    // Validate user ID
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      res.status(400).json({ 
+        success: false, 
+        error: 'Invalid user ID format' 
+      });
+      return;
+    }
+
+    const filter: any = { userId };
+    if (status) {
+      filter.status = status;
+    }
+
+    // Always hide hidden listings from public view
+    filter.isHidden = { $ne: true };
+
+    const skip = (Number(page) - 1) * Number(limit);
+    
+    const [listings, total] = await Promise.all([
+      Listing.find(filter)
+        .populate('categoryId', 'name description')
+        .populate('userId', 'first_name last_name email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit)),
+      Listing.countDocuments(filter)
+    ]);
+
+    res.json({ 
+      success: true, 
+      listings,
+      pagination: {
+        current: Number(page),
+        pageSize: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error: any) {
+    console.error('Get listings by user ID error:', error);
     res.status(500).json({ 
       success: false, 
       error: error.message 
@@ -80,6 +136,15 @@ export const getListings = async (req: Request, res: Response): Promise<void> =>
     const filter: any = {};
     if (status) {
       filter.status = status;
+    }
+
+    // Check if user is admin
+    const authUser = (req as any).user;
+    const isAdmin = authUser?.roles?.includes('admin');
+    
+    // Hide hidden listings from non-admin users
+    if (!isAdmin) {
+      filter.isHidden = { $ne: true };
     }
 
     const skip = (Number(page) - 1) * Number(limit);
@@ -339,11 +404,12 @@ export const deleteListing = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    // Check if the authenticated user owns the listing
+    // Check if the authenticated user owns the listing or is an admin
     const listingUserId = listing.userId.toString();
     const authUserId = authUser._id.toString();
+    const isAdmin = authUser.roles?.includes('admin');
 
-    if (listingUserId !== authUserId) {
+    if (listingUserId !== authUserId && !isAdmin) {
       res.status(403).json({ 
         success: false, 
         error: 'You can only delete your own listings' 
@@ -353,6 +419,12 @@ export const deleteListing = async (req: Request, res: Response): Promise<void> 
 
     // Delete the listing
     await Listing.findByIdAndDelete(id);
+
+    // Also delete all reports associated with this listing
+    await Report.deleteMany({ listingId: id });
+
+    // Delete all saved listings references
+    await SavedListing.deleteMany({ listingId: id });
 
     res.json({ 
       success: true, 

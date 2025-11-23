@@ -102,6 +102,7 @@ export interface IListing {
   description: string;
   price: number;
   status: "ACTIVE" | "SOLD";
+  isHidden: boolean;
   userId: {
     _id: string;
     first_name: string;
@@ -500,6 +501,71 @@ class ApiService {
 
   async updateProfile(profileData: Partial<ProfileData>): Promise<ProfileData> {
     const { data } = await api.put<ProfileData>("/api/profile", profileData);
+    return data;
+  }
+
+  // Admin: Toggle listing visibility (hide/restore)
+  async toggleListingVisibility(
+    listingId: string,
+    isHidden: boolean
+  ): Promise<{ success: boolean; message: string; data: { listing: IListing } }> {
+    const { data } = await api.patch<{
+      success: boolean;
+      message: string;
+      data: { listing: IListing };
+    }>(`/api/admin/listings/${listingId}/visibility`, {
+      isHidden,
+    });
+    return data;
+  }
+
+  // Admin: Suspend user account
+  async suspendUser(
+    userId: string,
+    reason?: string,
+    listingId?: string
+  ): Promise<{ success: boolean; message: string }> {
+    const { data } = await api.patch<{
+      success: boolean;
+      message: string;
+    }>(`/api/admin/users/${userId}/suspend`, {
+      reason,
+      listingId,
+    });
+    return data;
+  }
+
+  // Admin: Delete user account
+  async deleteUser(
+    userId: string,
+    reason?: string
+  ): Promise<{ success: boolean; message: string }> {
+    const { data } = await api.delete<{
+      success: boolean;
+      message: string;
+    }>(`/api/admin/users/${userId}`, {
+      data: { reason },
+    });
+    return data;
+  }
+
+  // Admin: Get suspended users
+  async getSuspendedUsers(params?: {
+    page?: number;
+    limit?: number;
+  }): Promise<any> {
+    const { data } = await api.get("/api/admin/users/suspended", { params });
+    return data;
+  }
+
+  // Admin: Unsuspend user
+  async unsuspendUser(
+    userId: string
+  ): Promise<{ success: boolean; message: string }> {
+    const { data } = await api.patch<{
+      success: boolean;
+      message: string;
+    }>(`/api/admin/users/${userId}/unsuspend`);
     return data;
   }
 }
