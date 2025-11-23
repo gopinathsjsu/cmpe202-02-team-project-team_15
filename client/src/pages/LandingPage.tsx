@@ -78,12 +78,11 @@ const LandingPage: React.FC = () => {
             {/* Right Column - Visual */}
             <div className="relative">
               <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                  <div className="text-center p-8">
-                    <ShoppingBag className="w-32 h-32 md:w-40 md:h-40 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500 text-sm">Marketplace Preview</p>
-                  </div>
-                </div>
+                <img 
+                  src="/campus-image.jpg" 
+                  alt="Campus marketplace" 
+                  className="w-full h-full object-cover aspect-square"
+                />
               </div>
               {/* Decorative elements */}
               <div className="absolute -top-4 -right-4 w-24 h-24 bg-blue-100 rounded-full opacity-50 blur-2xl"></div>
