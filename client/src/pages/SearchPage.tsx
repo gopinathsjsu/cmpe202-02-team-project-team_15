@@ -6,6 +6,7 @@ import ProductGrid from "../components/ProductGrid";
 import Pagination from "../components/Pagination";
 import Navbar from '../components/Navbar';
 import ChatbotButton from '../components/ChatbotButton';
+import Footer from '../components/Footer';
 import { apiService, IListing, ICategory, SearchParams } from "../services/api";
 
 const SearchPage: React.FC = () => {
@@ -504,6 +505,7 @@ const SearchPage: React.FC = () => {
           </main>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

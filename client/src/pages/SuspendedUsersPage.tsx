@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserX, UserCheck, Mail, Calendar, X, AlertCircle, CheckCircle } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import BackButton from '../components/BackButton';
 import Pagination from '../components/Pagination';
 import { apiService } from '../services/api';
@@ -379,6 +380,7 @@ const SuspendedUsersPage: React.FC = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };

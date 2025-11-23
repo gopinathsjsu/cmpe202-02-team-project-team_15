@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService, ProfileData, IListing } from '../services/api';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import ProductCard from '../components/ProductCard';
 
 const Profile: React.FC = () => {
@@ -141,7 +142,7 @@ const Profile: React.FC = () => {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
+          <h1 className="text-3xl font-semibold text-gray-900">Profile</h1>
           <p className="mt-2 text-sm text-gray-600">
             Manage your personal information and contact details
           </p>
@@ -641,6 +642,7 @@ const Profile: React.FC = () => {
         </div>
       </div>
     </div>
+    <Footer />
     </div>
   );
 }

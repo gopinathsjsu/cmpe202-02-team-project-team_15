@@ -61,7 +61,7 @@ api.interceptors.response.use(
           } catch (e) {
             // ignore localStorage errors
           }
-          window.location.href = "/login";
+          window.location.href = "/";
         }
       }
     }

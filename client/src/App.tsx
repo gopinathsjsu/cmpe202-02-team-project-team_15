@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import Auth from './components/Auth';
+import LandingPage from './pages/LandingPage';
 import SearchPage from './pages/SearchPage';
 import ViewListing from './pages/ViewListing';
 import EditListing from './pages/EditListing';
@@ -10,12 +11,15 @@ import MessagesPage from './pages/Messages';
 import SavedListings from './pages/SavedListings';
 import MyListings from './pages/MyListings';
 import ProtectedRoute from './components/ProtectedRoute';
-import RootRedirect from './components/RootRedirect';
 import ChatbotButton from './components/ChatbotButton';
 import AdminReportsPage from './pages/AdminReportsPage';
 import AdminCategoriesPage from './pages/AdminCategoriesPage';
 import SuspendedUsersPage from './pages/SuspendedUsersPage';
 import Profile from './pages/Profile';
+import AboutUs from './pages/AboutUs';
+import FAQ from './pages/FAQ';
+import TermsOfService from './pages/TermsOfService';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import PublicProfile from './pages/PublicProfile';
 
 function App() {
@@ -28,6 +32,12 @@ function App() {
             {/* Authentication routes */}
             <Route path="/login" element={<Auth />} />
             <Route path="/signup" element={<Auth />} />
+            
+            {/* Public pages */}
+            <Route path="/about" element={<AboutUs />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
             
             {/* Protected search page */}
             <Route 
@@ -139,11 +149,11 @@ function App() {
               } 
             />
             
-            {/* Redirect root based on auth status */}
-            <Route path="/" element={<RootRedirect />} />
+            {/* Landing page */}
+            <Route path="/" element={<LandingPage />} />
             
-            {/* Catch all route - redirect to login */}
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            {/* Catch all route - redirect to landing page */}
+            <Route path="*" element={<Navigate to="/" replace />} />
             
           </Routes>
         </div>
