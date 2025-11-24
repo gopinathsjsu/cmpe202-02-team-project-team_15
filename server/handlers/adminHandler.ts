@@ -446,7 +446,7 @@ export class AdminHandler {
       // Query & paginate
       const total = await Report.countDocuments(query);
       const reports = await Report.find(query)
-        .populate({ path: 'listingId', select: 'title listingId' })
+        .populate({ path: 'listingId', select: 'title listingId isHidden' })
         .populate({ path: 'reporterId', select: 'first_name last_name email' })
         .populate({ path: 'sellerId', select: 'first_name last_name email' })
         .sort(sortObj)
@@ -917,6 +917,348 @@ export class AdminHandler {
       res.status(500).json({
         success: false,
         message: 'Failed to update listing category',
+        error: error.message
+      });
+    }
+  }
+
+  // @desc    Hide or restore a listing (Admin only)
+  // @access  Private (Admin)
+  static async toggleListingVisibility(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { isHidden } = req.body;
+
+      // Validate listing ID
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid listing ID'
+        });
+        return;
+      }
+
+      // Validate isHidden parameter
+      if (typeof isHidden !== 'boolean') {
+        res.status(400).json({
+          success: false,
+          message: 'isHidden must be a boolean value'
+        });
+        return;
+      }
+
+      // Find and update the listing
+      const listing = await Listing.findByIdAndUpdate(
+        id,
+        { isHidden },
+        { new: true }
+      ).populate('userId', 'first_name last_name email')
+       .populate('categoryId', 'name');
+
+      if (!listing) {
+        res.status(404).json({
+          success: false,
+          message: 'Listing not found'
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        message: `Listing ${isHidden ? 'hidden' : 'restored'} successfully`,
+        data: { listing }
+      });
+
+    } catch (error: any) {
+      console.error('Toggle listing visibility error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to toggle listing visibility',
+        error: error.message
+      });
+    }
+  }
+
+  // @desc    Suspend user account (Admin only)
+  // @access  Private (Admin)
+  static async suspendUser(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { reason, listingId } = req.body;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid user ID'
+        });
+        return;
+      }
+
+      const user = await User.findById(id);
+
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+        return;
+      }
+
+      // Don't allow suspending admin users
+      const adminRole = await mongoose.model('Role').findOne({ name: 'admin' });
+      const userRoles = await mongoose.model('UserRole').find({ user_id: id });
+      const isAdmin = userRoles.some((ur: any) => ur.role_id.toString() === adminRole?._id.toString());
+
+      if (isAdmin) {
+        res.status(403).json({
+          success: false,
+          message: 'Cannot suspend admin users'
+        });
+        return;
+      }
+
+      // Update user status to suspended
+      user.status = 'suspended';
+      await user.save();
+
+      // Hide all listings by this user
+      await Listing.updateMany(
+        { userId: id },
+        { isHidden: true }
+      );
+
+      // Create audit log
+      await AuditLog.create({
+        user_id: (req as any).user?.userId,
+        action: 'SUSPEND_USER',
+        details: `Suspended user ${user.email}. Reason: ${reason || 'No reason provided'}. All user listings hidden.`,
+        ip_address: req.ip
+      });
+
+      // Revoke all active sessions for this user
+      await Session.updateMany(
+        { user_id: id, revoked_at: null },
+        { revoked_at: new Date() }
+      );
+
+      res.json({
+        success: true,
+        message: 'User account suspended successfully',
+        data: {
+          user: {
+            _id: user._id,
+            email: user.email,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            status: user.status
+          }
+        }
+      });
+
+    } catch (error: any) {
+      console.error('Suspend user error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to suspend user',
+        error: error.message
+      });
+    }
+  }
+
+  // @desc    Delete user account (Admin only)
+  // @access  Private (Admin)
+  static async deleteUser(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid user ID'
+        });
+        return;
+      }
+
+      const user = await User.findById(id);
+
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+        return;
+      }
+
+      // Don't allow deleting admin users
+      const adminRole = await mongoose.model('Role').findOne({ name: 'admin' });
+      const userRoles = await mongoose.model('UserRole').find({ user_id: id });
+      const isAdmin = userRoles.some((ur: any) => ur.role_id.toString() === adminRole?._id.toString());
+
+      if (isAdmin) {
+        res.status(403).json({
+          success: false,
+          message: 'Cannot delete admin users'
+        });
+        return;
+      }
+
+      // Update user status to deleted (soft delete)
+      user.status = 'deleted';
+      await user.save();
+
+      // Create audit log
+      await AuditLog.create({
+        user_id: (req as any).user?.userId,
+        action: 'DELETE_USER',
+        details: `Deleted user ${user.email}. Reason: ${reason || 'No reason provided'}`,
+        ip_address: req.ip
+      });
+
+      // Revoke all active sessions for this user
+      await Session.updateMany(
+        { user_id: id, revoked_at: null },
+        { revoked_at: new Date() }
+      );
+
+      // Hide all listings by this user
+      await Listing.updateMany(
+        { userId: id },
+        { isHidden: true }
+      );
+
+      res.json({
+        success: true,
+        message: 'User account deleted successfully',
+        data: {
+          user: {
+            _id: user._id,
+            email: user.email,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            status: user.status
+          }
+        }
+      });
+
+    } catch (error: any) {
+      console.error('Delete user error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to delete user',
+        error: error.message
+      });
+    }
+  }
+
+  // @desc    Get all suspended users (Admin only)
+  // @access  Private (Admin)
+  static async getSuspendedUsers(req: Request, res: Response): Promise<void> {
+    try {
+      const { page = '1', limit = '20' } = req.query;
+      const pageNum = parseInt(page as string, 10);
+      const limitNum = parseInt(limit as string, 10);
+
+      const suspendedUsers = await User.find({ status: 'suspended' })
+        .select('first_name last_name email status created_at updated_at')
+        .limit(limitNum)
+        .skip((pageNum - 1) * limitNum)
+        .sort({ updated_at: -1 });
+
+      const total = await User.countDocuments({ status: 'suspended' });
+
+      res.json({
+        success: true,
+        data: {
+          users: suspendedUsers,
+          pagination: {
+            current_page: pageNum,
+            total_pages: Math.ceil(total / limitNum),
+            total_users: total,
+            per_page: limitNum
+          }
+        }
+      });
+
+    } catch (error: any) {
+      console.error('Get suspended users error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get suspended users',
+        error: error.message
+      });
+    }
+  }
+
+  // @desc    Unsuspend user account (restore to active) (Admin only)
+  // @access  Private (Admin)
+  static async unsuspendUser(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid user ID'
+        });
+        return;
+      }
+
+      const user = await User.findById(id);
+
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+        return;
+      }
+
+      if (user.status !== 'suspended') {
+        res.status(400).json({
+          success: false,
+          message: 'User is not suspended'
+        });
+        return;
+      }
+
+      // Update user status to active
+      user.status = 'active';
+      await user.save();
+
+      // Restore (unhide) all listings by this user
+      await Listing.updateMany(
+        { userId: id },
+        { isHidden: false }
+      );
+
+      // Create audit log
+      await AuditLog.create({
+        user_id: (req as any).user?.userId,
+        action: 'REACTIVATE_USER',
+        details: `Unsuspended user ${user.email}. All listings restored.`,
+        ip_address: req.ip
+      });
+
+      res.json({
+        success: true,
+        message: 'User account unsuspended successfully',
+        data: {
+          user: {
+            _id: user._id,
+            email: user.email,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            status: user.status
+          }
+        }
+      });
+
+    } catch (error: any) {
+      console.error('Unsuspend user error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to unsuspend user',
         error: error.message
       });
     }

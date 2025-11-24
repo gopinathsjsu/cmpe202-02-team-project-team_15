@@ -1,0 +1,200 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { ShoppingBag, Users, Shield, Zap, ArrowRight, Check } from 'lucide-react';
+import LandingHeader from '../components/LandingHeader';
+import Footer from '../components/Footer';
+import { useAuth } from '../contexts/AuthContext';
+
+const LandingPage: React.FC = () => {
+  const { user, loading } = useAuth();
+
+  return (
+    <div className="min-h-screen bg-white">
+      <LandingHeader />
+      
+      {/* Hero Section */}
+      <section className="pt-24 md:pt-32 pb-16 md:pb-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-gray-50 to-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left Column - Content */}
+            <div className="text-center lg:text-left">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+                Buy and Sell on Your
+                <span className="block text-gray-900 mt-2">Campus Marketplace</span>
+              </h1>
+              <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto lg:mx-0">
+                Connect with students, find great deals, and sell your items quickly. 
+                Your trusted campus community marketplace.
+              </p>
+              
+              {/* CTA Buttons */}
+              {!loading && (
+                <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
+                  {user ? (
+                    <Link
+                      to="/search"
+                      className="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-all duration-200 hover:shadow-xl transform hover:-translate-y-1"
+                    >
+                      Browse Items
+                      <ArrowRight className="ml-2 w-5 h-5" />
+                    </Link>
+                  ) : (
+                    <>
+                      <Link
+                        to="/signup"
+                        className="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-all duration-200 hover:shadow-xl transform hover:-translate-y-1"
+                      >
+                        Get Started Free
+                        <ArrowRight className="ml-2 w-5 h-5" />
+                      </Link>
+                      <Link
+                        to="/login"
+                        className="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-gray-900 bg-white border-2 border-gray-900 rounded-lg hover:bg-gray-50 transition-all duration-200"
+                      >
+                        Sign In
+                      </Link>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Trust Indicators */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 text-sm text-gray-600">
+                <div className="flex items-center">
+                  <Check className="w-5 h-5 text-green-600 mr-2" />
+                  <span>Free to join</span>
+                </div>
+                <div className="flex items-center">
+                  <Check className="w-5 h-5 text-green-600 mr-2" />
+                  <span>Secure transactions</span>
+                </div>
+                <div className="flex items-center">
+                  <Check className="w-5 h-5 text-green-600 mr-2" />
+                  <span>Campus verified</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - Visual */}
+            <div className="relative">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+                <img 
+                  src="/campus-image.jpg" 
+                  alt="Campus marketplace" 
+                  className="w-full h-full object-cover aspect-square"
+                />
+              </div>
+              {/* Decorative elements */}
+              <div className="absolute -top-4 -right-4 w-24 h-24 bg-blue-100 rounded-full opacity-50 blur-2xl"></div>
+              <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-purple-100 rounded-full opacity-50 blur-2xl"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Why Choose Campus Market?
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Everything you need for buying and selling on campus
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="text-center p-6 rounded-xl hover:bg-gray-50 transition-colors">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ShoppingBag className="w-8 h-8 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Easy Listings</h3>
+              <p className="text-gray-600">
+                Create listings in minutes with photos and descriptions
+              </p>
+            </div>
+
+            <div className="text-center p-6 rounded-xl hover:bg-gray-50 transition-colors">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="w-8 h-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Campus Community</h3>
+              <p className="text-gray-600">
+                Connect with verified students on your campus
+              </p>
+            </div>
+
+            <div className="text-center p-6 rounded-xl hover:bg-gray-50 transition-colors">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Shield className="w-8 h-8 text-purple-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Safe & Secure</h3>
+              <p className="text-gray-600">
+                Built-in safety features and verified accounts
+              </p>
+            </div>
+
+            <div className="text-center p-6 rounded-xl hover:bg-gray-50 transition-colors">
+              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Zap className="w-8 h-8 text-orange-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Fast & Simple</h3>
+              <p className="text-gray-600">
+                Quick search and instant messaging with sellers
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-gray-900 to-gray-800">
+        <div className="max-w-4xl mx-auto text-center">
+          {!loading && (
+            <>
+              {user ? (
+                <>
+                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                    Ready to Shop?
+                  </h2>
+                  <p className="text-lg md:text-xl text-gray-300 mb-8">
+                    Browse thousands of items from students on your campus
+                  </p>
+                  <Link
+                    to="/search"
+                    className="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-gray-900 bg-white rounded-lg hover:bg-gray-100 transition-all duration-200 hover:shadow-xl transform hover:-translate-y-1"
+                  >
+                    Browse Items
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                    Ready to Get Started?
+                  </h2>
+                  <p className="text-lg md:text-xl text-gray-300 mb-8">
+                    Join thousands of students buying and selling on campus
+                  </p>
+                  <Link
+                    to="/signup"
+                    className="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-gray-900 bg-white rounded-lg hover:bg-gray-100 transition-all duration-200 hover:shadow-xl transform hover:-translate-y-1"
+                  >
+                    Create Your Account
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Link>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      </section>
+
+      <Footer />
+    </div>
+  );
+};
+
+export default LandingPage;
+

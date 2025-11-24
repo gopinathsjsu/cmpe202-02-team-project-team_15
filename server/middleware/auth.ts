@@ -29,6 +29,15 @@ const authenticateToken = async (req: Request, res: Response, next: NextFunction
       });
     }
 
+    // Get user roles
+    const userRoles = await UserRole.find({ user_id: user._id })
+      .populate('role_id');
+    
+    const userRoleNames = userRoles.map(ur => (ur.role_id as any).name);
+    
+    // Attach roles to user object
+    (user as any).roles = userRoleNames;
+
     req.user = user;
     next();
   } catch (error: any) {

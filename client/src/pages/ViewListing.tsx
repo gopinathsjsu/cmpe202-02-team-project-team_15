@@ -15,9 +15,11 @@ import {
   Heart
 } from "lucide-react";
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import { ReportModal } from "../components/ReportModal";
 import { WarnUserModal } from "../components/WarnUserModal";
 import ReportedDetailsPanel from "../components/ReportedDetailsPanel";
+import ManageUserModal from "../components/ManageUserModal";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { apiService, IListing, ICategory } from "../services/api";
@@ -41,6 +43,8 @@ const ViewListing = () => {
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [updatingCategory, setUpdatingCategory] = useState(false);
+  const [togglingVisibility, setTogglingVisibility] = useState(false);
+  const [showManageUserModal, setShowManageUserModal] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
@@ -221,6 +225,44 @@ const ViewListing = () => {
     }
   };
 
+  const handleToggleVisibility = async () => {
+    if (!listing) return;
+
+    const newHiddenState = !listing.isHidden;
+    const loadingToastId = showLoading(
+      newHiddenState ? "Hiding Listing" : "Restoring Listing",
+      `Please wait while we ${newHiddenState ? 'hide' : 'restore'} the listing...`
+    );
+
+    try {
+      setTogglingVisibility(true);
+      const response = await apiService.toggleListingVisibility(listing._id, newHiddenState);
+      
+      // Update the listing in state
+      setListing(response.data.listing);
+      
+      // Hide loading and show success
+      hideToast(loadingToastId);
+      showSuccess(
+        newHiddenState ? "Listing Hidden Successfully!" : "Listing Restored Successfully!",
+        newHiddenState 
+          ? "The listing is now hidden from users." 
+          : "The listing is now visible to users."
+      );
+    } catch (err: any) {
+      console.error('Error toggling visibility:', err);
+      
+      // Hide loading and show error
+      hideToast(loadingToastId);
+      showError(
+        "Failed to Toggle Visibility",
+        err.response?.data?.message || 'Please try again later.'
+      );
+    } finally {
+      setTogglingVisibility(false);
+    }
+  };
+
   const handleSaveToggle = async () => {
     if (isSaving || !id) return;
 
@@ -304,6 +346,11 @@ const ViewListing = () => {
         listing.userId.email ||
         "Unknown Seller"
       : "Unknown Seller";
+
+  const sellerId =
+    listing.userId && typeof listing.userId === "object"
+      ? listing.userId._id
+      : null;
 
   const sellerEmail =
     listing.userId && typeof listing.userId === "object"
@@ -451,9 +498,18 @@ const ViewListing = () => {
               </div>
               <div>
                 <div className="text-sm text-gray-600 mb-1">Seller</div>
-                <div className="text-lg font-semibold text-gray-900">
-                  {sellerName}
-                </div>
+                {sellerId ? (
+                  <button
+                    onClick={() => navigate(`/profile/${sellerId}`)}
+                    className="text-lg font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-colors text-left"
+                  >
+                    {sellerName}
+                  </button>
+                ) : (
+                  <div className="text-lg font-semibold text-gray-900">
+                    {sellerName}
+                  </div>
+                )}
                 {sellerEmail && (
                   <div className="text-sm text-gray-500">{sellerEmail}</div>
                 )}
@@ -532,30 +588,23 @@ const ViewListing = () => {
                   <span>Warn User</span>
                 </button>
                 <button
-                  onClick={() => {
-                    // TODO: Implement delete listing functionality
-                    showError(
-                      "Feature Not Available",
-                      "Delete listing functionality is coming soon."
-                    );
-                  }}
+                  onClick={() => setShowDeleteConfirm(true)}
                   className="bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
                 >
                   <Trash2 className="w-5 h-5" />
                   <span>Delete Listing</span>
                 </button>
                 <button
-                  onClick={() => {
-                    // TODO: Implement hide/show listing functionality
-                    showError(
-                      "Feature Not Available",
-                      "Hide/Show listing functionality is coming soon."
-                    );
-                  }}
-                  className="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                  onClick={handleToggleVisibility}
+                  disabled={togglingVisibility}
+                  className={`${
+                    listing.isHidden 
+                      ? 'bg-green-600 hover:bg-green-700' 
+                      : 'bg-gray-600 hover:bg-gray-700'
+                  } disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2`}
                 >
                   <Eye className="w-5 h-5" />
-                  <span>Hide/Show Listing</span>
+                  <span>{listing.isHidden ? 'Restore Listing' : 'Hide Listing'}</span>
                 </button>
                 <button
                   onClick={handleOpenEditCategory}
@@ -565,13 +614,7 @@ const ViewListing = () => {
                   <span>Edit Categories</span>
                 </button>
                 <button
-                  onClick={() => {
-                    // TODO: Implement manage user account functionality
-                    showError(
-                      "Feature Not Available",
-                      "Manage user account functionality is coming soon."
-                    );
-                  }}
+                  onClick={() => setShowManageUserModal(true)}
                   className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
                 >
                   <UserCog className="w-5 h-5" />
@@ -690,6 +733,24 @@ const ViewListing = () => {
             </div>
           </div>
         </div>
+      )}
+      <Footer />
+
+      {/* Manage User Account Modal */}
+      {listing && listing.userId && (
+        <ManageUserModal
+          isOpen={showManageUserModal}
+          onClose={() => setShowManageUserModal(false)}
+          userId={listing.userId._id}
+          userName={`${listing.userId.first_name} ${listing.userId.last_name}`}
+          userEmail={listing.userId.email}
+          listingId={listing._id}
+          onSuccess={() => {
+            showSuccess('User account action completed successfully');
+            // Optionally refresh the listing data
+            window.location.reload();
+          }}
+        />
       )}
 
       {/* Image Modal - Fullscreen View */}

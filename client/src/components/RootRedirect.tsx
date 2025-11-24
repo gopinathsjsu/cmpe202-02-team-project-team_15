@@ -1,13 +1,7 @@
-import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-  requiredRoles?: string[];
-}
-
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles }) => {
+const RootRedirect = () => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -21,16 +15,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
     );
   }
 
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
-
-  if (requiredRoles && !requiredRoles.some(r => user.roles?.includes(r))) {
-    // User lacks permission
-    return <Navigate to="/search" replace />;
-  }
-
-  return <>{children}</>;
+  // If user is logged in, redirect to search page
+  // If not logged in, redirect to login page
+  return <Navigate to={user ? "/search" : "/login"} replace />;
 };
 
-export default ProtectedRoute;
+export default RootRedirect;

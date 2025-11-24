@@ -727,6 +727,24 @@ class AuthHandler {
         return;
       }
 
+      // Check if user is suspended
+      if (user.status === 'suspended') {
+        res.status(403).json({
+          success: false,
+          message: 'Your account has been suspended. Please contact support for assistance.'
+        });
+        return;
+      }
+
+      // Check if user is deleted
+      if (user.status === 'deleted') {
+        res.status(403).json({
+          success: false,
+          message: 'This account has been deleted. Please contact support if you believe this is an error.'
+        });
+        return;
+      }
+
       // Check if user is active
       if (user.status !== 'active') {
         res.status(401).json({
@@ -745,7 +763,7 @@ class AuthHandler {
         refresh_token: refreshToken,
         user_agent: userAgent,
         ip_address: ipAddress,
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+        expires_at: new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
       });
 
       // Get user roles
