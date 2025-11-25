@@ -20,6 +20,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+# PM2 logs
+server/logs/
+*.log
 
 # Runtime data
 pids
