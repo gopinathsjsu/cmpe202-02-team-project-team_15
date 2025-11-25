@@ -9,7 +9,7 @@ import { initSocket } from "./utils/socket";
 // Load environment variables
 
 dotenv.config({ path: path.resolve(__dirname, ".env") });
-const PORT = process.env.PORT || 5000;
+const PORT = parseInt(process.env.PORT || '5000', 10);
 
 // Connect to MongoDB
 const connectDatabase = async () => {
@@ -34,8 +34,9 @@ connectDatabase();
 const server = http.createServer(app);
 initSocket(server);
 // Start server
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`Server accessible at http://0.0.0.0:${PORT}`);
   console.log(`Client: http://localhost:3000`);
 });
 
