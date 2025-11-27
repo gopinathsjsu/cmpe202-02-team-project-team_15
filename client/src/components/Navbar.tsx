@@ -210,7 +210,7 @@ const Navbar: React.FC = () => {
               <ImageViewerModal
                 isOpen={showViewModal}
                 onClose={() => setShowViewModal(false)}
-                imageUrl={user?.photoUrl || user?.photo_url}
+                imageUrl={user?.photoUrl || user?.photo_url || null}
               />
 
               {/* Delete Confirmation Modal */}

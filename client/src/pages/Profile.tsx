@@ -574,7 +574,7 @@ const Profile: React.FC = () => {
                 {/* Image Viewer Modal */}
                 <ImageViewerModal
                   isOpen={viewerOpen}
-                  imageUrl={user?.photoUrl || ""}
+                  imageUrl={user?.photoUrl || user?.photo_url || null}
                   onClose={() => setViewerOpen(false)}
                 />
               </div>

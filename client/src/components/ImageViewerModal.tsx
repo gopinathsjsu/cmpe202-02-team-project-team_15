@@ -2,7 +2,7 @@ import React from "react";
 
 interface ImageViewerModalProps {
   isOpen: boolean;
-  imageUrl: string;
+  imageUrl: string | null;
   onClose: () => void;
 }
 
