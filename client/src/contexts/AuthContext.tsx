@@ -42,52 +42,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    const storedUser = localStorage.getItem('user');
-
-    // First, hydrate from localStorage for instant display (no API call needed)
-    if (storedUser) {
+    // HYDRATION PHASE: Read from localStorage when app starts
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
       try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        setLoading(false);
+        setUser(JSON.parse(savedUser));
       } catch (err) {
-        console.error('Failed to parse stored user:', err);
+        console.error('Failed to parse saved user:', err);
         localStorage.removeItem('user');
-        setLoading(false);
       }
-    } else {
-      setLoading(false);
     }
-
-    // Only fetch from API if we have a token but no stored user
-    if (token && !storedUser) {
-      api.get("/api/profile")
-        .then(res => {
-          const profileData = res.data;
-          // Map profile data to User interface
-          const userData: User = {
-            id: profileData._id || profileData.id,
-            email: profileData.email,
-            first_name: profileData.first_name,
-            last_name: profileData.last_name,
-            status: profileData.status,
-            roles: profileData.roles || [],
-            photoUrl: profileData.photoUrl || profileData.photo_url || null,
-            photo_url: profileData.photo_url || profileData.photoUrl || null,
-          };
-          setUser(userData);
-          localStorage.setItem('user', JSON.stringify(userData));
-        })
-        .catch(err => {
-          console.error('Failed to fetch user profile:', err);
-          // Clear invalid token
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('user');
-          setUser(null);
-        });
-    }
+    setLoading(false);
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -110,8 +75,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           photoUrl: profileData.photoUrl || profileData.photo_url || null,
           photo_url: profileData.photo_url || profileData.photoUrl || null,
         };
-        setUser(userData);
+        // Cache user in localStorage first, then update state
         localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
         return true;
       }
       return false;

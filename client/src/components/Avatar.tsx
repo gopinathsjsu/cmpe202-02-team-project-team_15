@@ -43,6 +43,7 @@ interface AvatarProps {
   size?: number;
   className?: string;
   showCacheBusting?: boolean;
+  onClick?: () => void;
 }
 
 export const Avatar: React.FC<AvatarProps> = ({
@@ -52,7 +53,8 @@ export const Avatar: React.FC<AvatarProps> = ({
   email,
   size = 40,
   className = '',
-  showCacheBusting = true,
+  showCacheBusting = false, // Default to false - timestamp only added when photo changes
+  onClick,
 }) => {
   const avatarUrl = showCacheBusting && photoUrl 
     ? getAvatarUrl(photoUrl) 
@@ -63,6 +65,7 @@ export const Avatar: React.FC<AvatarProps> = ({
     <div
       className={`rounded-full flex items-center justify-center overflow-hidden bg-gray-200 ${className}`}
       style={{ width: size, height: size }}
+      onClick={onClick}
     >
       {avatarUrl ? (
         <img

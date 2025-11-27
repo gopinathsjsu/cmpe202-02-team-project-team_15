@@ -519,6 +519,12 @@ class ApiService {
     });
     return data;
   }
+
+  // Delete profile photo from S3 and set photoUrl = null in DB
+  async deleteProfilePhoto(): Promise<{ success: boolean; user: any }> {
+    const { data } = await api.delete<{ success: boolean; user: any }>("/api/profile/photo");
+    return data;
+  }
 }
 
 export const apiService = new ApiService();

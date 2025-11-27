@@ -278,6 +278,8 @@ export const constructPublicUrl = (key: string): string => {
   return `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
 };
 
+export { getS3Client, getBucketName };
+
 export default {
   generatePresignedUploadUrl,
   deleteFileFromS3,

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { User } from '../models/User';
-import { headS3Object, constructPublicUrl } from '../utils/s3';
+import { headS3Object, constructPublicUrl, getS3Client, getBucketName } from '../utils/s3';
+import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 export const getProfile = async (req: Request, res: Response) => {
   try {
@@ -175,5 +176,62 @@ export const updateProfilePhoto = async (req: Request, res: Response): Promise<v
       success: false,
       message: error.message || 'Server error' 
     });
+  }
+};
+
+/**
+ * DELETE /api/profile/photo
+ * Delete user profile photo from S3 and set photoUrl = null in DB
+ */
+export const deleteProfilePhoto = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user?._id || (req as any).user?.id;
+    
+    if (!userId) {
+      res.status(401).json({ message: 'Authentication required' });
+      return;
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    if (!user.photoUrl && !user.photo_url) {
+      res.status(400).json({ message: 'No photo to delete' });
+      return;
+    }
+
+    const photoUrl = user.photoUrl || user.photo_url;
+    
+    // Extract S3 key from URL (simple split method)
+    const key = photoUrl.split('.com/')[1];
+    
+    if (key) {
+      // Delete from S3 using AWS SDK v3
+      const s3Client = getS3Client();
+      const bucketName = getBucketName();
+
+      const deleteCommand = new DeleteObjectCommand({
+        Bucket: bucketName,
+        Key: key,
+      });
+
+      await s3Client.send(deleteCommand);
+    }
+
+    // Update user: set photoUrl and photo_url to null
+    user.photoUrl = null;
+    user.photo_url = null;
+    await user.save();
+
+    // Return updated user object (without password)
+    const updatedUser = await User.findById(userId).select('-password_hash');
+    
+    res.json({ user: updatedUser });
+  } catch (error: any) {
+    console.error('Profile photo delete error:', error);
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 };

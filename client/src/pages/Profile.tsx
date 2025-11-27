@@ -2,8 +2,12 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService, ProfileData } from '../services/api';
+import api from '../services/api';
 import Navbar from '../components/Navbar';
-import { Camera, Loader2, X } from 'lucide-react';
+import { Camera, Loader2, Trash2 } from 'lucide-react';
+import { Avatar } from '../components/Avatar';
+import ProfileImageMenu from '../components/ProfileImageMenu';
+import ImageViewerModal from '../components/ImageViewerModal';
 
 const Profile: React.FC = () => {
   const { user, setUser } = useAuth();
@@ -50,6 +54,9 @@ const Profile: React.FC = () => {
   const [uploadAbortController, setUploadAbortController] = useState<AbortController | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -277,24 +284,28 @@ const Profile: React.FC = () => {
         return;
       }
 
-      // 5) Refresh AuthContext with fresh user data from backend
-      const profileResponse = await apiService.getProfile();
-      const profileData = profileResponse;
+      // Step 3: After profile photo update, refresh the cached user ONCE
+      const res = await api.get("/api/profile");
+      const profileData = res.data;
       
-      if (setUser) {
-        const updatedUser = {
-          id: profileData._id || profileData.id || user?.id,
-          email: profileData.email,
-          first_name: profileData.first_name,
-          last_name: profileData.last_name,
-          status: profileData.status,
-          roles: profileData.roles || [],
-          photoUrl: profileData.photoUrl || profileData.photo_url || null,
-          photo_url: profileData.photo_url || profileData.photoUrl || null,
-        };
-        setUser(updatedUser);
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-      }
+      // Step 4: Add timestamp only when photo changes, then store in localStorage
+      const updated = {
+        id: profileData._id || profileData.id || user?.id,
+        email: profileData.email,
+        first_name: profileData.first_name,
+        last_name: profileData.last_name,
+        status: profileData.status,
+        roles: profileData.roles || [],
+        photoUrl: profileData.photoUrl || profileData.photo_url 
+          ? `${profileData.photoUrl || profileData.photo_url}?v=${Date.now()}`
+          : null,
+        photo_url: profileData.photo_url || profileData.photoUrl
+          ? `${profileData.photo_url || profileData.photoUrl}?v=${Date.now()}`
+          : null,
+      };
+      
+      setUser(updated);
+      localStorage.setItem('user', JSON.stringify(updated));
 
       // Update form data with new photo URL (with cache busting)
       const photoUrlWithVersion = `${publicUrl}?v=${Date.now()}`;
@@ -336,16 +347,103 @@ const Profile: React.FC = () => {
   };
 
   // Handle file input change
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      handleFileUpload(files[0]);
+  const handleEdit = () => {
+    const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+    fileInput?.click();
+  };
+
+  const handleDelete = async () => {
+    try {
+      const res = await api.delete("/api/profile/photo");
+      const profileData = res.data.user;
+      
+      const updated = {
+        id: profileData._id || profileData.id || user?.id,
+        email: profileData.email,
+        first_name: profileData.first_name,
+        last_name: profileData.last_name,
+        status: profileData.status,
+        roles: profileData.roles || [],
+        photoUrl: profileData.photoUrl || profileData.photo_url || null,
+        photo_url: profileData.photo_url || profileData.photoUrl || null,
+      };
+      
+      setUser(updated);
+      localStorage.setItem('user', JSON.stringify(updated));
+      
+      // Reload profile data
+      const data = await apiService.getProfile();
+      setFormData(data);
+      setOriginalData(data);
+      
+      setMenuOpen(false);
+    } catch (error: any) {
+      console.error('Failed to delete profile photo:', error);
+      alert(error.response?.data?.message || 'Failed to delete profile photo');
     }
   };
 
-  // Trigger file input
-  const handleAvatarClick = () => {
-    fileInputRef.current?.click();
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (isUploading) return;
+    
+    setIsUploading(true);
+
+    try {
+      const file = event.target.files?.[0];
+      if (!file) {
+        setIsUploading(false);
+        return;
+      }
+
+      // 1. Ask backend for a presigned URL
+      const presignRes = await api.post("/api/upload/presigned-url", {
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        folder: "profiles",
+        purpose: "profile",
+      });
+
+      const { presignedUrl, key } = presignRes.data;
+
+      // 2. Upload to S3
+      await fetch(presignedUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+
+      // 3. Save to backend and get updated user
+      const updateRes = await api.put("/api/profile/photo", { key });
+
+      // 4. Update AuthContext + localStorage
+      const profileData = updateRes.data.user;
+      const updated = {
+        id: profileData._id || profileData.id || user?.id,
+        email: profileData.email,
+        first_name: profileData.first_name,
+        last_name: profileData.last_name,
+        status: profileData.status,
+        roles: profileData.roles || [],
+        photoUrl: profileData.photoUrl || profileData.photo_url || null,
+        photo_url: profileData.photo_url || profileData.photoUrl || null,
+      };
+      
+      setUser(updated);
+      localStorage.setItem("user", JSON.stringify(updated));
+
+      // Update form data
+      const data = await apiService.getProfile();
+      setFormData(data);
+      setOriginalData(data);
+
+      console.log("Profile image updated!");
+    } catch (err) {
+      console.error("Upload failed:", err);
+      setError("Failed to upload profile image. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -417,28 +515,18 @@ const Profile: React.FC = () => {
             {/* Profile Photo and Info */}
             <div className="-mt-12 flex items-start gap-5">
               <div className="flex-shrink-0 relative group">
-                <div className="h-24 w-24 rounded-full ring-4 ring-white bg-gray-200 flex items-center justify-center overflow-hidden">
-                  {photoPreview || formData.photo_url ? (
-                    <img 
-                      src={photoPreview || formData.photo_url || ''} 
-                      alt="Profile" 
-                      className="h-24 w-24 rounded-full object-cover" 
-                    />
-                  ) : (
-                    <span className="text-4xl text-gray-400">{formData.first_name?.[0]?.toUpperCase()}</span>
-                  )}
+                <div className="h-24 w-24 rounded-full ring-4 ring-white overflow-hidden">
+                  <Avatar
+                    photoUrl={photoPreview || formData.photo_url || user?.photoUrl || user?.photo_url}
+                    firstName={formData.first_name || user?.first_name}
+                    lastName={formData.last_name || user?.last_name}
+                    email={formData.email || user?.email}
+                    size={96}
+                    className="w-full h-full cursor-pointer"
+                    onClick={() => setMenuOpen(true)}
+                  />
                 </div>
-                {/* Upload button overlay */}
-                {!uploadingPhoto ? (
-                  <button
-                    type="button"
-                    onClick={handleAvatarClick}
-                    className="absolute inset-0 rounded-full bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200"
-                    title="Change profile photo"
-                  >
-                    <Camera className="text-white" size={24} />
-                  </button>
-                ) : (
+                {uploadingPhoto && (
                   <div className="absolute inset-0 rounded-full bg-black bg-opacity-70 flex flex-col items-center justify-center gap-2">
                     <Loader2 className="animate-spin text-white" size={20} />
                     <span className="text-white text-xs font-medium">
@@ -463,12 +551,31 @@ const Profile: React.FC = () => {
                 )}
                 {/* Hidden file input */}
                 <input
-                  ref={fileInputRef}
+                  id="fileInput"
                   type="file"
-                  accept="image/jpeg,image/jpg,image/png,image/webp"
-                  onChange={handleFileInputChange}
+                  accept="image/*"
                   className="hidden"
-                  disabled={uploadingPhoto}
+                  onChange={handleFileChange}
+                  disabled={isUploading || uploadingPhoto}
+                />
+
+                {/* Profile Image Menu */}
+                <ProfileImageMenu
+                  isOpen={menuOpen}
+                  onClose={() => setMenuOpen(false)}
+                  onView={() => {
+                    setMenuOpen(false);
+                    setViewerOpen(true);
+                  }}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+
+                {/* Image Viewer Modal */}
+                <ImageViewerModal
+                  isOpen={viewerOpen}
+                  imageUrl={user?.photoUrl || ""}
+                  onClose={() => setViewerOpen(false)}
                 />
               </div>
               

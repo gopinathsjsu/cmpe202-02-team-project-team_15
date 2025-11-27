@@ -4,7 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import Navbar from "./Navbar";
 import { ListingPreview } from "./ListingPreview";
 import api from "../services/api";
-import { Avatar } from "../utils/avatar";
+import { Avatar } from "./Avatar";
 
 // Types for chat functionality
 interface Conversation {
@@ -521,7 +521,6 @@ export const Messages: React.FC<MessagesProps> = ({
                                       email={otherParty?.email}
                                       size={40}
                                       className={`flex-shrink-0 ${hasUnread ? "ring-2 ring-blue-500" : ""}`}
-                                      showCacheBusting={true}
                                     />
                                   );
                                 })()}
@@ -703,7 +702,6 @@ export const Messages: React.FC<MessagesProps> = ({
                           email={otherParty?.email}
                           size={40}
                           className="flex-shrink-0"
-                          showCacheBusting={true}
                         />
                       );
                     })()}
@@ -764,23 +762,16 @@ export const Messages: React.FC<MessagesProps> = ({
                         : message.senderId._id;
                       const isCurrentUser = senderIdStr === user?.id;
                       
-                      // Get sender name and profile image
-                      let senderName = "";
+                      // Get sender profile image
                       let senderProfileImage = message.senderProfileImage || null;
                       
                       if (typeof message.senderId === "object") {
-                        const firstName = message.senderId.first_name || "";
-                        const lastName = message.senderId.last_name || "";
-                        senderName = `${firstName} ${lastName}`.trim() || message.senderId.email || "User";
                         // Use senderProfileImage from message, or fallback to senderId photoUrl
                         if (!senderProfileImage) {
                           senderProfileImage = message.senderId.photoUrl || message.senderId.photo_url || null;
                         }
                       } else {
-                        // If senderId is just a string, get name from conversation
-                        const otherParty = getOtherPartyName(selectedConversation);
-                        senderName = isCurrentUser ? (user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : user?.email || "You") : otherParty;
-                        // For current user, use their photoUrl
+                        // If senderId is just a string, for current user, use their photoUrl
                         if (isCurrentUser) {
                           senderProfileImage = user?.photoUrl || user?.photo_url || null;
                         }
@@ -820,25 +811,14 @@ export const Messages: React.FC<MessagesProps> = ({
                           {/* Avatar - only show for other users (left side) */}
                           {!isCurrentUser && (
                             <div className="flex-shrink-0">
-                              {senderProfileImage ? (
-                                <img
-                                  src={senderProfileImage}
-                                  alt={senderName}
-                                  className="w-10 h-10 rounded-full object-cover"
-                                  onError={(e) => {
-                                    // Fallback to initials if image fails to load
-                                    const target = e.target as HTMLImageElement;
-                                    const parent = target.parentElement;
-                                    if (parent) {
-                                      parent.innerHTML = `<div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-sm">${senderName.charAt(0).toUpperCase()}</div>`;
-                                    }
-                                  }}
-                                />
-                              ) : (
-                                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-sm">
-                                  {senderName.charAt(0).toUpperCase()}
-                                </div>
-                              )}
+                              <Avatar
+                                photoUrl={senderProfileImage}
+                                firstName={typeof message.senderId === 'object' ? message.senderId.first_name : undefined}
+                                lastName={typeof message.senderId === 'object' ? message.senderId.last_name : undefined}
+                                email={typeof message.senderId === 'object' ? message.senderId.email : undefined}
+                                size={40}
+                                className="flex-shrink-0"
+                              />
                             </div>
                           )}
                           
@@ -872,25 +852,14 @@ export const Messages: React.FC<MessagesProps> = ({
                           {/* Avatar - only show for current user (right side) */}
                           {isCurrentUser && (
                             <div className="flex-shrink-0">
-                              {senderProfileImage ? (
-                                <img
-                                  src={senderProfileImage}
-                                  alt={senderName}
-                                  className="w-10 h-10 rounded-full object-cover"
-                                  onError={(e) => {
-                                    // Fallback to initials if image fails to load
-                                    const target = e.target as HTMLImageElement;
-                                    const parent = target.parentElement;
-                                    if (parent) {
-                                      parent.innerHTML = `<div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-sm">${senderName.charAt(0).toUpperCase()}</div>`;
-                                    }
-                                  }}
-                                />
-                              ) : (
-                                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-sm">
-                                  {senderName.charAt(0).toUpperCase()}
-                                </div>
-                              )}
+                              <Avatar
+                                photoUrl={senderProfileImage}
+                                firstName={user?.first_name}
+                                lastName={user?.last_name}
+                                email={user?.email}
+                                size={40}
+                                className="flex-shrink-0"
+                              />
                             </div>
                           )}
                         </div>
