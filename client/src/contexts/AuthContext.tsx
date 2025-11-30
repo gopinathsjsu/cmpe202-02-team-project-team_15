@@ -41,17 +41,76 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Helper function to store only minimal profile data in localStorage
+  const storeMinimalProfileCache = (userData: User) => {
+    const profileCache = {
+      first_name: userData.first_name,
+      last_name: userData.last_name,
+      status: userData.status,
+      photoUrl: userData.photoUrl || userData.photo_url || null,
+    };
+    localStorage.setItem('user', JSON.stringify(profileCache));
+  };
+
   useEffect(() => {
     // HYDRATION PHASE: Read from localStorage when app starts
     const savedUser = localStorage.getItem('user');
+    const accessToken = localStorage.getItem('accessToken');
+    
+    const fetchFullUserData = async () => {
+      if (!accessToken) return;
+      
+      try {
+        const response = await api.get("/api/profile");
+        const profileData = response.data;
+        const userData: User = {
+          id: profileData._id || profileData.id,
+          email: profileData.email,
+          first_name: profileData.first_name,
+          last_name: profileData.last_name,
+          status: profileData.status,
+          roles: profileData.roles || [],
+          photoUrl: profileData.photoUrl || profileData.photo_url || null,
+          photo_url: profileData.photo_url || profileData.photoUrl || null,
+        };
+        setUser(userData);
+        // Store only minimal profile cache in localStorage
+        storeMinimalProfileCache(userData);
+      } catch (err) {
+        console.error('Failed to fetch user data:', err);
+        // If fetch fails and we have minimal cache, keep it
+        // Otherwise clear invalid tokens
+        if (!savedUser) {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          setUser(null);
+        }
+      }
+    };
+    
     if (savedUser) {
       try {
-        setUser(JSON.parse(savedUser));
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+        
+        // If we only have minimal cache (missing id, email, or roles) and have a token,
+        // fetch full user data to ensure we have complete user information
+        if (accessToken && (!parsedUser.id || !parsedUser.email || !parsedUser.roles)) {
+          // Fetch full user data asynchronously without blocking initial render
+          fetchFullUserData();
+        }
       } catch (err) {
         console.error('Failed to parse saved user:', err);
         localStorage.removeItem('user');
+        if (accessToken) {
+          fetchFullUserData();
+        }
       }
+    } else if (accessToken) {
+      // No cached user but we have a token, fetch full user data
+      fetchFullUserData();
     }
+    
     setLoading(false);
   }, []);
 
@@ -75,8 +134,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           photoUrl: profileData.photoUrl || profileData.photo_url || null,
           photo_url: profileData.photo_url || profileData.photoUrl || null,
         };
-        // Cache user in localStorage first, then update state
-        localStorage.setItem('user', JSON.stringify(userData));
+        // Store only minimal profile cache in localStorage
+        storeMinimalProfileCache(userData);
         setUser(userData);
         return true;
       }
@@ -121,7 +180,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         photo_url: profileData.photo_url || profileData.photoUrl || null,
       };
       setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
+      // Store only minimal profile cache in localStorage
+      storeMinimalProfileCache(userData);
     } catch (err) {
       console.error('Failed to refresh user profile:', err);
       // Clear invalid token

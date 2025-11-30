@@ -58,6 +58,19 @@ const Profile: React.FC = () => {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Helper function to update minimal profile picture cache in localStorage
+  const updateProfilePictureCache = (profileData: any, photoUrlWithTimestamp?: string | null) => {
+    const profileCache = {
+      first_name: profileData.first_name,
+      last_name: profileData.last_name,
+      status: profileData.status,
+      photoUrl: photoUrlWithTimestamp !== undefined 
+        ? photoUrlWithTimestamp 
+        : (profileData.photoUrl || profileData.photo_url || null),
+    };
+    localStorage.setItem('user', JSON.stringify(profileCache));
+  };
+
   useEffect(() => {
     const loadProfile = async () => {
       try {
@@ -288,7 +301,11 @@ const Profile: React.FC = () => {
       const res = await api.get("/api/profile");
       const profileData = res.data;
       
-      // Step 4: Add timestamp only when photo changes, then store in localStorage
+      // Step 4: Add timestamp only when photo changes, then store minimal data in localStorage
+      const photoUrlWithTimestamp = profileData.photoUrl || profileData.photo_url 
+        ? `${profileData.photoUrl || profileData.photo_url}?v=${Date.now()}`
+        : null;
+      
       const updated = {
         id: profileData._id || profileData.id || user?.id,
         email: profileData.email,
@@ -296,16 +313,12 @@ const Profile: React.FC = () => {
         last_name: profileData.last_name,
         status: profileData.status,
         roles: profileData.roles || [],
-        photoUrl: profileData.photoUrl || profileData.photo_url 
-          ? `${profileData.photoUrl || profileData.photo_url}?v=${Date.now()}`
-          : null,
-        photo_url: profileData.photo_url || profileData.photoUrl
-          ? `${profileData.photo_url || profileData.photoUrl}?v=${Date.now()}`
-          : null,
+        photoUrl: photoUrlWithTimestamp,
+        photo_url: photoUrlWithTimestamp,
       };
       
-      setUser(updated);
-      localStorage.setItem('user', JSON.stringify(updated));
+      setUser(updated); // Keep full user object in state memory
+      updateProfilePictureCache(profileData, photoUrlWithTimestamp);
 
       // Update form data with new photo URL (with cache busting)
       const photoUrlWithVersion = `${publicUrl}?v=${Date.now()}`;
@@ -368,8 +381,8 @@ const Profile: React.FC = () => {
         photo_url: profileData.photo_url || profileData.photoUrl || null,
       };
       
-      setUser(updated);
-      localStorage.setItem('user', JSON.stringify(updated));
+      setUser(updated); // Keep full user object in state memory
+      updateProfilePictureCache(profileData);
       
       // Reload profile data
       const data = await apiService.getProfile();
@@ -429,8 +442,8 @@ const Profile: React.FC = () => {
         photo_url: profileData.photo_url || profileData.photoUrl || null,
       };
       
-      setUser(updated);
-      localStorage.setItem("user", JSON.stringify(updated));
+      setUser(updated); // Keep full user object in state memory
+      updateProfilePictureCache(profileData);
 
       // Update form data
       const data = await apiService.getProfile();
