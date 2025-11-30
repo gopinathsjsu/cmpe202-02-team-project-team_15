@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:8080";
+// Use relative path for CloudFront + ALB setup
+// This will work with both CloudFront (production) and local development with proxy
+const API_BASE_URL = "";
 
 // Create axios instance
 const api = axios.create({
