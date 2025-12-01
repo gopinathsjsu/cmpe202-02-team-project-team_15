@@ -1,0 +1,110 @@
+@startuml UML Component Diagram
+
+package "Client (React Frontend)" {
+    component "React Application" as ReactApp
+    component "Pages" as Pages
+    component "Components" as Components
+    component "Contexts" as Contexts
+    component "API Service" as APIService
+    
+    ReactApp --> Pages
+    ReactApp --> Components
+    ReactApp --> Contexts
+    Pages --> APIService
+    Components --> APIService
+}
+
+package "Server (Express Backend)" {
+    component "HTTP Server\n+ Socket.io" as HTTPServer
+    component "Express App\n+ Middleware" as ExpressApp
+    
+    package "API Layer" {
+        component "Routes" as Routes
+        component "Auth/User Routes" as AuthRoutes
+        component "Listing/Search Routes" as ListingRoutes
+        component "Admin Routes" as AdminRoutes
+        component "Chat/Report Routes" as ChatRoutes
+        component "Upload/Profile Routes" as UploadRoutes
+        
+        component "Handlers" as Handlers
+        component "Auth/User Handlers" as AuthHandlers
+        component "Listing Handlers" as ListingHandlers
+        component "Admin Handlers" as AdminHandlers
+        component "Chat Handlers" as ChatHandlers
+        component "Upload/Profile Handlers" as UploadHandlers
+        
+        Routes --> AuthRoutes
+        Routes --> ListingRoutes
+        Routes --> AdminRoutes
+        Routes --> ChatRoutes
+        Routes --> UploadRoutes
+        
+        Handlers --> AuthHandlers
+        Handlers --> ListingHandlers
+        Handlers --> AdminHandlers
+        Handlers --> ChatHandlers
+        Handlers --> UploadHandlers
+    }
+    
+    package "Data & Services" {
+        component "Data Models" as Models
+        component "Mongoose Schemas" as MongooseSchemas
+        
+        component "Services" as Services
+        component "Email Service" as EmailService
+        component "S3 Utils" as S3Utils
+        component "Socket.io Utils" as SocketUtils
+        
+        Models --> MongooseSchemas
+        
+        Services --> EmailService
+        Services --> S3Utils
+        Services --> SocketUtils
+    }
+}
+
+package "External Services" {
+    database "MongoDB" as MongoDB
+    cloud "AWS S3" as S3
+    cloud "Email Service" as EmailProvider
+    cloud "Google AI\n(Chatbot)" as ChatbotAI
+}
+
+' Main connections
+APIService --> ExpressApp : HTTP/REST API
+ReactApp ..> HTTPServer : WebSocket (Chat)
+
+HTTPServer --> ExpressApp
+ExpressApp --> Routes
+Routes --> Handlers
+Handlers --> Models
+Handlers --> Services
+
+Models --> MongoDB
+Services --> S3
+Services --> EmailProvider
+Services --> ChatbotAI
+
+HTTPServer --> Services : Socket.io
+
+note right of ReactApp
+  React Router
+  Context API (Auth, Toast)
+  Pages & Components
+end note
+
+note right of ExpressApp
+  Express.js
+  Middleware:
+  - Auth
+  - Validation
+  - Rate Limiting
+end note
+
+note right of Models
+  Mongoose ODM
+  All data persistence
+end note
+
+@enduml
+
