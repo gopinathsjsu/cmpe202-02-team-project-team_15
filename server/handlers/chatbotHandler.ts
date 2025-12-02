@@ -67,8 +67,19 @@ export const chatWithBot = async (req: Request, res: Response) => {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
+    // Get user's university if authenticated
+    let userUniversity: string | undefined;
+    const authUser = (req as any).user;
+    if (authUser) {
+      const { User } = await import('../models/User');
+      const fullUser = await User.findById(authUser._id);
+      if (fullUser && fullUser.university) {
+        userUniversity = fullUser.university;
+      }
+    }
+
     // Get relevant context from database
-    const context = await getRelevantContext(message);
+    const context = await getRelevantContext(message, userUniversity);
 
     // Get the number of listings in context to help the AI understand what to display
     const listingCount = context.match(/Listing ID:/g)?.length || 0;
@@ -111,50 +122,59 @@ Please provide a helpful response based on the context and conversation history.
 };
 
 // Function to get relevant context from database
-async function getRelevantContext(query: string): Promise<string> {
+async function getRelevantContext(query: string, userUniversity?: string): Promise<string> {
   try {
     const searchTerms = query.toLowerCase().split(' ').filter(term => term.length > 2);
     
-    // Get categories with actual listing counts
+    // Build base filter for university scoping
+    const universityFilter: any = {};
+    if (userUniversity) {
+      universityFilter.university = userUniversity;
+    }
+    
+    // Get categories with actual listing counts (filtered by university)
     const categories = await Category.find({}).limit(10);
     const categoryInfo = await Promise.all(categories.map(async (cat) => {
       const listingCount = await Listing.countDocuments({ 
         categoryId: cat._id, 
-        status: 'ACTIVE' 
+        status: 'ACTIVE',
+        ...universityFilter
       });
       return `Category: ${cat.name}${cat.description ? ` - ${cat.description}` : ''} (${listingCount} active listings)`;
     }));
     const categoryInfoText = categoryInfo.join('\n');
 
     // Search for relevant listings
-    // Strategy: Search ALL listings in database first, then sort by most recent
-    // MongoDB will: 1) Search all matching listings, 2) Sort by most recent, 3) Return top results
+    // Strategy: Search listings filtered by university, then sort by most recent
     let listings: IListing[] = [];
     
     if (searchTerms.length > 0) {
       // Create search regex for comprehensive matching
       const searchRegex = new RegExp(searchTerms.join('|'), 'i');
       
-      // Search ALL listings in the database that match the query
-      // Then sort by most recent, then limit to top results
+      // Search listings that match the query and university
       listings = await Listing.find({
         $or: [
           { title: searchRegex },
           { description: searchRegex }
         ],
-        status: 'ACTIVE'
+        status: 'ACTIVE',
+        ...universityFilter
       })
       .populate('categoryId', 'name')
       .populate('userId', 'username')
-      .sort({ createdAt: -1 }) // Sort by most recent first (applied to ALL matching results)
-      .limit(10); // Return top 10 most recent matches from entire database
+      .sort({ createdAt: -1 }) // Sort by most recent first
+      .limit(10); // Return top 10 most recent matches
     } else {
-      // If no specific search terms, get the most recent listings from entire database
-      listings = await Listing.find({ status: 'ACTIVE' })
+      // If no specific search terms, get the most recent listings from user's university
+      listings = await Listing.find({ 
+        status: 'ACTIVE',
+        ...universityFilter
+      })
         .populate('categoryId', 'name')
         .populate('userId', 'username')
         .sort({ createdAt: -1 }) // Sort by most recent first
-        .limit(10); // Get top 10 most recent listings from entire database
+        .limit(10); // Get top 10 most recent listings
     }
 
     const listingInfo = listings.map(listing => {
@@ -163,8 +183,11 @@ async function getRelevantContext(query: string): Promise<string> {
       return `Listing ID: ${listing._id} - Title: "${listing.title}" - Price: $${listing.price} - Category: ${category?.name || 'Unknown'} - Description: ${listing.description.substring(0, 100)}...`;
     }).join('\n');
 
-    // Get some general stats
-    const totalListings = await Listing.countDocuments({ status: 'ACTIVE' });
+    // Get some general stats (filtered by university if provided)
+    const totalListings = await Listing.countDocuments({ 
+      status: 'ACTIVE',
+      ...universityFilter
+    });
     const totalCategories = await Category.countDocuments();
 
     return `
@@ -203,7 +226,22 @@ export const getCategories = async (req: Request, res: Response) => {
 export const getRecentListings = async (req: Request, res: Response) => {
   try {
     const limit = parseInt(req.query.limit as string) || 10;
-    const listings = await Listing.find({ status: 'ACTIVE' })
+    
+    // Get user's university if authenticated
+    const authUser = (req as any).user;
+    let universityFilter: any = {};
+    if (authUser) {
+      const { User } = await import('../models/User');
+      const fullUser = await User.findById(authUser._id);
+      if (fullUser && fullUser.university) {
+        universityFilter.university = fullUser.university;
+      }
+    }
+    
+    const listings = await Listing.find({ 
+      status: 'ACTIVE',
+      ...universityFilter
+    })
       .populate('categoryId', 'name')
       .populate('userId', 'username')
       .limit(limit)

@@ -16,9 +16,20 @@ export const initiateChat = async (req: any, res: Response) => {
     }
 
     // Get the listing to find the seller
-    const listing = await Listing.findById(listingId).select("userId");
+    const listing = await Listing.findById(listingId).select("userId university");
     if (!listing) {
       return res.status(404).json({ message: "Listing not found" });
+    }
+
+    // Check if buyer and listing are from the same university
+    const buyer = await User.findById(req.user._id).select("university");
+    if (!buyer) {
+      return res.status(404).json({ message: "Buyer not found" });
+    }
+    
+    // Check university access - users can only chat about listings from their university
+    if (buyer.university && listing.university && buyer.university !== listing.university) {
+      return res.status(403).json({ message: "Access denied: Listing belongs to a different university" });
     }
 
     const sellerId = String(listing.userId);

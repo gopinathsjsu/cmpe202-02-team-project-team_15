@@ -17,6 +17,7 @@ export interface IListing extends Document {
   price: number;
   status: 'ACTIVE' | 'SOLD';
   isHidden: boolean;
+  university: string;
   photos: IPhoto[];
   createdAt: Date;
   updatedAt: Date;
@@ -76,6 +77,12 @@ const listingSchema = new Schema<IListing>({
     type: Boolean,
     default: false
   },
+  university: {
+    type: String,
+    required: true,
+    default: 'sjsu',
+    index: true
+  },
   photos: [photoSchema]
 }, { 
   timestamps: true 
@@ -88,5 +95,6 @@ listingSchema.index({ description: 1 });
 // Compound indexes for filtering
 listingSchema.index({ categoryId: 1, price: 1 });
 listingSchema.index({ status: 1, createdAt: -1 });
+listingSchema.index({ university: 1, status: 1, createdAt: -1 });
 
 export default mongoose.model<IListing>('Listing', listingSchema);

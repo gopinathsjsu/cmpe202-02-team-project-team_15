@@ -66,6 +66,19 @@ export const searchListings = async (req: Request<{}, SearchResponse, {}, Search
     const authUser = (req as any).user;
     const isAdmin = authUser?.roles?.includes('admin');
     
+    // Filter by university for non-admin users
+    if (!isAdmin && authUser) {
+      // Get user's university from the authenticated user object
+      // The auth middleware already fetches the full user from DB
+      const userUniversity = authUser.university;
+      if (userUniversity) {
+        filter.university = userUniversity;
+        console.log(`[Search] Filtering by university: ${userUniversity}`);
+      } else {
+        console.log(`[Search] WARNING: User ${authUser._id} has no university set`);
+      }
+    }
+    
     // Hide hidden listings from non-admin users
     if (!isAdmin) {
       filter.isHidden = { $ne: true };
@@ -183,6 +196,23 @@ export const getListingById = async (req: Request<{ id: string }>, res: Response
     if (!listing) {
       res.status(404).json({ error: 'Listing not found' });
       return;
+    }
+
+    // Check university access - non-admin users can only view listings from their university
+    const authUser = (req as any).user;
+    if (authUser) {
+      const isAdmin = authUser?.roles?.includes('admin');
+      
+      if (!isAdmin) {
+        // Get user's university from the authenticated user object
+        const userUniversity = authUser.university;
+        
+        if (userUniversity && listing.university && listing.university !== userUniversity) {
+          console.log(`[GetListing] Access denied: User university ${userUniversity} != Listing university ${listing.university}`);
+          res.status(403).json({ error: 'Access denied: Listing belongs to a different university' });
+          return;
+        }
+      }
     }
 
     // Allow both ACTIVE and SOLD listings to be viewed
