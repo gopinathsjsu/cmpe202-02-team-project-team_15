@@ -10,7 +10,7 @@ import { Camera, Loader2, Trash2 } from 'lucide-react';
 import { Avatar } from '../components/Avatar';
 import ProfileImageMenu from '../components/ProfileImageMenu';
 import ImageViewerModal from '../components/ImageViewerModal';
-
+//
 const Profile: React.FC = () => {
   const { user, setUser } = useAuth();
   const navigate = useNavigate();
