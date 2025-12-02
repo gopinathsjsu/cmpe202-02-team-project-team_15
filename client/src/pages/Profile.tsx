@@ -52,11 +52,6 @@ const Profile: React.FC = () => {
   const [listings, setListings] = useState<IListing[]>([]);
   const [loadingListings, setLoadingListings] = useState(true);
   const [listingFilter, setListingFilter] = useState<'ACTIVE' | 'SOLD'>('ACTIVE');
-  const [socialMediaErrors, setSocialMediaErrors] = useState({
-    linkedin: '',
-    twitter: '',
-    instagram: ''
-  });
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -110,57 +105,10 @@ const Profile: React.FC = () => {
     loadListings();
   }, [listingFilter]);
 
-  // Validation functions for social media URLs
-  const validateLinkedInURL = (url: string): boolean => {
-    if (!url || url.trim() === '') return true; // Empty is valid
-    const linkedinPattern = /^(https?:\/\/)?(www\.)?linkedin\.com\/(in|company)\/[a-zA-Z0-9_-]+\/?$/i;
-    return linkedinPattern.test(url.trim());
-  };
-
-  const validateTwitterURL = (url: string): boolean => {
-    if (!url || url.trim() === '') return true; // Empty is valid
-    const twitterPattern = /^(https?:\/\/)?(www\.)?(twitter\.com|x\.com)\/[a-zA-Z0-9_]+\/?$/i;
-    return twitterPattern.test(url.trim());
-  };
-
-  const validateInstagramURL = (url: string): boolean => {
-    if (!url || url.trim() === '') return true; // Empty is valid
-    const instagramPattern = /^(https?:\/\/)?(www\.)?instagram\.com\/[a-zA-Z0-9_.]+\/?$/i;
-    return instagramPattern.test(url.trim());
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
-
-    // Validate social media URLs before submitting
-    const errors = {
-      linkedin: '',
-      twitter: '',
-      instagram: ''
-    };
-
-    if (formData.contact_info?.social_media?.linkedin && !validateLinkedInURL(formData.contact_info.social_media.linkedin)) {
-      errors.linkedin = 'Please enter a valid LinkedIn URL (e.g., https://linkedin.com/in/username)';
-    }
-
-    if (formData.contact_info?.social_media?.twitter && !validateTwitterURL(formData.contact_info.social_media.twitter)) {
-      errors.twitter = 'Please enter a valid Twitter/X URL (e.g., https://twitter.com/username)';
-    }
-
-    if (formData.contact_info?.social_media?.instagram && !validateInstagramURL(formData.contact_info.social_media.instagram)) {
-      errors.instagram = 'Please enter a valid Instagram URL (e.g., https://instagram.com/username)';
-    }
-
-    // Check if there are any validation errors
-    if (errors.linkedin || errors.twitter || errors.instagram) {
-      setSocialMediaErrors(errors);
-      setError('Please fix the social media URL errors before saving');
-      return;
-    }
-
-    setSocialMediaErrors({ linkedin: '', twitter: '', instagram: '' });
 
     try {
       // Send all form data except email (which is read-only)
@@ -181,7 +129,6 @@ const Profile: React.FC = () => {
     setIsEditing(false);
     setError('');
     setSuccess('');
-    setSocialMediaErrors({ linkedin: '', twitter: '', instagram: '' });
   };
 
   const handleChange = (
@@ -207,36 +154,6 @@ const Profile: React.FC = () => {
         
         return newData;
       });
-
-      // Real-time validation for social media fields
-      if (name === 'contact_info.social_media.linkedin') {
-        if (value && !validateLinkedInURL(value)) {
-          setSocialMediaErrors(prev => ({
-            ...prev,
-            linkedin: 'Please enter a valid LinkedIn URL (e.g., https://linkedin.com/in/username)'
-          }));
-        } else {
-          setSocialMediaErrors(prev => ({ ...prev, linkedin: '' }));
-        }
-      } else if (name === 'contact_info.social_media.twitter') {
-        if (value && !validateTwitterURL(value)) {
-          setSocialMediaErrors(prev => ({
-            ...prev,
-            twitter: 'Please enter a valid Twitter/X URL (e.g., https://twitter.com/username)'
-          }));
-        } else {
-          setSocialMediaErrors(prev => ({ ...prev, twitter: '' }));
-        }
-      } else if (name === 'contact_info.social_media.instagram') {
-        if (value && !validateInstagramURL(value)) {
-          setSocialMediaErrors(prev => ({
-            ...prev,
-            instagram: 'Please enter a valid Instagram URL (e.g., https://instagram.com/username)'
-          }));
-        } else {
-          setSocialMediaErrors(prev => ({ ...prev, instagram: '' }));
-        }
-      }
     } else {
       setFormData(prev => ({
         ...prev,
@@ -971,17 +888,10 @@ const Profile: React.FC = () => {
                           value={formData.contact_info?.social_media?.linkedin || ''}
                           onChange={handleChange}
                           disabled={!isEditing}
-                          placeholder={isEditing ? "https://linkedin.com/in/username" : "No LinkedIn profile"}
-                          className={`pl-10 pr-3 py-2 mt-1 block w-full rounded-lg shadow-sm focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors duration-200 ${
-                            socialMediaErrors.linkedin 
-                              ? 'border-red-300 focus:border-red-500' 
-                              : 'border-gray-300 focus:border-blue-500'
-                          }`}
+                          placeholder={isEditing ? "LinkedIn URL" : "No LinkedIn profile"}
+                          className="pl-10 pr-3 py-2 mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors duration-200"
                         />
                       </div>
-                      {socialMediaErrors.linkedin && (
-                        <p className="mt-1 text-sm text-red-600">{socialMediaErrors.linkedin}</p>
-                      )}
                     </div>
                     <div className="space-y-2">
                       <label htmlFor="contact_info.social_media.twitter" className="block text-sm font-medium text-gray-700">
@@ -1000,17 +910,10 @@ const Profile: React.FC = () => {
                           value={formData.contact_info?.social_media?.twitter || ''}
                           onChange={handleChange}
                           disabled={!isEditing}
-                          placeholder={isEditing ? "https://twitter.com/username" : "No Twitter profile"}
-                          className={`pl-10 pr-3 py-2 mt-1 block w-full rounded-lg shadow-sm focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors duration-200 ${
-                            socialMediaErrors.twitter 
-                              ? 'border-red-300 focus:border-red-500' 
-                              : 'border-gray-300 focus:border-blue-500'
-                          }`}
+                          placeholder={isEditing ? "Twitter URL" : "No Twitter profile"}
+                          className="pl-10 pr-3 py-2 mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors duration-200"
                         />
                       </div>
-                      {socialMediaErrors.twitter && (
-                        <p className="mt-1 text-sm text-red-600">{socialMediaErrors.twitter}</p>
-                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -1030,17 +933,10 @@ const Profile: React.FC = () => {
                           value={formData.contact_info?.social_media?.instagram || ''}
                           onChange={handleChange}
                           disabled={!isEditing}
-                          placeholder={isEditing ? "https://instagram.com/username" : "No Instagram profile"}
-                          className={`pl-10 pr-3 py-2 mt-1 block w-full rounded-lg shadow-sm focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors duration-200 ${
-                            socialMediaErrors.instagram 
-                              ? 'border-red-300 focus:border-red-500' 
-                              : 'border-gray-300 focus:border-blue-500'
-                          }`}
+                          placeholder={isEditing ? "Instagram URL" : "No Instagram profile"}
+                          className="pl-10 pr-3 py-2 mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors duration-200"
                         />
                       </div>
-                      {socialMediaErrors.instagram && (
-                        <p className="mt-1 text-sm text-red-600">{socialMediaErrors.instagram}</p>
-                      )}
                     </div>
                   </div>
                 </div>
