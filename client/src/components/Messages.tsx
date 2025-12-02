@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Send, AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import Navbar from "./Navbar";
@@ -93,6 +94,7 @@ export const Messages: React.FC<MessagesProps> = ({
   initialConversationId,
 }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] =
     useState<Conversation | null>(null);
@@ -440,6 +442,34 @@ export const Messages: React.FC<MessagesProps> = ({
     }
   };
 
+  // Get the other party's user ID for navigation to their profile
+  const getOtherPartyId = (conv: Conversation): string | null => {
+    const userId = String(user?.id);
+    let buyerId: string;
+    let sellerId: string;
+
+    if (typeof conv.buyerId === "object" && conv.buyerId !== null) {
+      buyerId = String(conv.buyerId._id);
+    } else {
+      buyerId = String(conv.buyerId);
+    }
+
+    if (typeof conv.sellerId === "object" && conv.sellerId !== null) {
+      sellerId = String(conv.sellerId._id);
+    } else {
+      sellerId = String(conv.sellerId);
+    }
+
+    if (buyerId === userId) {
+      // Current user is buyer, return seller ID
+      return sellerId;
+    } else if (sellerId === userId) {
+      // Current user is seller, return buyer ID
+      return buyerId;
+    }
+    return null;
+  };
+
   const selectedListingInfo = getListingInfo(selectedConversation);
   const showListingPreview =
     selectedConversation &&
@@ -710,7 +740,15 @@ export const Messages: React.FC<MessagesProps> = ({
                       );
                     })()}
                     <div>
-                      <h3 className="font-semibold text-gray-900">
+                      <h3 
+                        className="font-semibold text-gray-900 hover:text-blue-600 cursor-pointer transition-colors"
+                        onClick={() => {
+                          const otherPartyId = getOtherPartyId(selectedConversation);
+                          if (otherPartyId) {
+                            navigate(`/profile/${otherPartyId}`);
+                          }
+                        }}
+                      >
                         {getOtherPartyName(selectedConversation)}
                       </h3>
                       <p className="text-sm text-gray-600">
