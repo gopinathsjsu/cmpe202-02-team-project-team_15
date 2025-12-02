@@ -195,9 +195,11 @@ const SearchPage: React.FC = () => {
         }
         setTotalPages(response.page.totalPages);
         setTotalItems(response.page.total);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Search failed:", err);
-        setError("Failed to search listings");
+        // Display the specific error message from the backend
+        const errorMessage = err.response?.data?.error || "Failed to search listings";
+        setError(errorMessage);
         setListings([]);
       } finally {
         setLoading(false);

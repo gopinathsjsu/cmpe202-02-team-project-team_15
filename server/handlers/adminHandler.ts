@@ -12,7 +12,7 @@ import Category from '../models/Category';
 import { Conversation } from '../models/Conversation';
 import { Message } from '../models/Message';
 import mongoose, { SortOrder, Types } from 'mongoose';
-import { sendAccountSuspensionEmail } from '../services/emailService';
+import { sendAccountSuspensionEmail, sendAccountUnsuspensionEmail } from '../services/emailService';
 
 export class AdminHandler {
   // @desc    Get audit logs (Admin only)
@@ -1259,6 +1259,24 @@ export class AdminHandler {
         details: `Unsuspended user ${user.email}. All listings restored.`,
         ip_address: req.ip
       });
+
+      // Send unsuspension email notification to the user
+      try {
+        const emailSent = await sendAccountUnsuspensionEmail(
+          user.email,
+          user.first_name,
+          user.last_name
+        );
+        
+        if (emailSent) {
+          console.log(`Unsuspension notification email sent to ${user.email}`);
+        } else {
+          console.warn(`Failed to send unsuspension notification email to ${user.email}`);
+        }
+      } catch (emailError: any) {
+        // Log error but don't fail the unsuspension operation
+        console.error('Error sending unsuspension email:', emailError.message);
+      }
 
       res.json({
         success: true,
