@@ -332,13 +332,21 @@ class ApiService {
     fileName: string,
     fileType: string,
     fileSize: number,
-    folder: "listings" | "profiles" = "listings"
-  ): Promise<{ uploadUrl: string; fileUrl: string; key: string }> {
+    folder: "listings" | "profiles" = "listings",
+    purpose?: "profile" | "listing"
+  ): Promise<{ presignedUrl: string; key: string; publicUrl: string }> {
     const { data } = await api.post<{
-      success: boolean;
-      data: { uploadUrl: string; fileUrl: string; key: string };
-    }>("/api/upload/presigned-url", { fileName, fileType, fileSize, folder });
-    return data.data;
+      presignedUrl: string;
+      key: string;
+      publicUrl: string;
+    }>("/api/upload/presigned-url", { 
+      fileName, 
+      fileType, 
+      fileSize, 
+      folder,
+      purpose 
+    });
+    return data;
   }
 
   // Upload functionality - Generate presigned URLs for multiple files
@@ -590,6 +598,21 @@ class ApiService {
       success: boolean;
       message: string;
     }>(`/api/admin/users/${userId}/unsuspend`);
+    return data;
+  }
+
+  // Update profile photo using S3 key
+  async updateProfilePhoto(key: string, publicUrl?: string): Promise<{ success: boolean; user: any }> {
+    const { data } = await api.put<{ success: boolean; user: any }>("/api/profile/photo", {
+      key,
+      publicUrl,
+    });
+    return data;
+  }
+
+  // Delete profile photo from S3 and set photoUrl = null in DB
+  async deleteProfilePhoto(): Promise<{ success: boolean; user: any }> {
+    const { data } = await api.delete<{ success: boolean; user: any }>("/api/profile/photo");
     return data;
   }
 }

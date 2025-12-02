@@ -1,0 +1,51 @@
+@startuml UML Deployment Diagram
+
+skinparam componentStyle rectangle
+
+' Client
+node "Client Browser" {
+    component "React Application" as ReactApp
+}
+
+' AWS Infrastructure
+cloud "AWS Cloud" {
+    cloud "CloudFront CDN" as CloudFront
+    database "S3 Bucket\n(Frontend)" as S3Frontend
+    
+    node "Application Load Balancer" as ALB
+    
+    node "EC2 Instance" {
+        component "Backend API Server" as Backend
+    }
+    
+    database "S3 Bucket\n(Images)" as S3Images
+}
+
+' MongoDB Atlas
+cloud "MongoDB Atlas" {
+    database "MongoDB Cluster" as MongoDB
+}
+
+' External Services
+cloud "External Services" {
+    component "Email Service" as Email
+    component "Google AI" as AI
+}
+
+' Connections
+ReactApp --> CloudFront : HTTPS
+CloudFront --> S3Frontend
+
+ReactApp --> ALB : HTTPS\n(REST API + WebSocket)
+ALB --> Backend
+
+Backend --> MongoDB
+
+Backend --> S3Images
+
+Backend --> Email
+
+Backend --> AI
+
+@enduml
+

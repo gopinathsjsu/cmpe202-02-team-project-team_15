@@ -14,10 +14,10 @@ interface EmailConfig {
 }
 
 const createTransporter = () => {
-  const emailUser = process.env.EMAIL_USER || 'rootuser.cmp@gmail.com';
-  const emailPass = process.env.EMAIL_PASS || 'fsts rpfx vixu uogu';
-  const emailHost = process.env.EMAIL_HOST || 'smtp.gmail.com';
-  const emailPort = parseInt(process.env.EMAIL_PORT || '587');
+  const emailUser = process.env.EMAIL_USER ;
+  const emailPass = process.env.EMAIL_PASS ;
+  const emailHost = process.env.EMAIL_HOST ;
+  const emailPort = parseInt(process.env.EMAIL_PORT);
   const isSecure = emailPort === 465;
 
   // Validate email configuration

@@ -1,13 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService, ProfileData, IListing } from '../services/api';
+import api from '../services/api';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ProductCard from '../components/ProductCard';
-
+import { Camera, Loader2, Trash2 } from 'lucide-react';
+import { Avatar } from '../components/Avatar';
+import ProfileImageMenu from '../components/ProfileImageMenu';
+import ImageViewerModal from '../components/ImageViewerModal';
+//
 const Profile: React.FC = () => {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<ProfileData>({
@@ -52,6 +57,29 @@ const Profile: React.FC = () => {
     twitter: '',
     instagram: ''
   });
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStage, setUploadStage] = useState<'idle' | 'resizing' | 'uploading' | 'updating'>('idle');
+  const [uploadAbortController, setUploadAbortController] = useState<AbortController | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Helper function to update minimal profile picture cache in localStorage
+  const updateProfilePictureCache = (profileData: any, photoUrlWithTimestamp?: string | null) => {
+    const profileCache = {
+      first_name: profileData.first_name,
+      last_name: profileData.last_name,
+      status: profileData.status,
+      photoUrl: photoUrlWithTimestamp !== undefined 
+        ? photoUrlWithTimestamp 
+        : (profileData.photoUrl || profileData.photo_url || null),
+    };
+    localStorage.setItem('user', JSON.stringify(profileCache));
+  };
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -217,6 +245,323 @@ const Profile: React.FC = () => {
     }
   };
 
+  // Helper function to resize image client-side (recommended: reduces bandwidth)
+  // Uses createImageBitmap for better performance
+  const resizeImage = async (file: File, maxSize: number = 1024): Promise<File> => {
+    try {
+      const img = await createImageBitmap(file);
+      
+      // Calculate ratio to fit within maxSize while maintaining aspect ratio
+      const ratio = Math.min(1, maxSize / Math.max(img.width, img.height));
+      
+      const width = Math.round(img.width * ratio);
+      const height = Math.round(img.height * ratio);
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        throw new Error('Failed to get canvas context');
+      }
+      
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      // Convert to blob with 0.85 quality (good balance between size and quality)
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob(resolve, file.type, 0.85);
+      });
+      
+      if (!blob) {
+        throw new Error('Failed to create blob from canvas');
+      }
+      
+      // Return as File object
+      return new File([blob], file.name, { type: file.type });
+    } catch (error) {
+      console.error('Image resize error:', error);
+      // If resize fails, return original file
+      return file;
+    }
+  };
+
+  // Cancel upload in progress
+  const cancelUpload = () => {
+    if (uploadAbortController) {
+      uploadAbortController.abort();
+      setUploadAbortController(null);
+    }
+    setUploadingPhoto(false);
+    setUploadProgress(0);
+    setUploadStage('idle');
+    setError('');
+    // Keep preview and pending file for retry
+  };
+
+  // Retry failed upload
+  const retryUpload = () => {
+    if (pendingFile) {
+      handleFileUpload(pendingFile);
+    }
+  };
+
+  // Handle file upload for profile photo
+  const handleFileUpload = async (file: File) => {
+    // 1) Client validation - Security: File type whitelist
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('Invalid file type. Please upload JPG, PNG, or WebP images only.');
+      return;
+    }
+
+    // Security: Max file size validation (10MB server limit, validate client-side too)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_FILE_SIZE) {
+      setError(`File size exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit`);
+      return;
+    }
+
+    // Store file for potential retry
+    setPendingFile(file);
+    setUploadingPhoto(true);
+    setError('');
+    setSuccess('');
+    setUploadProgress(0);
+    setUploadStage('resizing');
+
+    // Create abort controller for cancellation
+    const abortController = new AbortController();
+    setUploadAbortController(abortController);
+
+    try {
+      // Resize image client-side to reduce bandwidth (recommended)
+      // This reduces upload time and storage costs
+      setUploadStage('resizing');
+      setUploadProgress(10);
+      const fileToUpload = await resizeImage(file, 1024);
+
+      // Check if cancelled
+      if (abortController.signal.aborted) {
+        return;
+      }
+
+      // Create preview
+      const previewUrl = URL.createObjectURL(fileToUpload);
+      setPhotoPreview(previewUrl);
+
+      // 2) Request presigned URL
+      setUploadStage('uploading');
+      setUploadProgress(20);
+      const filename = fileToUpload.name;
+      const { presignedUrl, key, publicUrl } = await apiService.getPresignedUploadUrl(
+        filename,
+        fileToUpload.type,
+        fileToUpload.size,
+        'profiles',
+        'profile'
+      );
+
+      // Check if cancelled
+      if (abortController.signal.aborted) {
+        return;
+      }
+
+      // 3) Upload to S3 using PUT with progress tracking
+      setUploadProgress(30);
+      const putResponse = await fetch(presignedUrl, {
+        method: 'PUT',
+        body: fileToUpload,
+        headers: {
+          'Content-Type': fileToUpload.type,
+        },
+        signal: abortController.signal,
+      });
+
+      // Simulate progress (since fetch doesn't support progress events)
+      setUploadProgress(80);
+
+      if (!putResponse.ok) {
+        throw new Error('Upload to S3 failed');
+      }
+
+      // Check if cancelled
+      if (abortController.signal.aborted) {
+        return;
+      }
+
+      // 4) Tell API to attach this photo to profile
+      setUploadStage('updating');
+      setUploadProgress(90);
+      const updateResponse = await apiService.updateProfilePhoto(key, publicUrl);
+
+      // Check if cancelled
+      if (abortController.signal.aborted) {
+        return;
+      }
+
+      // Step 3: After profile photo update, refresh the cached user ONCE
+      const res = await api.get("/api/profile");
+      const profileData = res.data;
+      
+      // Step 4: Add timestamp only when photo changes, then store minimal data in localStorage
+      const photoUrlWithTimestamp = profileData.photoUrl || profileData.photo_url 
+        ? `${profileData.photoUrl || profileData.photo_url}?v=${Date.now()}`
+        : null;
+      
+      const updated = {
+        id: profileData._id || profileData.id || user?.id,
+        email: profileData.email,
+        first_name: profileData.first_name,
+        last_name: profileData.last_name,
+        status: profileData.status,
+        roles: profileData.roles || [],
+        photoUrl: photoUrlWithTimestamp,
+        photo_url: photoUrlWithTimestamp,
+      };
+      
+      setUser(updated); // Keep full user object in state memory
+      updateProfilePictureCache(profileData, photoUrlWithTimestamp);
+
+      // Update form data with new photo URL (with cache busting)
+      const photoUrlWithVersion = `${publicUrl}?v=${Date.now()}`;
+      setFormData(prev => ({
+        ...prev,
+        photo_url: photoUrlWithVersion,
+      }));
+
+      setUploadProgress(100);
+      setSuccess('Profile photo updated successfully');
+      setPhotoPreview(null);
+      setPendingFile(null);
+
+      // Reload profile to get updated data
+      const updatedProfile = await apiService.getProfile();
+      setFormData(updatedProfile);
+      setOriginalData(updatedProfile);
+    } catch (err: any) {
+      // Check if error is due to abort
+      if (err.name === 'AbortError' || abortController.signal.aborted) {
+        setError('Upload cancelled');
+        setPhotoPreview(null);
+        setPendingFile(null);
+        return;
+      }
+
+      console.error('Photo upload error:', err);
+      setError(err.message || 'Failed to upload photo. Please try again.');
+      // Keep preview and pending file for retry
+    } finally {
+      setUploadingPhoto(false);
+      setUploadProgress(0);
+      setUploadStage('idle');
+      setUploadAbortController(null);
+      if (fileInputRef.current && !pendingFile) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  // Handle file input change
+  const handleEdit = () => {
+    const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+    fileInput?.click();
+  };
+
+  const handleDelete = async () => {
+    try {
+      const res = await api.delete("/api/profile/photo");
+      const profileData = res.data.user;
+      
+      const updated = {
+        id: profileData._id || profileData.id || user?.id,
+        email: profileData.email,
+        first_name: profileData.first_name,
+        last_name: profileData.last_name,
+        status: profileData.status,
+        roles: profileData.roles || [],
+        photoUrl: profileData.photoUrl || profileData.photo_url || null,
+        photo_url: profileData.photo_url || profileData.photoUrl || null,
+      };
+      
+      setUser(updated); // Keep full user object in state memory
+      updateProfilePictureCache(profileData);
+      
+      // Reload profile data
+      const data = await apiService.getProfile();
+      setFormData(data);
+      setOriginalData(data);
+      
+      setMenuOpen(false);
+    } catch (error: any) {
+      console.error('Failed to delete profile photo:', error);
+      alert(error.response?.data?.message || 'Failed to delete profile photo');
+    }
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (isUploading) return;
+    
+    setIsUploading(true);
+
+    try {
+      const file = event.target.files?.[0];
+      if (!file) {
+        setIsUploading(false);
+        return;
+      }
+
+      // 1. Ask backend for a presigned URL
+      const presignRes = await api.post("/api/upload/presigned-url", {
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        folder: "profiles",
+        purpose: "profile",
+      });
+
+      const { presignedUrl, key } = presignRes.data;
+
+      // 2. Upload to S3
+      await fetch(presignedUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+
+      // 3. Save to backend and get updated user
+      const updateRes = await api.put("/api/profile/photo", { key });
+
+      // 4. Update AuthContext + localStorage
+      const profileData = updateRes.data.user;
+      const updated = {
+        id: profileData._id || profileData.id || user?.id,
+        email: profileData.email,
+        first_name: profileData.first_name,
+        last_name: profileData.last_name,
+        status: profileData.status,
+        roles: profileData.roles || [],
+        photoUrl: profileData.photoUrl || profileData.photo_url || null,
+        photo_url: profileData.photo_url || profileData.photoUrl || null,
+      };
+      
+      setUser(updated); // Keep full user object in state memory
+      updateProfilePictureCache(profileData);
+
+      // Update form data
+      const data = await apiService.getProfile();
+      setFormData(data);
+      setOriginalData(data);
+
+      console.log("Profile image updated!");
+    } catch (err) {
+      console.error("Upload failed:", err);
+      setError("Failed to upload profile image. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -236,15 +581,24 @@ const Profile: React.FC = () => {
           {/* Notification Messages */}
           {error && (
             <div className="mb-6 rounded-md bg-red-50 p-4">
-              <div className="flex">
+              <div className="flex items-start">
                 <div className="flex-shrink-0">
                   <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <div className="ml-3">
+                <div className="ml-3 flex-1">
                   <h3 className="text-sm font-medium text-red-800">Error</h3>
                   <div className="mt-2 text-sm text-red-700">{error}</div>
+                  {pendingFile && error !== 'Upload cancelled' && (
+                    <button
+                      type="button"
+                      onClick={retryUpload}
+                      className="mt-3 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    >
+                      Retry Upload
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -276,14 +630,69 @@ const Profile: React.FC = () => {
               <div className="px-4 sm:px-6 lg:px-8 pb-6 pt-0">
             {/* Profile Photo and Info */}
             <div className="-mt-12 flex items-start gap-5">
-              <div className="flex-shrink-0">
-                <div className="h-24 w-24 rounded-full ring-4 ring-white bg-gray-200 flex items-center justify-center overflow-hidden">
-                  {formData.photo_url ? (
-                    <img src={formData.photo_url} alt="Profile" className="h-24 w-24 rounded-full object-cover" />
-                  ) : (
-                    <span className="text-4xl text-gray-400">{formData.first_name?.[0]?.toUpperCase()}</span>
-                  )}
+              <div className="flex-shrink-0 relative group">
+                <div className="h-24 w-24 rounded-full ring-4 ring-white overflow-hidden">
+                  <Avatar
+                    photoUrl={photoPreview || formData.photo_url || user?.photoUrl || user?.photo_url}
+                    firstName={formData.first_name || user?.first_name}
+                    lastName={formData.last_name || user?.last_name}
+                    email={formData.email || user?.email}
+                    size={96}
+                    className="w-full h-full cursor-pointer"
+                    onClick={() => setMenuOpen(true)}
+                  />
                 </div>
+                {uploadingPhoto && (
+                  <div className="absolute inset-0 rounded-full bg-black bg-opacity-70 flex flex-col items-center justify-center gap-2">
+                    <Loader2 className="animate-spin text-white" size={20} />
+                    <span className="text-white text-xs font-medium">
+                      {uploadStage === 'resizing' && 'Resizing...'}
+                      {uploadStage === 'uploading' && 'Uploading...'}
+                      {uploadStage === 'updating' && 'Updating...'}
+                    </span>
+                    <div className="w-16 h-1 bg-gray-600 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-blue-500 transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={cancelUpload}
+                      className="text-white text-xs hover:text-red-300 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+                {/* Hidden file input */}
+                <input
+                  id="fileInput"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileChange}
+                  disabled={isUploading || uploadingPhoto}
+                />
+
+                {/* Profile Image Menu */}
+                <ProfileImageMenu
+                  isOpen={menuOpen}
+                  onClose={() => setMenuOpen(false)}
+                  onView={() => {
+                    setMenuOpen(false);
+                    setViewerOpen(true);
+                  }}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+
+                {/* Image Viewer Modal */}
+                <ImageViewerModal
+                  isOpen={viewerOpen}
+                  imageUrl={user?.photoUrl || user?.photo_url || null}
+                  onClose={() => setViewerOpen(false)}
+                />
               </div>
               
               {/* Name, Email and Social Links */}
