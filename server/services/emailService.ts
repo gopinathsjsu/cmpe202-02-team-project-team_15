@@ -430,6 +430,173 @@ const sendAccountSuspensionEmail = async (
   }
 };
 
-module.exports = { sendVerificationEmail, sendPasswordResetEmail, sendAccountSuspensionEmail };
-export { sendVerificationEmail, sendPasswordResetEmail, sendAccountSuspensionEmail };
+/**
+ * Send account unsuspension notification email
+ * @param email - User's email address
+ * @param firstName - User's first name
+ * @param lastName - User's last name
+ * @returns Promise<boolean> - True if email sent successfully
+ */
+const sendAccountUnsuspensionEmail = async (
+  email: string,
+  firstName: string,
+  lastName: string
+): Promise<boolean> => {
+  try {
+    const transporter = createTransporter();
+    
+    // Verify transporter configuration
+    await transporter.verify();
+    console.log('Email transporter verified successfully');
+
+    const mailOptions = {
+      from: `"Campus Marketplace" <${process.env.EMAIL_USER || 'rootuser.cmp@gmail.com'}>`,
+      to: email,
+      subject: 'Account Reactivated - Campus Marketplace',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #10b981; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+            .content { background-color: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+            .success-box { background-color: #d1fae5; border: 2px solid #10b981; border-radius: 8px; padding: 20px; margin: 20px 0; }
+            .info-box { background-color: #e0e7ff; border-left: 4px solid #3b82f6; padding: 16px; margin: 20px 0; }
+            .action-button { display: inline-block; background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0; }
+            .footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 12px; }
+            .guidelines-box { background-color: white; padding: 16px; border-radius: 6px; margin: 20px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>✅ Account Reactivated</h1>
+            </div>
+            <div class="content">
+              <h2>Hello ${firstName} ${lastName},</h2>
+              
+              <div class="success-box">
+                <p style="margin: 0; font-size: 16px; font-weight: bold; color: #065f46;">
+                  Great news! Your Campus Marketplace account has been reactivated.
+                </p>
+              </div>
+
+              <p style="margin: 20px 0; color: #374151; font-size: 15px;">
+                We're happy to inform you that your account suspension has been lifted. 
+                You now have full access to all Campus Marketplace features.
+              </p>
+
+              <div class="info-box">
+                <p style="margin: 0 0 12px 0; font-weight: bold; color: #1e40af;">What's Been Restored:</p>
+                <ul style="margin: 0; padding-left: 20px; color: #374151;">
+                  <li>Full account access - you can log in again</li>
+                  <li>All your listings are visible in the marketplace</li>
+                  <li>Ability to create new listings</li>
+                  <li>Ability to browse and purchase items</li>
+                  <li>Access to messaging and chat features</li>
+                </ul>
+              </div>
+
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${process.env.FRONTEND_ORIGIN || 'http://localhost:5173'}" class="action-button">
+                  Login to Your Account
+                </a>
+              </div>
+
+              <div class="guidelines-box">
+                <p style="margin: 0 0 12px 0; font-weight: bold; color: #1f2937;">📋 Please Remember:</p>
+                <p style="margin: 0; color: #6b7280; font-size: 14px;">
+                  To maintain a positive marketplace experience for everyone, please continue to follow our 
+                  <strong>Community Guidelines</strong> and <strong>Terms of Service</strong>. 
+                  This helps keep Campus Marketplace safe and enjoyable for all users.
+                </p>
+              </div>
+
+              <p style="margin-top: 30px; font-size: 14px; color: #6b7280;">
+                If you have any questions or need assistance, feel free to reach out to our support team.
+              </p>
+
+              <p style="margin: 12px 0 0 0; color: #3b82f6; font-weight: bold;">
+                Support Email: rootuser.cmp@gmail.com
+              </p>
+            </div>
+            <div class="footer">
+              <p>© ${new Date().getFullYear()} Campus Marketplace. All rights reserved.</p>
+              <p>This is an automated message. Please do not reply directly to this email.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+      text: `
+        Account Reactivated - Campus Marketplace
+        
+        Hello ${firstName} ${lastName},
+        
+        Great news! Your Campus Marketplace account has been reactivated.
+        
+        We're happy to inform you that your account suspension has been lifted.
+        You now have full access to all Campus Marketplace features.
+        
+        What's Been Restored:
+        - Full account access - you can log in again
+        - All your listings are visible in the marketplace
+        - Ability to create new listings
+        - Ability to browse and purchase items
+        - Access to messaging and chat features
+        
+        Login to Your Account: ${process.env.FRONTEND_ORIGIN || 'http://localhost:5173'}
+        
+        Please Remember:
+        To maintain a positive marketplace experience for everyone, please continue to follow our
+        Community Guidelines and Terms of Service. This helps keep Campus Marketplace safe and 
+        enjoyable for all users.
+        
+        If you have any questions or need assistance, feel free to reach out to our support team.
+        Support Email: rootuser.cmp@gmail.com
+        
+        © ${new Date().getFullYear()} Campus Marketplace. All rights reserved.
+        This is an automated message. Please do not reply directly to this email.
+      `
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Account unsuspension email sent successfully:', {
+      messageId: info.messageId,
+      to: email,
+      accepted: info.accepted,
+      rejected: info.rejected
+    });
+    return true;
+  } catch (error: any) {
+    console.error('Error sending account unsuspension email:', {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response,
+      responseCode: error.responseCode,
+      email: email
+    });
+    
+    // Log specific error details
+    if (error.code === 'EAUTH') {
+      console.error('Authentication failed. Please check:');
+      console.error('1. EMAIL_USER and EMAIL_PASS are set correctly in .env');
+      console.error('2. For Gmail, use an App Password (not your regular password)');
+      console.error('3. Enable "Less secure app access" or use OAuth2');
+    } else if (error.code === 'ECONNECTION') {
+      console.error('Connection failed. Please check:');
+      console.error('1. EMAIL_HOST and EMAIL_PORT are correct');
+      console.error('2. Your network connection');
+      console.error('3. Firewall settings');
+    }
+    
+    return false;
+  }
+};
+
+module.exports = { sendVerificationEmail, sendPasswordResetEmail, sendAccountSuspensionEmail, sendAccountUnsuspensionEmail };
+export { sendVerificationEmail, sendPasswordResetEmail, sendAccountSuspensionEmail, sendAccountUnsuspensionEmail };
 
