@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { User } from '../models/User';
+import { UserRole } from '../models/UserRole';
 import { headS3Object, constructPublicUrl, getS3Client, getBucketName } from '../utils/s3';
 import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 
@@ -9,7 +10,16 @@ export const getProfile = async (req: Request, res: Response) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.json(user);
+    
+    // Fetch user roles from UserRole collection
+    const userRoles = await UserRole.find({ user_id: user._id }).populate('role_id');
+    const roles = userRoles.map((ur: any) => ur.role_id?.name).filter(Boolean);
+    
+    // Return user data with roles
+    res.json({
+      ...user.toObject(),
+      roles
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
