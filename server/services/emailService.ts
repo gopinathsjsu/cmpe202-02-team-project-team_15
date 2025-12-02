@@ -430,6 +430,82 @@ const sendAccountSuspensionEmail = async (
   }
 };
 
-module.exports = { sendVerificationEmail, sendPasswordResetEmail, sendAccountSuspensionEmail };
-export { sendVerificationEmail, sendPasswordResetEmail, sendAccountSuspensionEmail };
+const sendAccountUnsuspensionEmail = async (
+  email: string,
+  firstName: string,
+  lastName: string
+): Promise<boolean> => {
+  try {
+    const transporter = createTransporter();
+    await transporter.verify();
+
+    const mailOptions = {
+      from: `"Campus Marketplace" <${process.env.EMAIL_USER || 'rootuser.cmp@gmail.com'}>`,
+      to: email,
+      subject: 'Account Reactivated - Campus Marketplace',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #10b981; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+            .content { background-color: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+            .success-box { background-color: #d1fae5; border: 2px solid #10b981; border-radius: 8px; padding: 20px; margin: 20px 0; }
+            .info-box { background-color: #e0e7ff; border-left: 4px solid #3b82f6; padding: 16px; margin: 20px 0; }
+            .footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>✅ Account Reactivated</h1>
+            </div>
+            <div class="content">
+              <h2>Hello ${firstName} ${lastName},</h2>
+              <div class="success-box">
+                <p style="margin: 0; font-size: 16px; font-weight: bold; color: #065f46;">
+                  Great news! Your Campus Marketplace account has been reactivated.
+                </p>
+              </div>
+              <p style="margin: 20px 0; color: #374151; font-size: 15px;">
+                We're happy to inform you that your account suspension has been lifted. 
+                You now have full access to all Campus Marketplace features.
+              </p>
+              <div class="info-box">
+                <p style="margin: 0 0 12px 0; font-weight: bold; color: #1e40af;">What's Been Restored:</p>
+                <ul style="margin: 0; padding-left: 20px; color: #374151;">
+                  <li>Full account access - you can log in again</li>
+                  <li>All your listings are visible in the marketplace</li>
+                  <li>Ability to create new listings</li>
+                  <li>Ability to browse and purchase items</li>
+                  <li>Access to messaging and chat features</li>
+                </ul>
+              </div>
+              <p style="margin-top: 30px; font-size: 14px; color: #6b7280;">
+                If you have any questions, contact our support team at rootuser.cmp@gmail.com
+              </p>
+            </div>
+            <div class="footer">
+              <p>© ${new Date().getFullYear()} Campus Marketplace. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+      text: `Account Reactivated - Campus Marketplace\n\nHello ${firstName} ${lastName},\n\nGreat news! Your Campus Marketplace account has been reactivated.\n\nYou now have full access to all features.\n\nSupport: rootuser.cmp@gmail.com`
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Unsuspension email sent:', info.messageId);
+    return true;
+  } catch (error: any) {
+    console.error('Error sending unsuspension email:', error.message);
+    return false;
+  }
+};
+
+module.exports = { sendVerificationEmail, sendPasswordResetEmail, sendAccountSuspensionEmail, sendAccountUnsuspensionEmail };
+export { sendVerificationEmail, sendPasswordResetEmail, sendAccountSuspensionEmail, sendAccountUnsuspensionEmail };
 
