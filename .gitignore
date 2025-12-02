@@ -111,3 +111,10 @@ frontend/public/css/output.css
 # Markdown files
 *.md
 **/*.md
+
+
+#files
+
+backend-api-key.pem
+ec2-54-219-131-39.us-west-1.compute.amazonaws.com
+user-data.sh
