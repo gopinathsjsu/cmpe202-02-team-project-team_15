@@ -3,28 +3,29 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { MessageSquare, Heart, BarChart3, FolderTree, UserX } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
+import { Avatar } from './Avatar';
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   
   // Close profile dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (isProfileOpen) {
+      if (isUserMenuOpen) {
         const target = event.target as HTMLElement;
         if (!target.closest('.profile-dropdown')) {
-          setIsProfileOpen(false);
+          setIsUserMenuOpen(false);
         }
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isProfileOpen]);
+  }, [isUserMenuOpen]);
 
   useEffect(() => {
     let mounted = true;
@@ -165,47 +166,52 @@ const Navbar: React.FC = () => {
 
             {/* User Avatar with Dropdown */}
             <div className="relative profile-dropdown">
-              <button 
-                onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors"
+              <button
+                type="button"
+                onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                className="flex items-center focus:outline-none"
               >
-                <span className="text-gray-700 text-sm font-medium">
-                  {user?.first_name?.[0]?.toUpperCase() || 'A'}
-                </span>
+                <Avatar
+                  photoUrl={user?.photoUrl || user?.photo_url}
+                  firstName={user?.first_name}
+                  lastName={user?.last_name}
+                  email={user?.email}
+                  size={32}
+                />
               </button>
 
               {/* Profile Dropdown Menu */}
-              {isProfileOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-20 border border-gray-200">
-                  <div className="px-4 py-2 border-b border-gray-200">
-                    <div className="text-sm font-medium text-gray-900">{user?.first_name} {user?.last_name}</div>
-                    <div className="text-xs text-gray-500">{user?.email}</div>
+              {isUserMenuOpen && (
+                <div className="absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white z-20">
+                  <div className="px-4 py-3 border-b">
+                    <p className="text-sm font-medium">{user?.first_name} {user?.last_name}</p>
+                    <p className="text-xs text-gray-500">{user?.email}</p>
                   </div>
                   <button
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
                     onClick={() => {
-                      navigate('/profile');
-                      setIsProfileOpen(false);
+                      navigate("/profile");
+                      setIsUserMenuOpen(false);
                     }}
-                    className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
                   >
                     Your Profile
                   </button>
                   <button
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
                     onClick={() => {
-                      navigate('/my-listings');
-                      setIsProfileOpen(false);
+                      navigate("/my-listings");
+                      setIsUserMenuOpen(false);
                     }}
-                    className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
                   >
                     My Listings
                   </button>
                   <button
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
                     onClick={() => {
                       navigate('/');
                       logout();
-                      setIsProfileOpen(false);
+                      setIsUserMenuOpen(false);
                     }}
-                    className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-200"
                   >
                     Sign Out
                   </button>

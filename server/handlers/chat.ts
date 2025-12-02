@@ -53,12 +53,12 @@ export const listConversations = async (req: any, res: Response) => {
     })
     .populate({
       path: "buyerId",
-      select: "first_name last_name email",
+      select: "first_name last_name email photoUrl photo_url",
       model: "User",
     })
     .populate({
       path: "sellerId",
-      select: "first_name last_name email",
+      select: "first_name last_name email photoUrl photo_url",
       model: "User",
     })
     .sort({ lastMessageAt: -1 })
@@ -147,14 +147,41 @@ export const getMessages = async (req: any, res: Response) => {
   const q: any = { conversationId };
   if (cursor) q.createdAt = { $lt: new Date(cursor) };
 
+  // Fetch messages with explicit field selection including senderProfileImage
   const msgs = await Message.find(q)
+    .select("body senderId senderProfileImage readBy createdAt conversationId")
+    .populate({
+      path: "senderId",
+      select: "first_name last_name email photoUrl photo_url",
+      model: "User",
+    })
     .sort({ createdAt: -1 })
     .limit(Number(limit));
+  
   await Message.updateMany(
     { _id: { $in: msgs.map((m) => m._id) }, readBy: { $ne: userId } },
     { $addToSet: { readBy: userId } }
   );
-  return res.json({ messages: msgs.reverse() });
+  
+  // Ensure senderProfileImage is always included in response
+  // Use cached value if available, otherwise fallback to populated sender data
+  const messagesWithProfile = msgs.map((msg: any) => {
+    const senderProfileImage = msg.senderProfileImage || 
+                              msg.senderId?.photoUrl || 
+                              msg.senderId?.photo_url || 
+                              null;
+    return {
+      _id: msg._id,
+      conversationId: msg.conversationId,
+      senderId: msg.senderId,
+      body: msg.body,
+      senderProfileImage, // Always include senderProfileImage in response
+      readBy: msg.readBy,
+      createdAt: msg.createdAt,
+    };
+  });
+  
+  return res.json({ messages: messagesWithProfile.reverse() });
 };
 
 export const postMessage = async (req: any, res: Response) => {
@@ -171,11 +198,17 @@ export const postMessage = async (req: any, res: Response) => {
   if (![String(conv.buyerId), String(conv.sellerId)].includes(userId))
     return res.status(403).json({ message: "Forbidden" });
 
+  // Get sender's profile image before creating message
+  // This ensures every message carries the sender's image
+  const sender = await User.findById(userId).select('photoUrl photo_url first_name last_name');
+  const senderProfileImage = sender?.photoUrl || sender?.photo_url || null;
+
   const msg = await Message.create({
     conversationId,
     senderId: userId,
     body,
     readBy: [userId],
+    senderProfileImage, // Store sender's profile image (cached for performance)
   });
   conv.lastMessageAt = new Date();
   await conv.save();

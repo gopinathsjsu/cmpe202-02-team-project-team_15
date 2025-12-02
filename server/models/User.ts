@@ -12,6 +12,8 @@ export interface IUser extends Document {
   updated_at: Date;
   full_name: string;
   photo_url?: string;
+  photoUrl?: string | null;
+  photoThumbUrl?: string | null;
   bio?: string;
   contact_info?: {
     phone?: string;
@@ -57,6 +59,14 @@ const userSchema = new Schema<IUser>({
     default: null
   },
   photo_url: {
+    type: String,
+    default: null
+  },
+  photoUrl: {
+    type: String,
+    default: null
+  },
+  photoThumbUrl: {
     type: String,
     default: null
   },

@@ -8,6 +8,10 @@ A modern, optimized campus marketplace application built with React TypeScript f
 - Node.js (v16 or higher)
 - MongoDB
 - npm or yarn
+- AWS Account (for S3 image uploads)
+  - S3 bucket configured
+  - AWS credentials (Access Key ID & Secret Access Key)
+  - (Optional) CloudFront distribution for CDN
 
 ## Quick Start
 

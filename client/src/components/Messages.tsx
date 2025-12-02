@@ -5,6 +5,7 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import { ListingPreview } from "./ListingPreview";
 import api from "../services/api";
+import { Avatar } from "./Avatar";
 
 // Types for chat functionality
 interface Conversation {
@@ -65,8 +66,16 @@ interface Conversation {
 interface Message {
   _id: string;
   conversationId: string;
-  senderId: string;
+  senderId: string | {
+    _id: string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    photoUrl?: string;
+    photo_url?: string;
+  };
   body: string;
+  senderProfileImage?: string | null;
   createdAt: string;
   sender?: {
     _id: string;
@@ -495,15 +504,30 @@ export const Messages: React.FC<MessagesProps> = ({
                               }`}
                             >
                               <div className="flex items-start gap-3">
-                                <div
-                                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold flex-shrink-0 ${
-                                    hasUnread
-                                      ? "bg-blue-100 text-blue-700"
-                                      : "bg-gray-200 text-gray-600"
-                                  }`}
-                                >
-                                  {otherPartyName.charAt(0).toUpperCase()}
-                                </div>
+                                {(() => {
+                                  // Determine the other party's data
+                                  const userId = String(user?.id);
+                                  const buyerId = typeof conv.buyerId === "object" ? String(conv.buyerId._id) : String(conv.buyerId);
+                                  const sellerId = typeof conv.sellerId === "object" ? String(conv.sellerId._id) : String(conv.sellerId);
+                                  
+                                  let otherParty: any = null;
+                                  if (buyerId === userId) {
+                                    otherParty = typeof conv.sellerId === "object" ? conv.sellerId : conv.seller;
+                                  } else if (sellerId === userId) {
+                                    otherParty = typeof conv.buyerId === "object" ? conv.buyerId : conv.buyer;
+                                  }
+                                  
+                                  return (
+                                    <Avatar
+                                      photoUrl={otherParty?.photoUrl || otherParty?.photo_url}
+                                      firstName={otherParty?.first_name}
+                                      lastName={otherParty?.last_name}
+                                      email={otherParty?.email}
+                                      size={40}
+                                      className={`flex-shrink-0 ${hasUnread ? "ring-2 ring-blue-500" : ""}`}
+                                    />
+                                  );
+                                })()}
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-baseline justify-between mb-1">
                                     <h4
@@ -651,11 +675,40 @@ export const Messages: React.FC<MessagesProps> = ({
               <>
                 <div className="p-5 border-b border-gray-200">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 font-semibold">
-                      {getOtherPartyName(selectedConversation)
-                        .charAt(0)
-                        .toUpperCase()}
-                    </div>
+                    {(() => {
+                      // Get the other party's data for the avatar
+                      const userId = String(user?.id);
+                      const buyerId = typeof selectedConversation.buyerId === "object" 
+                        ? String(selectedConversation.buyerId._id) 
+                        : String(selectedConversation.buyerId);
+                      const sellerId = typeof selectedConversation.sellerId === "object" 
+                        ? String(selectedConversation.sellerId._id) 
+                        : String(selectedConversation.sellerId);
+                      
+                      let otherParty: any = null;
+                      if (buyerId === userId) {
+                        // Current user is buyer, show seller
+                        otherParty = typeof selectedConversation.sellerId === "object" 
+                          ? selectedConversation.sellerId 
+                          : selectedConversation.seller;
+                      } else if (sellerId === userId) {
+                        // Current user is seller, show buyer
+                        otherParty = typeof selectedConversation.buyerId === "object" 
+                          ? selectedConversation.buyerId 
+                          : selectedConversation.buyer;
+                      }
+                      
+                      return (
+                        <Avatar
+                          photoUrl={otherParty?.photoUrl || otherParty?.photo_url}
+                          firstName={otherParty?.first_name}
+                          lastName={otherParty?.last_name}
+                          email={otherParty?.email}
+                          size={40}
+                          className="flex-shrink-0"
+                        />
+                      );
+                    })()}
                     <div>
                       <h3 className="font-semibold text-gray-900">
                         {getOtherPartyName(selectedConversation)}
@@ -707,7 +760,27 @@ export const Messages: React.FC<MessagesProps> = ({
                     </div>
                   ) : (
                     messages.map((message) => {
-                      const isCurrentUser = message.senderId === user?.id;
+                      // Handle senderId as string or populated object
+                      const senderIdStr = typeof message.senderId === "string" 
+                        ? message.senderId 
+                        : message.senderId._id;
+                      const isCurrentUser = senderIdStr === user?.id;
+                      
+                      // Get sender profile image
+                      let senderProfileImage = message.senderProfileImage || null;
+                      
+                      if (typeof message.senderId === "object") {
+                        // Use senderProfileImage from message, or fallback to senderId photoUrl
+                        if (!senderProfileImage) {
+                          senderProfileImage = message.senderId.photoUrl || message.senderId.photo_url || null;
+                        }
+                      } else {
+                        // If senderId is just a string, for current user, use their photoUrl
+                        if (isCurrentUser) {
+                          senderProfileImage = user?.photoUrl || user?.photo_url || null;
+                        }
+                      }
+                      
                       // Check if this is a warning message (starts with warning emoji or contains "WARNING")
                       const isWarningMessage = message.body.includes("⚠️") || message.body.toUpperCase().includes("WARNING");
                       
@@ -735,13 +808,25 @@ export const Messages: React.FC<MessagesProps> = ({
                       return (
                         <div
                           key={message._id}
-                          className={`flex ${
+                          className={`flex items-end gap-2 ${
                             isCurrentUser ? "justify-end" : "justify-start"
                           }`}
                         >
-                          <div
-                            className={`max-w-[70%] ${isCurrentUser ? "" : ""}`}
-                          >
+                          {/* Avatar - only show for other users (left side) */}
+                          {!isCurrentUser && (
+                            <div className="flex-shrink-0">
+                              <Avatar
+                                photoUrl={senderProfileImage}
+                                firstName={typeof message.senderId === 'object' ? message.senderId.first_name : undefined}
+                                lastName={typeof message.senderId === 'object' ? message.senderId.last_name : undefined}
+                                email={typeof message.senderId === 'object' ? message.senderId.email : undefined}
+                                size={40}
+                                className="flex-shrink-0"
+                              />
+                            </div>
+                          )}
+                          
+                          <div className={`max-w-[70%] ${isCurrentUser ? "" : ""}`}>
                             <div
                               className={`px-4 py-3 rounded-2xl ${
                                 isCurrentUser
@@ -767,6 +852,20 @@ export const Messages: React.FC<MessagesProps> = ({
                               {formatTime(message.createdAt)}
                             </p>
                           </div>
+                          
+                          {/* Avatar - only show for current user (right side) */}
+                          {isCurrentUser && (
+                            <div className="flex-shrink-0">
+                              <Avatar
+                                photoUrl={senderProfileImage}
+                                firstName={user?.first_name}
+                                lastName={user?.last_name}
+                                email={user?.email}
+                                size={40}
+                                className="flex-shrink-0"
+                              />
+                            </div>
+                          )}
                         </div>
                       );
                     })

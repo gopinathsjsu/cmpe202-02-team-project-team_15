@@ -4,6 +4,7 @@ export interface IMessage extends Document {
   senderId: Types.ObjectId;
   body: string;
   readBy: Types.ObjectId[];
+  senderProfileImage?: string | null; // Cached sender profile image URL
   createdAt: Date;
 }
 
@@ -18,6 +19,11 @@ const MessageSchema = new Schema<IMessage>(
     senderId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     body: { type: String, required: true, trim: true, maxlength: 4000 },
     readBy: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    senderProfileImage: { 
+      type: String, 
+      default: null,
+      trim: true 
+    }, // Cached sender profile image URL for performance
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );
