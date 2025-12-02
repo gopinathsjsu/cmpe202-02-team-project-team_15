@@ -16,6 +16,7 @@ export interface IListing extends Document {
   description: string;
   price: number;
   status: 'ACTIVE' | 'SOLD';
+  isHidden: boolean;
   photos: IPhoto[];
   createdAt: Date;
   updatedAt: Date;
@@ -70,6 +71,10 @@ const listingSchema = new Schema<IListing>({
     type: String, 
     enum: ['ACTIVE', 'SOLD'], 
     default: 'ACTIVE' 
+  },
+  isHidden: {
+    type: Boolean,
+    default: false
   },
   photos: [photoSchema]
 }, { 

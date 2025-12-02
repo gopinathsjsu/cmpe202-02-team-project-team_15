@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const Auth: React.FC = () => {
@@ -64,8 +64,9 @@ const Auth: React.FC = () => {
       } else {
         setError('Invalid credentials');
       }
-    } catch (err) {
-      setError('Login failed. Please try again.');
+    } catch (err: any) {
+      // Display the specific error message from the backend
+      setError(err.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -170,9 +171,17 @@ const Auth: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="loginPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="loginPassword" className="block text-sm font-medium text-gray-700">
+                  Password
+                </label>
+                <Link 
+                  to="/forgot-password" 
+                  className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
               <input
                 type="password"
                 id="loginPassword"

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Send, AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import Navbar from "./Navbar";
+import Footer from "./Footer";
 import { ListingPreview } from "./ListingPreview";
 import api from "../services/api";
 import { Avatar } from "./Avatar";
@@ -457,16 +458,19 @@ export const Messages: React.FC<MessagesProps> = ({
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <h2 className="text-3xl font-semibold text-gray-900 mb-8">Messages</h2>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
-            {error}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mt-8">
+          <div className="mb-6">
+            <h1 className="text-3xl font-semibold text-gray-900">Messages</h1>
           </div>
-        )}
 
-        <div className="grid grid-cols-12 gap-6 h-[calc(100vh-240px)]">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+              {error}
+            </div>
+          )}
+
+          <div className="grid grid-cols-12 gap-6 h-[calc(100vh-240px)]">
           <div className="col-span-4 bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col">
             <div className="p-5 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">
@@ -895,7 +899,9 @@ export const Messages: React.FC<MessagesProps> = ({
             )}
           </div>
         </div>
+        </div>
       </div>
+      <Footer />
     </div>
   );
 };

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import Pagination from '../components/Pagination';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import { apiService } from '../services/api';
 
 const REPORT_CATEGORIES = [
@@ -216,9 +217,17 @@ const AdminReportsPage: React.FC = () => {
       {/* Header with Navigation */}
       <Navbar />
 
-      <div className="max-w-7xl mx-auto p-4 lg:p-5">
-        {/* Mobile Filter Toggle Button */}
-        <div className="lg:hidden mb-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-semibold text-gray-900">Report Management</h1>
+              <p className="text-gray-600 mt-1">Review and manage user reports</p>
+            </div>
+          </div>
+
+          {/* Mobile Filter Toggle Button */}
+          <div className="lg:hidden mb-4">
           <button
             onClick={toggleFilterMenu}
             className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm flex items-center justify-between hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -233,9 +242,9 @@ const AdminReportsPage: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
-        </div>
+          </div>
 
-        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+          <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
           {/* Filter Menu Sidebar */}
           <div className={`${isFilterMenuOpen ? 'block lg:hidden' : 'hidden lg:block'} w-full lg:w-72 flex-shrink-0 bg-white rounded-xl p-6 h-fit shadow-lg`}>
             {/* Mobile Header */}
@@ -415,14 +424,21 @@ const AdminReportsPage: React.FC = () => {
                 {reports.map((report: any) => (
                   <div
                     key={report._id}
-                    className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.01] hover:shadow-lg"
+                    className={`bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.01] hover:shadow-lg ${
+                      report.listingId?.isHidden ? 'opacity-50' : ''
+                    }`}
                     onClick={() => navigate(`/listing/${report.listingId?._id}`)}
                   >
                     <div className="p-6">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-1 flex items-center gap-2">
                             {report.listingId?.title || 'Listing Deleted'}
+                            {report.listingId?.isHidden && (
+                              <span className="px-2 py-0.5 bg-gray-200 text-gray-700 text-xs font-medium rounded">
+                                HIDDEN
+                              </span>
+                            )}
                           </h3>
                           {report.listingId?.listingId && (
                             <p className="text-xs text-gray-500 font-mono">
@@ -485,8 +501,10 @@ const AdminReportsPage: React.FC = () => {
               onPageChange={handlePageChange}
             />
           </main>
+          </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

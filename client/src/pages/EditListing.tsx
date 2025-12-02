@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ImageUpload from '../components/ImageUpload';
+import Footer from '../components/Footer';
 import { apiService, ICategory, IListing } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 
@@ -246,6 +247,7 @@ const EditListing = () => {
           </form>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

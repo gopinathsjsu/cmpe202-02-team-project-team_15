@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IAuditLog extends Document {
   user_id: mongoose.Types.ObjectId | null;
-  action: 'SIGN_UP' | 'VERIFY_EMAIL' | 'LOGIN' | 'LOGOUT' | 'REFRESH' | 'ENABLE_MFA' | 'DISABLE_MFA' | 'RESET_PASSWORD' | 'CHANGE_PASSWORD' | 'ASSIGN_ROLE' | 'REVOKE_ROLE' | 'SUSPEND_USER' | 'REACTIVATE_USER';
+  action: 'SIGN_UP' | 'VERIFY_EMAIL' | 'LOGIN' | 'LOGOUT' | 'REFRESH' | 'ENABLE_MFA' | 'DISABLE_MFA' | 'RESET_PASSWORD' | 'CHANGE_PASSWORD' | 'ASSIGN_ROLE' | 'REVOKE_ROLE' | 'SUSPEND_USER' | 'REACTIVATE_USER' | 'DELETE_USER';
   metadata: any;
   created_at: Date;
 }
@@ -29,7 +29,8 @@ const auditLogSchema = new Schema<IAuditLog>({
       'ASSIGN_ROLE',
       'REVOKE_ROLE',
       'SUSPEND_USER',
-      'REACTIVATE_USER'
+      'REACTIVATE_USER',
+      'DELETE_USER'
     ]
   },
   metadata: {
