@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Send, AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
+import { Send, AlertTriangle, ChevronDown, ChevronRight, ArrowLeft } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
@@ -476,6 +476,20 @@ export const Messages: React.FC<MessagesProps> = ({
     selectedListingInfo &&
     !isAdminConversation(selectedConversation);
 
+  // State to track if we're viewing a conversation on mobile
+  const [showMobileChat, setShowMobileChat] = useState(false);
+
+  // When a conversation is selected on mobile, show the chat view
+  const handleSelectConversation = (conv: Conversation) => {
+    setSelectedConversation(conv);
+    setShowMobileChat(true);
+  };
+
+  // Go back to conversation list on mobile
+  const handleBackToList = () => {
+    setShowMobileChat(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -485,23 +499,26 @@ export const Messages: React.FC<MessagesProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mt-8">
-          <div className="mb-6">
-            <h1 className="text-3xl font-semibold text-gray-900">Messages</h1>
+      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <div className="h-full flex flex-col">
+          {/* Header - hide on mobile when viewing chat */}
+          <div className={`mb-4 sm:mb-6 ${showMobileChat ? 'hidden sm:block' : ''}`}>
+            <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">Messages</h1>
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4 sm:mb-6">
               {error}
             </div>
           )}
 
-          <div className="grid grid-cols-12 gap-6 h-[calc(100vh-240px)]">
-          <div className="col-span-4 bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col">
+          {/* Main container - responsive layout */}
+          <div className="flex-1 flex flex-col lg:grid lg:grid-cols-12 gap-4 sm:gap-6 min-h-0 h-[calc(100vh-180px)] sm:h-[calc(100vh-240px)]">
+            {/* Conversations List - full width on mobile, hidden when chat is open */}
+            <div className={`${showMobileChat ? 'hidden' : 'flex'} lg:flex lg:col-span-4 w-full bg-white rounded-2xl border border-gray-200 overflow-hidden flex-col flex-1 lg:flex-none`}>
             <div className="p-5 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">
                 Conversations
@@ -528,8 +545,8 @@ export const Messages: React.FC<MessagesProps> = ({
                           return (
                             <button
                               key={conv._id}
-                              onClick={() => setSelectedConversation(conv)}
-                              className={`w-full p-5 border-b border-gray-100 hover:bg-gray-50 text-left transition-colors ${
+                              onClick={() => handleSelectConversation(conv)}
+                              className={`w-full p-4 sm:p-5 border-b border-gray-100 hover:bg-gray-50 text-left transition-colors ${
                                 selectedConversation?._id === conv._id ? "bg-gray-50" : ""
                               }`}
                             >
@@ -645,8 +662,8 @@ export const Messages: React.FC<MessagesProps> = ({
                               return (
                                 <button
                                   key={conv._id}
-                                  onClick={() => setSelectedConversation(conv)}
-                                  className={`w-full p-4 pl-7 border-b border-gray-100 hover:bg-yellow-50 text-left transition-colors ${
+                                  onClick={() => handleSelectConversation(conv)}
+                                  className={`w-full p-3 sm:p-4 pl-5 sm:pl-7 border-b border-gray-100 hover:bg-yellow-50 text-left transition-colors ${
                                     selectedConversation?._id === conv._id ? "bg-yellow-50" : ""
                                   }`}
                                 >
@@ -700,11 +717,20 @@ export const Messages: React.FC<MessagesProps> = ({
             </div>
           </div>
 
-          <div className="col-span-8 bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col">
+          {/* Chat Panel - full width on mobile when open, always on desktop */}
+          <div className={`${showMobileChat ? 'flex' : 'hidden'} lg:flex lg:col-span-8 w-full bg-white rounded-2xl border border-gray-200 overflow-hidden flex-col flex-1 lg:flex-none`}>
             {selectedConversation ? (
               <>
-                <div className="p-5 border-b border-gray-200">
-                  <div className="flex items-center gap-3">
+                <div className="p-3 sm:p-5 border-b border-gray-200">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    {/* Back button - only on mobile */}
+                    <button
+                      onClick={handleBackToList}
+                      className="lg:hidden p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors"
+                      aria-label="Back to conversations"
+                    >
+                      <ArrowLeft className="w-5 h-5 text-gray-600" />
+                    </button>
                     {(() => {
                       // Get the other party's data for the avatar
                       const userId = String(user?.id);
@@ -751,7 +777,7 @@ export const Messages: React.FC<MessagesProps> = ({
                       >
                         {getOtherPartyName(selectedConversation)}
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-xs sm:text-sm text-gray-600 truncate max-w-[200px] sm:max-w-none">
                         {(() => {
                           // Handle both populated listingId and separate listing field
                           let listingData;
@@ -774,7 +800,7 @@ export const Messages: React.FC<MessagesProps> = ({
                 </div>
 
                 {showListingPreview && selectedListingInfo && (
-                  <div className="px-6 pt-4">
+                  <div className="px-4 sm:px-6 pt-3 sm:pt-4">
                     <ListingPreview
                       listingId={selectedListingInfo.id}
                       listingTitle={selectedListingInfo.title}
@@ -784,7 +810,7 @@ export const Messages: React.FC<MessagesProps> = ({
                   </div>
                 )}
 
-                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 sm:space-y-4">
                   {messages.length === 0 ? (
                     <div className="flex items-center justify-center h-full">
                       <div className="text-center text-gray-500">
@@ -846,7 +872,7 @@ export const Messages: React.FC<MessagesProps> = ({
                       return (
                         <div
                           key={message._id}
-                          className={`flex items-end gap-2 ${
+                          className={`flex items-end gap-1.5 sm:gap-2 ${
                             isCurrentUser ? "justify-end" : "justify-start"
                           }`}
                         >
@@ -858,21 +884,21 @@ export const Messages: React.FC<MessagesProps> = ({
                                 firstName={typeof message.senderId === 'object' ? message.senderId.first_name : undefined}
                                 lastName={typeof message.senderId === 'object' ? message.senderId.last_name : undefined}
                                 email={typeof message.senderId === 'object' ? message.senderId.email : undefined}
-                                size={40}
+                                size={32}
                                 className="flex-shrink-0"
                               />
                             </div>
                           )}
                           
-                          <div className={`max-w-[70%] ${isCurrentUser ? "" : ""}`}>
+                          <div className={`max-w-[85%] sm:max-w-[70%] ${isCurrentUser ? "" : ""}`}>
                             <div
-                              className={`px-4 py-3 rounded-2xl ${
+                              className={`px-3 sm:px-4 py-2 sm:py-3 rounded-2xl ${
                                 isCurrentUser
                                   ? "bg-gray-100 text-gray-900"
                                   : "bg-gray-100 text-gray-900"
                               }`}
                             >
-                              <p className="text-sm leading-relaxed">
+                              <p className="text-sm leading-relaxed break-words">
                                 {message.body}
                               </p>
                               
@@ -899,7 +925,7 @@ export const Messages: React.FC<MessagesProps> = ({
                                 firstName={user?.first_name}
                                 lastName={user?.last_name}
                                 email={user?.email}
-                                size={40}
+                                size={32}
                                 className="flex-shrink-0"
                               />
                             </div>
@@ -910,20 +936,20 @@ export const Messages: React.FC<MessagesProps> = ({
                   )}
                 </div>
 
-                <div className="p-5 border-t border-gray-200">
-                  <div className="flex gap-3">
+                <div className="p-3 sm:p-5 border-t border-gray-200">
+                  <div className="flex gap-2 sm:gap-3">
                     <input
                       type="text"
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                       onKeyPress={(e) => e.key === "Enter" && sendMessage()}
                       placeholder="Type a message..."
-                      className="flex-1 px-4 py-3 bg-gray-100 border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                      className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-100 border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
                     />
                     <button
                       onClick={sendMessage}
                       disabled={!newMessage.trim()}
-                      className="bg-black text-white p-3 rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="bg-black text-white p-2.5 sm:p-3 rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Send className="w-5 h-5" />
                     </button>
@@ -931,8 +957,8 @@ export const Messages: React.FC<MessagesProps> = ({
                 </div>
               </>
             ) : (
-              <div className="flex-1 flex items-center justify-center text-gray-500">
-                <p>Select a conversation to start messaging</p>
+              <div className="flex-1 flex items-center justify-center text-gray-500 p-4">
+                <p className="text-center">Select a conversation to start messaging</p>
               </div>
             )}
           </div>
