@@ -63,6 +63,9 @@ const SearchPage: React.FC = () => {
     pageSize,
   });
 
+  // Ref to track previous URL params string to detect external navigation
+  const previousUrlParamsRef = useRef<string>("");
+
   // Update ref when values change
   useEffect(() => {
     searchParamsRef.current = {
@@ -205,6 +208,40 @@ const SearchPage: React.FC = () => {
     },
     []
   );
+
+  // Sync state with URL params when they change (e.g., when navigating to /search without params)
+  useEffect(() => {
+    const currentUrlParams = searchParams.toString();
+    const urlQuery = searchParams.get("q") || "";
+    const urlCategory = searchParams.get("category") || "";
+    const urlMinPrice = searchParams.get("minPrice");
+    const urlMaxPrice = searchParams.get("maxPrice");
+    const urlSort = searchParams.get("sort") || "createdAt_desc";
+    const urlPage = Number(searchParams.get("page")) || 1;
+    const urlPageSize = Number(searchParams.get("pageSize")) || 6;
+
+    // Check if URL params actually changed (external navigation)
+    const urlParamsChanged = currentUrlParams !== previousUrlParamsRef.current;
+    previousUrlParamsRef.current = currentUrlParams;
+
+    // Update state to match URL params
+    // This handles the case when user navigates to /search without query params
+    setSearchQuery(urlQuery);
+    setSelectedCategory(urlCategory);
+    setMinPrice(urlMinPrice ? Number(urlMinPrice) : null);
+    setMaxPrice(urlMaxPrice ? Number(urlMaxPrice) : null);
+    setSortBy(urlSort);
+    setCurrentPage(urlPage);
+    setPageSize(urlPageSize);
+
+    // Only trigger search if URL params changed (external navigation, not our own updates)
+    if (urlParamsChanged) {
+      // Use setTimeout to ensure state updates are processed first
+      setTimeout(() => {
+        performSearch(urlPage);
+      }, 0);
+    }
+  }, [searchParams, performSearch]);
 
   // Load initial listings on mount
   useEffect(() => {
