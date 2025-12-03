@@ -19,13 +19,21 @@ const Signup: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
   const [showAdmin, setShowAdmin] = useState(false);
   const [adminKey, setAdminKey] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
   
-  const { signup } = useAuth();
+  const { signup, user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  // Redirect to /search if user is already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/search', { replace: true });
+    }
+  }, [user, navigate]);
 
   // Check if coming from verification link (cross-device support)
   useEffect(() => {

@@ -26,8 +26,15 @@ const Auth: React.FC = () => {
   const [showAdmin, setShowAdmin] = useState(false);
   const [adminKey, setAdminKey] = useState('');
   
-  const { login, signup } = useAuth();
+  const { login, signup, user } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect to /search if user is already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/search', { replace: true });
+    }
+  }, [user, navigate]);
 
   // Set active tab based on current route
   useEffect(() => {
