@@ -1,15 +1,25 @@
 {
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "PublicReadGetObject",
-            "Effect": "Allow",
-            "Principal": "*",
-            "Action": "s3:GetObject",
-            "Resource": [
-                "arn:aws:s3:::campus-marketplace-team15/listings/*",
-                "arn:aws:s3:::campus-marketplace-team15/profiles/*"
-            ]
-        }
-    ]
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PublicReadForWebsite",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::272-images-site-1234/*"
+    },
+    {
+      "Sid": "AllowCampusMarketplaceUserAccess",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::909200563659:user/campus-marketplace-s3-user"
+      },
+      "Action": [
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": "arn:aws:s3:::272-images-site-1234/*"
+    }
+  ]
 }
