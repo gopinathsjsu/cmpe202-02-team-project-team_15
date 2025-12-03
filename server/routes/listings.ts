@@ -9,7 +9,8 @@ router.put("/:id", authenticateToken, updateListing);
 router.patch("/:id/sold", authenticateToken, markAsSold);
 router.get("/my-listings", authenticateToken, getMyListings);
 router.get("/user/:userId", authenticateToken, getListingsByUserId);
-router.get("/", getListings);
+// GET /api/listings - requires auth for university filtering
+router.get("/", authenticateToken, getListings);
 router.delete("/:id", authenticateToken, deleteListing);
 
 export default router;

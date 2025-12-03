@@ -8,6 +8,7 @@ export interface IUser extends Document {
   last_name: string;
   status: 'pending_verification' | 'active' | 'suspended' | 'deleted';
   email_verified_at: Date | null;
+  university: string;
   created_at: Date;
   updated_at: Date;
   full_name: string;
@@ -58,6 +59,12 @@ const userSchema = new Schema<IUser>({
     type: Date,
     default: null
   },
+  university: {
+    type: String,
+    required: true,
+    default: 'sjsu',
+    index: true
+  },
   photo_url: {
     type: String,
     default: null
@@ -103,8 +110,7 @@ const userSchema = new Schema<IUser>({
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });
 
-// Index for email
-userSchema.index({ email: 1 });
+// Note: email index is automatically created by unique: true, so no need for explicit index
 
 // Pre-save middleware to hash password
 userSchema.pre('save', async function(next) {

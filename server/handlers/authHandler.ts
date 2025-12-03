@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const { User, Session, EmailVerification, PasswordReset, AuditLog, UserRole, Role } = require('../models');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../services/emailService');
+const { extractUniversitySlug } = require('../utils/university');
 
 // Helper function to generate tokens
 const generateTokens = (userId: string) => {
@@ -589,6 +590,9 @@ class AuthHandler {
         return;
       }
 
+      // Extract university slug from email
+      const university = extractUniversitySlug(normalizedEmail);
+
       // Create user
       const user = new User({
         email: normalizedEmail,
@@ -596,7 +600,8 @@ class AuthHandler {
         first_name: finalFirstName,
         last_name: finalLastName,
         status: 'active',
-        email_verified_at: verification.used_at || new Date()
+        email_verified_at: verification.used_at || new Date(),
+        university: university
       });
       try {
         await user.save();
@@ -715,6 +720,13 @@ class AuthHandler {
           message: 'Invalid credentials'
         });
         return;
+      }
+
+      // Extract and update university if missing (for existing users)
+      if (!user.university) {
+        const university = extractUniversitySlug(user.email);
+        user.university = university;
+        await user.save();
       }
 
       // Check password
