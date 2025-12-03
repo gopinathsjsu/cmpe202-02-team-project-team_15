@@ -5,6 +5,14 @@ import Footer from '../components/Footer';
 import { apiService, ICategory } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 
+const TITLE_MIN_LENGTH = 5;
+const TITLE_MAX_LENGTH = 100;
+const DESCRIPTION_MIN_LENGTH = 20;
+const DESCRIPTION_MAX_LENGTH = 1000;
+const PRICE_MIN = 1;
+const PRICE_MAX = 10000;
+const MAX_IMAGES = 5;
+
 const CreateListing = () => {
   const navigate = useNavigate();
   const { showSuccess, showError } = useToast();
@@ -16,6 +24,7 @@ const CreateListing = () => {
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   // Load categories on component mount
   useEffect(() => {
@@ -33,11 +42,57 @@ const CreateListing = () => {
     loadCategories();
   }, []);
 
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+    const trimmedTitle = itemName.trim();
+    const trimmedDescription = description.trim();
+    const parsedPrice = Number(price);
+
+    if (
+      trimmedTitle.length < TITLE_MIN_LENGTH ||
+      trimmedTitle.length > TITLE_MAX_LENGTH
+    ) {
+      errors.title = `Item name must be between ${TITLE_MIN_LENGTH} and ${TITLE_MAX_LENGTH} characters.`;
+    }
+
+    if (
+      trimmedDescription.length < DESCRIPTION_MIN_LENGTH ||
+      trimmedDescription.length > DESCRIPTION_MAX_LENGTH
+    ) {
+      errors.description = `Description must be between ${DESCRIPTION_MIN_LENGTH} and ${DESCRIPTION_MAX_LENGTH} characters.`;
+    }
+
+    if (Number.isNaN(parsedPrice)) {
+      errors.price = 'Price must be a valid number.';
+    } else if (parsedPrice < PRICE_MIN || parsedPrice > PRICE_MAX) {
+      errors.price = `Price must be between $${PRICE_MIN} and $${PRICE_MAX}.`;
+    }
+
+    if (!category) {
+      errors.category = 'Please select a category.';
+    }
+
+    if (photos.length > MAX_IMAGES) {
+      errors.photos = `You can upload up to ${MAX_IMAGES} images.`;
+    }
+
+    return errors;
+  };
+
   const handleCreateListing = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
     try {
+      const errors = validateForm();
+      if (Object.keys(errors).length > 0) {
+        setFormErrors(errors);
+        showError('Please fix the highlighted fields.', 'The listing has validation issues.');
+        setSaving(false);
+        return;
+      }
+      setFormErrors({});
+
       // Find the selected category ID
       const selectedCategory = categories.find(cat => cat.name === category);
       if (!selectedCategory) {
@@ -45,8 +100,8 @@ const CreateListing = () => {
       }
 
       const listingData = {
-        title: itemName,
-        description: description,
+        title: itemName.trim(),
+        description: description.trim(),
         price: parseFloat(price),
         categoryId: selectedCategory._id,
         photos: photos
@@ -116,10 +171,13 @@ const CreateListing = () => {
                 Item Photos (up to 5)
               </label>
               <ImageUpload
-                maxImages={5}
+                maxImages={MAX_IMAGES}
                 onImagesChange={setPhotos}
                 existingImages={photos}
               />
+              {formErrors.photos && (
+                <p className="text-sm text-red-500 mt-2">{formErrors.photos}</p>
+              )}
             </div>
 
             {/* ---------- Item Name ---------- */}
@@ -129,12 +187,17 @@ const CreateListing = () => {
               </label>
               <input
                 type="text"
+                minLength={TITLE_MIN_LENGTH}
+                maxLength={TITLE_MAX_LENGTH}
                 value={itemName}
                 onChange={(e) => setItemName(e.target.value)}
                 placeholder="e.g., iPhone 13 Pro"
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all"
               />
+              {formErrors.title && (
+                <p className="text-sm text-red-500 mt-2">{formErrors.title}</p>
+              )}
             </div>
 
             {/* ---------- Category ---------- */}
@@ -174,6 +237,9 @@ const CreateListing = () => {
                   </svg>
                 </div>
               </div>
+              {formErrors.category && (
+                <p className="text-sm text-red-500 mt-2">{formErrors.category}</p>
+              )}
             </div>
 
             {/* ---------- Price ---------- */}
@@ -184,13 +250,17 @@ const CreateListing = () => {
               <input
                 type="number"
                 step="0.01"
-                min="0"
+                min={PRICE_MIN}
+                max={PRICE_MAX}
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 placeholder="0.00"
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all"
               />
+              {formErrors.price && (
+                <p className="text-sm text-red-500 mt-2">{formErrors.price}</p>
+              )}
             </div>
 
             {/* ---------- Description ---------- */}
@@ -204,8 +274,17 @@ const CreateListing = () => {
                 placeholder="Describe your item, its condition, and any other relevant details..."
                 required
                 rows={6}
+                minLength={DESCRIPTION_MIN_LENGTH}
+                maxLength={DESCRIPTION_MAX_LENGTH}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all resize-none"
               />
+              <div className="flex justify-between text-sm text-gray-500 mt-2">
+                <span>Minimum {DESCRIPTION_MIN_LENGTH} characters</span>
+                <span>{description.length}/{DESCRIPTION_MAX_LENGTH}</span>
+              </div>
+              {formErrors.description && (
+                <p className="text-sm text-red-500 mt-2">{formErrors.description}</p>
+              )}
             </div>
 
             {/* ---------- Buttons ---------- */}
