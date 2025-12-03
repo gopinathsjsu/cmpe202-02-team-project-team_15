@@ -95,6 +95,17 @@ export const getSavedListings = async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
+    // Get user's university
+    const { User } = await import('../models/User');
+    const user = await User.findById(userId);
+    if (!user || !user.university) {
+      return res.status(400).json({ error: 'User university information is missing' });
+    }
+
+    // Check if user is admin
+    const authUser = req.user as any;
+    const isAdmin = authUser?.roles?.includes('admin');
+
     // Get saved listings with full listing details
     const savedListings = await SavedListing.find({ userId })
       .populate({
@@ -106,8 +117,13 @@ export const getSavedListings = async (req: Request, res: Response) => {
       })
       .sort({ saved_at: -1 });
 
-    // Filter out any saved listings where the listing was deleted
-    const validSavedListings = savedListings.filter(saved => saved.listingId);
+    // Filter out any saved listings where the listing was deleted or doesn't match university
+    const validSavedListings = savedListings.filter(saved => {
+      if (!saved.listingId) return false;
+      const listing = saved.listingId as any;
+      // Admins can see all saved listings, others only their university
+      return isAdmin || listing.university === user.university;
+    });
 
     // Format the response
     const formattedListings = validSavedListings.map(saved => ({
