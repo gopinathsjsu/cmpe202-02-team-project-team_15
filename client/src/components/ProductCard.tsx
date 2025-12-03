@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
 import { IListing, apiService } from '../services/api';
 
@@ -17,6 +17,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const [isSaved, setIsSaved] = useState(initialIsSaved);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Keep local state in sync whenever the parent updates saved status
+  useEffect(() => {
+    setIsSaved(initialIsSaved);
+  }, [initialIsSaved]);
 
   const handleClick = () => {
     if (onClick) {
