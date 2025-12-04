@@ -1147,6 +1147,24 @@ export class AdminHandler {
         { isHidden: true }
       );
 
+      // Send account deletion email notification
+      try {
+        const { sendAccountDeletionEmail } = require('../services/emailService');
+        const emailSent = await sendAccountDeletionEmail(
+          user.email,
+          user.first_name,
+          user.last_name,
+          reason
+        );
+        if (emailSent) {
+          console.log(`Account deletion email sent to ${user.email}`);
+        } else {
+          console.warn(`Failed to send account deletion email to ${user.email}`);
+        }
+      } catch (emailError: any) {
+        console.error('Error sending account deletion email:', emailError.message);
+      }
+
       res.json({
         success: true,
         message: 'User account deleted successfully',
