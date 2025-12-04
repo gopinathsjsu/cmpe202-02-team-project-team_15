@@ -67,6 +67,7 @@ const Profile: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [savedListingIds, setSavedListingIds] = useState<Set<string>>(new Set());
 
   // Helper function to update minimal profile picture cache in localStorage
   const updateProfilePictureCache = (profileData: any, photoUrlWithTimestamp?: string | null) => {
@@ -94,6 +95,27 @@ const Profile: React.FC = () => {
     };
     loadProfile();
   }, []);
+
+  useEffect(() => {
+    const fetchSavedIds = async () => {
+      try {
+        const response = await apiService.getSavedListingIds();
+        setSavedListingIds(new Set(response.listingIds));
+      } catch (err) {
+        console.error('Failed to load saved listing IDs:', err);
+      }
+    };
+    fetchSavedIds();
+  }, []);
+
+  const handleSaveToggle = (listingId: string, saved: boolean) => {
+    setSavedListingIds((prev) => {
+      const newSet = new Set(prev);
+      if (saved) newSet.add(listingId);
+      else newSet.delete(listingId);
+      return newSet;
+    });
+  };
 
   useEffect(() => {
     const loadListings = async () => {
@@ -1147,6 +1169,8 @@ const Profile: React.FC = () => {
                     key={listing._id}
                     listing={listing}
                     onClick={() => navigate(`/listing/${listing._id}`)}
+                    isSaved={savedListingIds.has(listing._id)}
+                    onSaveToggle={handleSaveToggle}
                   />
                 ))}
               </div>
