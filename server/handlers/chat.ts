@@ -4,6 +4,7 @@ import { Conversation } from "../models/Conversation";
 import { Message } from "../models/Message";
 import Listing from "../models/Listing";
 import { User } from "../models/User";
+import { sanitizeChatMessage } from "../utils/chatSanitizer";
 
 export const initiateChat = async (req: any, res: Response) => {
   try {
@@ -200,7 +201,14 @@ export const postMessage = async (req: any, res: Response) => {
   const { body } = req.body as { body: string };
   const userId = String(req.user._id);
 
-  if (!body?.trim()) return res.status(400).json({ message: "Empty message" });
+  // Sanitize and validate message body
+  const sanitizationResult = sanitizeChatMessage(body);
+  if (!sanitizationResult.isValid) {
+    return res.status(400).json({
+      message: sanitizationResult.error || "Invalid message",
+    });
+  }
+  const sanitizedBody = sanitizationResult.sanitized!.body;
 
   const conv = await Conversation.findById(conversationId);
   if (!conv) return res.status(404).json({ message: "Conversation not found" });
@@ -217,7 +225,7 @@ export const postMessage = async (req: any, res: Response) => {
   const msg = await Message.create({
     conversationId,
     senderId: userId,
-    body,
+    body: sanitizedBody,
     readBy: [userId],
     senderProfileImage, // Store sender's profile image (cached for performance)
   });
