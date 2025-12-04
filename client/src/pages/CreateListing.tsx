@@ -10,8 +10,8 @@ const TITLE_MAX_LENGTH = 100;
 const DESCRIPTION_MIN_LENGTH = 20;
 const DESCRIPTION_MAX_LENGTH = 1000;
 const PRICE_MIN = 1;
-const PRICE_MAX = 10000;
 const MAX_IMAGES = 5;
+const PRICE_MAX = 10000;
 
 const CreateListing = () => {
   const navigate = useNavigate();
