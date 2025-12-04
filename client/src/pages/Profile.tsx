@@ -546,7 +546,8 @@ const Profile: React.FC = () => {
         purpose: "profile",
       });
 
-      const { presignedUrl, key } = presignRes.data;
+      const { presignedUrl, key, publicUrl } = presignRes.data;
+
 
       // 2. Upload to S3
       await fetch(presignedUrl, {
@@ -556,7 +557,7 @@ const Profile: React.FC = () => {
       });
 
       // 3. Save to backend and get updated user
-      const updateRes = await api.put("/api/profile/photo", { key });
+      const updateRes = await api.put("/api/profile/photo", { key, publicUrl });
 
       // 4. Update AuthContext + localStorage
       const profileData = updateRes.data.user;
