@@ -1,12 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { Eye, EyeOff, Check, X } from 'lucide-react';
+
+// Password validation helper
+const validatePassword = (password: string) => ({
+  minLength: password.length >= 8,
+  hasUppercase: /[A-Z]/.test(password),
+  hasNumber: /[0-9]/.test(password),
+  hasSymbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+});
+
+const PasswordRequirement: React.FC<{ met: boolean; text: string }> = ({ met, text }) => (
+  <div className={`flex items-center gap-2 text-sm transition-colors duration-200 ${met ? 'text-green-600' : 'text-gray-400'}`}>
+    {met ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+    <span>{text}</span>
+  </div>
+);
 
 const Auth: React.FC = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  // Password visibility states
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   // Login form state
   const [loginData, setLoginData] = useState({
@@ -25,6 +46,10 @@ const Auth: React.FC = () => {
 
   const [showAdmin, setShowAdmin] = useState(false);
   const [adminKey, setAdminKey] = useState('');
+  
+  // Password validation state
+  const passwordValidation = validatePassword(signupData.password);
+  const isPasswordValid = Object.values(passwordValidation).every(Boolean);
   
   const { login, signup } = useAuth();
   const navigate = useNavigate();
@@ -76,6 +101,13 @@ const Auth: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    // Validate password requirements
+    if (!isPasswordValid) {
+      setError('Please ensure your password meets all requirements');
+      setLoading(false);
+      return;
+    }
 
     if (signupData.password !== signupData.confirmPassword) {
       setError('Passwords do not match');
@@ -159,7 +191,7 @@ const Auth: React.FC = () => {
                 School Email
               </label>
               <input
-                type="email"
+                type="text"
                 id="loginEmail"
                 name="email"
                 value={loginData.email}
@@ -182,16 +214,25 @@ const Auth: React.FC = () => {
                   Forgot Password?
                 </Link>
               </div>
-              <input
-                type="password"
-                id="loginPassword"
-                name="password"
-                value={loginData.password}
-                onChange={handleLoginChange}
-                className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                placeholder="Enter your password"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showLoginPassword ? "text" : "password"}
+                  id="loginPassword"
+                  name="password"
+                  value={loginData.password}
+                  onChange={handleLoginChange}
+                  className="w-full px-3 py-2 pr-10 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                  placeholder="Enter your password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowLoginPassword(!showLoginPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  {showLoginPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
 
             {error && (
@@ -279,7 +320,7 @@ const Auth: React.FC = () => {
                 School Email
               </label>
               <input
-                type="email"
+                type="text"
                 id="signupEmail"
                 name="email"
                 value={signupData.email}
@@ -294,32 +335,70 @@ const Auth: React.FC = () => {
               <label htmlFor="signupPassword" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
-              <input
-                type="password"
-                id="signupPassword"
-                name="password"
-                value={signupData.password}
-                onChange={handleSignupChange}
-                className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                placeholder="Create a strong password"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showSignupPassword ? "text" : "password"}
+                  id="signupPassword"
+                  name="password"
+                  value={signupData.password}
+                  onChange={handleSignupChange}
+                  className="w-full px-3 py-2 pr-10 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                  placeholder="Create a strong password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSignupPassword(!showSignupPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  {showSignupPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              
+              {/* Password Requirements Checklist */}
+              {signupData.password && (
+                <div className="mt-3 p-3 bg-gray-50 rounded-lg space-y-1.5">
+                  <PasswordRequirement met={passwordValidation.minLength} text="At least 8 characters" />
+                  <PasswordRequirement met={passwordValidation.hasUppercase} text="One uppercase letter" />
+                  <PasswordRequirement met={passwordValidation.hasNumber} text="One number" />
+                  <PasswordRequirement met={passwordValidation.hasSymbol} text="One special character (!@#$%^&*)" />
+                </div>
+              )}
             </div>
 
             <div>
               <label htmlFor="signupConfirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
                 Confirm Password
               </label>
-              <input
-                type="password"
-                id="signupConfirmPassword"
-                name="confirmPassword"
-                value={signupData.confirmPassword}
-                onChange={handleSignupChange}
-                className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                placeholder="Confirm your password"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  id="signupConfirmPassword"
+                  name="confirmPassword"
+                  value={signupData.confirmPassword}
+                  onChange={handleSignupChange}
+                  className="w-full px-3 py-2 pr-10 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                  placeholder="Confirm your password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              
+              {/* Password Match Check */}
+              {signupData.confirmPassword && (
+                <div className="mt-2">
+                  <PasswordRequirement 
+                    met={signupData.password === signupData.confirmPassword} 
+                    text="Passwords match" 
+                  />
+                </div>
+              )}
             </div>
 
             {error && (
@@ -328,10 +407,10 @@ const Auth: React.FC = () => {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !isPasswordValid || signupData.password !== signupData.confirmPassword}
               className={`w-full py-3 px-6 rounded-lg font-medium transition-all duration-200 ${
-                loading 
-                  ? 'bg-gray-400 cursor-not-allowed' 
+                loading || !isPasswordValid || signupData.password !== signupData.confirmPassword
+                  ? 'bg-gray-400 cursor-not-allowed text-gray-200' 
                   : 'bg-gray-900 text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2'
               }`}
             >
