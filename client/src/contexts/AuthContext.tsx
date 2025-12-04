@@ -48,6 +48,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       last_name: userData.last_name,
       status: userData.status,
       photoUrl: userData.photoUrl || userData.photo_url || null,
+      roles: userData.roles || [],
     };
     localStorage.setItem('user', JSON.stringify(profileCache));
   };
