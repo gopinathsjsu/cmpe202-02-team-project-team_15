@@ -1,30 +1,30 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../contexts/ToastContext';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   
   const { login } = useAuth();
-  const { showError } = useToast();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
 
     try {
       const success = await login(email, password);
       if (success) {
         navigate('/search');
       } else {
-        showError('Login Failed', 'Invalid credentials');
+        setError('Invalid credentials');
       }
-    } catch (err: any) {
-      showError('Login Failed', err.message || 'Please try again.');
+    } catch (err) {
+      setError('Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -73,6 +73,10 @@ const Login: React.FC = () => {
               required
             />
           </div>
+
+          {error && (
+            <div className="text-red-600 text-sm text-center message-enter">{error}</div>
+          )}
 
           <button
             type="submit"

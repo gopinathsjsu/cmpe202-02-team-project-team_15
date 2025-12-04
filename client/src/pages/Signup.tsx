@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../contexts/ToastContext';
 import { authAPI } from '../services/api';
 import { Mail, CheckCircle, Eye, EyeOff, Check, X } from 'lucide-react';
 
@@ -33,6 +32,8 @@ const Signup: React.FC = () => {
     confirmPassword: ''
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const [showAdmin, setShowAdmin] = useState(false);
   const [adminKey, setAdminKey] = useState('');
@@ -45,7 +46,6 @@ const Signup: React.FC = () => {
   const isPasswordValid = Object.values(passwordValidation).every(Boolean);
   
   const { signup, user } = useAuth();
-  const { showError, showSuccess, showInfo } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -75,7 +75,7 @@ const Signup: React.FC = () => {
             // Response structure: { success: true, data: { email: '...', verified: true, userExists?: true } }
             const data = response.data?.data;
             if (data?.userExists) {
-              showError('Account Exists', 'An account with this email already exists. Please login instead.');
+              setError('An account with this email already exists. Please login instead.');
               setStep('email');
               return;
             }
@@ -84,16 +84,17 @@ const Signup: React.FC = () => {
             if (isVerified) {
               // Automatically advance to registration step since email is verified
               setStep('register');
-              showSuccess('Email Verified', 'You can now complete your registration.');
+              setSuccess('Email verified successfully! You can now complete your registration.');
+              setError(''); // Clear any previous errors
             } else {
               console.error('Signup page: Verification not found for email:', decodedEmail, 'Response:', response.data);
-              showError('Verification Error', 'Email verification not found. Please verify your email again.');
+              setError('Email verification not found. Please verify your email again.');
               setStep('email');
             }
           })
           .catch((err) => {
             console.error('Signup page: Check verification error:', err);
-            showError('Verification Error', 'Could not verify email status. Please try again.');
+            setError('Could not verify email status. Please try again.');
             setStep('email');
           });
       }, 1000); // Increased delay to ensure DB write is complete
@@ -119,13 +120,13 @@ const Signup: React.FC = () => {
           // Response structure: { success: true, data: { email: '...', verified: true, userExists?: true } }
           const data = response.data?.data;
           if (data?.userExists) {
-            showError('Account Exists', 'An account with this email already exists. Please login instead.');
+            setError('An account with this email already exists. Please login instead.');
             setStep('email');
             return;
           }
           if (data?.verified) {
             setStep('register');
-            showSuccess('Email Verified', 'You can now complete your registration.');
+            setSuccess('Email already verified! You can now complete your registration.');
           }
         } catch (err) {
           // Silently fail - email might not be verified yet
@@ -146,9 +147,11 @@ const Signup: React.FC = () => {
   const handleRequestVerification = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
+    setSuccess('');
 
     if (!email) {
-      showError('Email Required', 'Email is required');
+      setError('Email is required');
       setLoading(false);
       return;
     }
@@ -157,7 +160,7 @@ const Signup: React.FC = () => {
     if (!showAdmin) {
       const emailDomain = email.split('@')[1];
       if (!emailDomain || !emailDomain.endsWith('.edu')) {
-        showError('Invalid Email', 'Email must be from an educational institution (.edu domain)');
+        setError('Email must be from an educational institution (.edu domain)');
         setLoading(false);
         return;
       }
@@ -169,13 +172,13 @@ const Signup: React.FC = () => {
       // Response structure: { success: true, data: { email: '...', verified: true, userExists?: true } }
       const data = checkResponse.data?.data;
       if (data?.userExists) {
-        showError('Account Exists', 'An account with this email already exists. Please login instead.');
+        setError('An account with this email already exists. Please login instead.');
         setLoading(false);
         return;
       }
       if (data?.verified) {
         setStep('register');
-        showSuccess('Email Verified', 'You can now complete your registration.');
+        setSuccess('Email already verified! You can now complete your registration.');
         setLoading(false);
         return;
       }
@@ -185,11 +188,11 @@ const Signup: React.FC = () => {
 
     try {
       await authAPI.requestVerification(email);
-      showSuccess('Verification Sent', 'Check your inbox for the code or click the verification link.');
+      setSuccess('Verification email sent! Check your inbox for the code or click the verification link.');
       setStep('verify');
       setResendCooldown(60); // 60 second cooldown
     } catch (err: any) {
-      showError('Verification Failed', err.response?.data?.message || 'Failed to send verification email. Please try again.');
+      setError(err.response?.data?.message || 'Failed to send verification email. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -198,19 +201,21 @@ const Signup: React.FC = () => {
   const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
+    setSuccess('');
 
     if (!verificationCode || verificationCode.length !== 6) {
-      showError('Invalid Code', 'Please enter a valid 6-digit verification code');
+      setError('Please enter a valid 6-digit verification code');
       setLoading(false);
       return;
     }
 
     try {
       await authAPI.verifyCode(email, verificationCode);
-      showSuccess('Email Verified', 'Successfully verified!');
+      setSuccess('Email verified successfully!');
       setStep('register');
     } catch (err: any) {
-      showError('Verification Failed', err.response?.data?.message || 'Invalid or expired verification code. Please try again.');
+      setError(err.response?.data?.message || 'Invalid or expired verification code. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -220,12 +225,13 @@ const Signup: React.FC = () => {
     if (resendCooldown > 0) return;
     
     setLoading(true);
+    setError('');
     try {
       await authAPI.requestVerification(email);
-      showSuccess('Email Resent', 'Verification email resent!');
+      setSuccess('Verification email resent!');
       setResendCooldown(60);
     } catch (err: any) {
-      showError('Resend Failed', err.response?.data?.message || 'Failed to resend verification email.');
+      setError(err.response?.data?.message || 'Failed to resend verification email.');
     } finally {
       setLoading(false);
     }
@@ -234,16 +240,17 @@ const Signup: React.FC = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
 
     // Validate password requirements
     if (!isPasswordValid) {
-      showError('Invalid Password', 'Please ensure your password meets all requirements');
+      setError('Please ensure your password meets all requirements');
       setLoading(false);
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      showError('Password Mismatch', 'Passwords do not match');
+      setError('Passwords do not match');
       setLoading(false);
       return;
     }
@@ -258,13 +265,12 @@ const Signup: React.FC = () => {
       );
       
       if (success) {
-        showSuccess('Account Created', 'Please log in to continue');
         navigate('/login');
       } else {
-        showError('Signup Failed', 'Please try again.');
+        setError('Signup failed. Please try again.');
       }
     } catch (err: any) {
-      showError('Signup Failed', err.response?.data?.message || 'Please try again.');
+      setError(err.response?.data?.message || 'Signup failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -357,6 +363,10 @@ const Signup: React.FC = () => {
               </div>
             )}
 
+            {error && (
+              <div className="text-red-600 text-sm text-center message-enter">{error}</div>
+            )}
+
             <button
               type="submit"
               disabled={loading}
@@ -381,6 +391,17 @@ const Signup: React.FC = () => {
                 We sent a verification code to <strong>{email}</strong>
               </p>
             </div>
+
+            {/* Show success if verified via link */}
+            {success && success.includes('via link') && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <p className="text-sm text-green-800 font-medium">{success}</p>
+                </div>
+                <p className="text-xs text-green-600 mt-2">Redirecting to registration...</p>
+              </div>
+            )}
 
             <div>
               <label htmlFor="verificationCode" className="block text-sm font-medium text-gray-700 mb-2">
@@ -409,6 +430,13 @@ const Signup: React.FC = () => {
               </p>
             </div>
 
+            {error && (
+              <div className="text-red-600 text-sm text-center message-enter">{error}</div>
+            )}
+            {success && (
+              <div className="text-green-600 text-sm text-center message-enter">{success}</div>
+            )}
+
             <div className="space-y-3">
               <button
                 type="submit"
@@ -422,6 +450,19 @@ const Signup: React.FC = () => {
                 {loading ? 'Verifying...' : 'Verify Email'}
               </button>
 
+              {/* Show "Continue to Registration" button if already verified via link */}
+              {success && success.includes('via link') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep('register');
+                    setSuccess('Email verified successfully! You can now complete your registration.');
+                  }}
+                  className="w-full py-2 px-4 rounded-lg font-medium bg-green-600 text-white hover:bg-green-700 transition-all duration-300"
+                >
+                  Continue to Registration
+                </button>
+              )}
 
               <button
                 type="button"
@@ -437,6 +478,8 @@ const Signup: React.FC = () => {
                 onClick={() => {
                   setStep('email');
                   setVerificationCode('');
+                  setError('');
+                  setSuccess('');
                 }}
                 className="w-full py-2 px-4 rounded-lg font-medium text-gray-600 hover:text-gray-800 transition-colors"
                 disabled={loading}
@@ -457,6 +500,10 @@ const Signup: React.FC = () => {
                 Email verified: <strong>{email}</strong>
               </p>
             </div>
+
+            {success && (
+              <div className="text-green-600 text-sm text-center bg-green-50 p-3 rounded-lg">{success}</div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -566,6 +613,10 @@ const Signup: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {error && (
+              <div className="text-red-600 text-sm text-center message-enter">{error}</div>
+            )}
 
             <button
               type="submit"

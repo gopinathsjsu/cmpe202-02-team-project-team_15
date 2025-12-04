@@ -5,7 +5,6 @@ import Navbar from '../components/Navbar';
 import ProductCard from '../components/ProductCard';
 import { IListing } from '../services/api';
 import api from '../services/api';
-import { useToast } from '../contexts/ToastContext';
 
 interface PublicUser {
   id: string;
@@ -28,9 +27,9 @@ interface PublicUser {
 
 const PublicProfile: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
-  const { showError } = useToast();
   const [user, setUser] = useState<PublicUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [activeListings, setActiveListings] = useState<IListing[]>([]);
   const [soldListings, setSoldListings] = useState<IListing[]>([]);
   const [listingsLoading, setListingsLoading] = useState(true);
@@ -40,7 +39,7 @@ const PublicProfile: React.FC = () => {
   useEffect(() => {
     const loadPublicProfile = async () => {
       if (!userId) {
-        showError('Invalid User', 'User ID is missing');
+        setError('User ID is missing');
         setLoading(false);
         return;
       }
@@ -53,19 +52,19 @@ const PublicProfile: React.FC = () => {
         if (response.data.success) {
           setUser(response.data.data.user);
         } else {
-          showError('Load Failed', 'Failed to load user profile');
+          setError('Failed to load user profile');
         }
       } catch (err: any) {
         console.error('Public profile load error:', err);
         console.error('Error response:', err.response);
-        showError('Load Failed', err.response?.data?.message || 'Failed to load user profile');
+        setError(err.response?.data?.message || 'Failed to load user profile');
       } finally {
         setLoading(false);
       }
     };
 
     loadPublicProfile();
-  }, [userId, showError]);
+  }, [userId]);
 
   useEffect(() => {
     const loadListings = async () => {
@@ -118,7 +117,7 @@ const PublicProfile: React.FC = () => {
               </svg>
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Profile Not Found</h2>
-            <p className="text-gray-600">Unable to load this profile</p>
+            <p className="text-gray-600">{error || 'Unable to load this profile'}</p>
           </div>
         </div>
       </div>

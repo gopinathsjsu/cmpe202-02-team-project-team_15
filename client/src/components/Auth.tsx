@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { useToast } from "../contexts/ToastContext";
 import { Eye, EyeOff, Check, X } from "lucide-react";
 
 // Password validation helper
@@ -30,6 +29,7 @@ const Auth: React.FC = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   // Password visibility states
   const [showLoginPassword, setShowLoginPassword] = useState(false);
@@ -59,7 +59,6 @@ const Auth: React.FC = () => {
   const isPasswordValid = Object.values(passwordValidation).every(Boolean);
 
   const { login, signup, user } = useAuth();
-  const { showError, showSuccess } = useToast();
   const navigate = useNavigate();
 
   // Redirect to /search if user is already logged in
@@ -95,17 +94,18 @@ const Auth: React.FC = () => {
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
 
     try {
       const success = await login(loginData.email, loginData.password);
       if (success) {
         navigate("/search");
       } else {
-        showError("Login Failed", "Invalid credentials");
+        setError("Invalid credentials");
       }
     } catch (err: any) {
       // Display the specific error message from the backend
-      showError("Login Failed", err.message || "Please try again.");
+      setError(err.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -114,16 +114,17 @@ const Auth: React.FC = () => {
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
 
     // Validate password requirements
     if (!isPasswordValid) {
-      showError("Invalid Password", "Please ensure your password meets all requirements");
+      setError("Please ensure your password meets all requirements");
       setLoading(false);
       return;
     }
 
     if (signupData.password !== signupData.confirmPassword) {
-      showError("Password Mismatch", "Passwords do not match");
+      setError("Passwords do not match");
       setLoading(false);
       return;
     }
@@ -138,7 +139,7 @@ const Auth: React.FC = () => {
       );
 
       if (success) {
-        showSuccess("Account Created", "Please log in to continue");
+        setError("");
         navigate("/login");
         // Clear signup form
         setSignupData({
@@ -151,10 +152,10 @@ const Auth: React.FC = () => {
         setAdminKey("");
         setShowAdmin(false);
       } else {
-        showError("Signup Failed", "Please try again.");
+        setError("Signup failed. Please try again.");
       }
-    } catch (err: any) {
-      showError("Signup Failed", err.message || "Please try again.");
+    } catch (err) {
+      setError("Signup failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -259,6 +260,10 @@ const Auth: React.FC = () => {
                 </button>
               </div>
             </div>
+
+            {error && (
+              <div className="text-red-600 text-sm text-center">{error}</div>
+            )}
 
             <button
               type="submit"
@@ -466,6 +471,10 @@ const Auth: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {error && (
+              <div className="text-red-600 text-sm text-center">{error}</div>
+            )}
 
             <button
               type="submit"
