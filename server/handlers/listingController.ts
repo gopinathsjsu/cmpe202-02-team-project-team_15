@@ -5,16 +5,144 @@ import Category from '../models/Category';
 import { Report } from '../models/Report';
 import { SavedListing } from '../models/SavedListing';
 
+const TITLE_MIN_LENGTH = 5;
+const TITLE_MAX_LENGTH = 100;
+const DESCRIPTION_MIN_LENGTH = 20;
+const DESCRIPTION_MAX_LENGTH = 1000;
+const PRICE_MIN = 1;
+const PRICE_MAX = 10000;
+const MAX_PHOTOS = 5;
+const SANITIZED_ALT_MAX = 120;
+
+const sanitizeText = (value: string): string =>
+  value.replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ').trim();
+
+interface ListingValidationResult {
+  errors: string[];
+  data: Partial<{
+    title: string;
+    description: string;
+    price: number;
+    categoryId: string;
+    photos: Array<{ url: string; alt: string }>;
+    status: 'ACTIVE' | 'SOLD';
+  }>;
+}
+
+const validateListingInput = (
+  payload: any,
+  options: { partial: boolean } = { partial: false }
+): ListingValidationResult => {
+  const errors: string[] = [];
+  const data: ListingValidationResult['data'] = {};
+
+  if (!options.partial || payload.title !== undefined) {
+    if (typeof payload.title !== 'string') {
+      errors.push('Title must be a string');
+    } else {
+      const sanitized = sanitizeText(payload.title);
+      if (
+        sanitized.length < TITLE_MIN_LENGTH ||
+        sanitized.length > TITLE_MAX_LENGTH
+      ) {
+        errors.push(
+          `Title must be between ${TITLE_MIN_LENGTH} and ${TITLE_MAX_LENGTH} characters`
+        );
+      } else {
+        data.title = sanitized;
+      }
+    }
+  }
+
+  if (!options.partial || payload.description !== undefined) {
+    if (typeof payload.description !== 'string') {
+      errors.push('Description must be a string');
+    } else {
+      const sanitized = sanitizeText(payload.description);
+      if (
+        sanitized.length < DESCRIPTION_MIN_LENGTH ||
+        sanitized.length > DESCRIPTION_MAX_LENGTH
+      ) {
+        errors.push(
+          `Description must be between ${DESCRIPTION_MIN_LENGTH} and ${DESCRIPTION_MAX_LENGTH} characters`
+        );
+      } else {
+        data.description = sanitized;
+      }
+    }
+  }
+
+  if (!options.partial || payload.price !== undefined) {
+    const priceValue = Number(payload.price);
+    if (Number.isNaN(priceValue)) {
+      errors.push('Price must be a valid number');
+    } else if (priceValue < PRICE_MIN || priceValue > PRICE_MAX) {
+      errors.push(`Price must be between ${PRICE_MIN} and ${PRICE_MAX}`);
+    } else {
+      data.price = Number(priceValue.toFixed(2));
+    }
+  }
+
+  if (!options.partial || payload.categoryId !== undefined) {
+    if (
+      typeof payload.categoryId !== 'string' ||
+      !mongoose.Types.ObjectId.isValid(payload.categoryId)
+    ) {
+      errors.push('categoryId must be a valid ID');
+    } else {
+      data.categoryId = payload.categoryId;
+    }
+  }
+
+  if (payload.status !== undefined) {
+    if (payload.status !== 'ACTIVE' && payload.status !== 'SOLD') {
+      errors.push('status must be ACTIVE or SOLD');
+    } else {
+      data.status = payload.status;
+    }
+  }
+
+  if (!options.partial || payload.photos !== undefined) {
+    if (payload.photos === undefined) {
+      data.photos = [];
+    } else if (!Array.isArray(payload.photos)) {
+      errors.push('photos must be an array');
+    } else if (payload.photos.length > MAX_PHOTOS) {
+      errors.push(`You can upload up to ${MAX_PHOTOS} images`);
+    } else {
+      data.photos = payload.photos.map((photo: any, index: number) => {
+        if (!photo || typeof photo.url !== 'string') {
+          errors.push(`Photo at position ${index + 1} is missing a valid url`);
+        }
+        const alt =
+          typeof photo?.alt === 'string'
+            ? sanitizeText(photo.alt).slice(0, SANITIZED_ALT_MAX)
+            : '';
+        return {
+          url: typeof photo?.url === 'string' ? photo.url : '',
+          alt
+        };
+      });
+    }
+  }
+
+  return { errors, data };
+};
+
 // POST /api/listings - Create a new listing
 export const createListing = async (req: Request, res: Response): Promise<void> => {
   try {
     const { title, description, price, categoryId, photos = [] } = req.body;
 
-    // Validate required fields
-    if (!title || !description || !price || !categoryId) {
-      res.status(400).json({ 
-        success: false, 
-        error: 'Missing required fields: title, description, price, categoryId' 
+    const validation = validateListingInput(
+      { title, description, price, categoryId, photos },
+      { partial: false }
+    );
+
+    if (validation.errors.length > 0) {
+      res.status(400).json({
+        success: false,
+        error: validation.errors.join('. ')
       });
       return;
     }
@@ -30,7 +158,7 @@ export const createListing = async (req: Request, res: Response): Promise<void> 
     }
 
     // Validate category exists
-    const category = await Category.findById(categoryId);
+    const category = await Category.findById(validation.data.categoryId);
     if (!category) {
       res.status(400).json({ 
         success: false, 
@@ -58,13 +186,13 @@ export const createListing = async (req: Request, res: Response): Promise<void> 
     // Create new listing with university auto-injected
     const newListing = new Listing({
       userId: authUser._id,
-      categoryId,
-      title,
-      description,
-      price: Number(price),
-      photos: photos.map((photo: any) => ({
-        url: photo.url || '',
-        alt: photo.alt || title
+      categoryId: validation.data.categoryId,
+      title: validation.data.title,
+      description: validation.data.description,
+      price: validation.data.price,
+      photos: (validation.data.photos || []).map((photo, index) => ({
+        url: photo.url,
+        alt: photo.alt || validation.data.title || `Photo ${index + 1}`
       })),
       status: 'ACTIVE',
       university: userUniversity
@@ -377,9 +505,25 @@ export const updateListing = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
+    const validation = validateListingInput(
+      { title, description, price, categoryId, photos, status },
+      { partial: true }
+    );
+
+    if (validation.errors.length > 0) {
+      res.status(400).json({
+        success: false,
+        error: validation.errors.join('. ')
+      });
+      return;
+    }
+
     // Validate category if provided
-    if (categoryId && categoryId !== listing.categoryId.toString()) {
-      const category = await Category.findById(categoryId);
+    if (
+      validation.data.categoryId &&
+      validation.data.categoryId !== listing.categoryId.toString()
+    ) {
+      const category = await Category.findById(validation.data.categoryId);
       if (!category) {
         res.status(400).json({ 
           success: false, 
@@ -391,15 +535,19 @@ export const updateListing = async (req: Request, res: Response): Promise<void> 
 
     // Update listing fields
     const updateData: any = {};
-    if (title !== undefined) updateData.title = title;
-    if (description !== undefined) updateData.description = description;
-    if (price !== undefined) updateData.price = Number(price);
-    if (categoryId !== undefined) updateData.categoryId = categoryId;
-    if (status !== undefined) updateData.status = status;
-    if (photos !== undefined) {
-      updateData.photos = photos.map((photo: any) => ({
-        url: photo.url || '',
-        alt: photo.alt || title || ''
+    if (validation.data.title !== undefined) updateData.title = validation.data.title;
+    if (validation.data.description !== undefined) updateData.description = validation.data.description;
+    if (validation.data.price !== undefined) updateData.price = validation.data.price;
+    if (validation.data.categoryId !== undefined) updateData.categoryId = validation.data.categoryId;
+    if (validation.data.status !== undefined) updateData.status = validation.data.status;
+    if (validation.data.photos !== undefined) {
+      updateData.photos = validation.data.photos.map((photo, index) => ({
+        url: photo.url,
+        alt:
+          photo.alt ||
+          validation.data.title ||
+          listing.title ||
+          `Photo ${index + 1}`
       }));
     }
 
