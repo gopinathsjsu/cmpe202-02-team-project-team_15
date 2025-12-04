@@ -55,21 +55,18 @@ const listingSchema = new Schema<IListing>({
     type: String, 
     required: true,
     trim: true,
-    minlength: 5,
     maxlength: 100
   },
   description: { 
     type: String, 
     required: true,
     trim: true,
-    minlength: 20,
     maxlength: 1000
   },
   price: { 
     type: Number, 
     required: true,
-    min: 1,
-    max: 10000
+    min: 0
   },
   status: { 
     type: String, 
