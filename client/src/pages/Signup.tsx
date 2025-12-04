@@ -2,9 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { authAPI } from '../services/api';
-import { Mail, CheckCircle } from 'lucide-react';
+import { Mail, CheckCircle, Eye, EyeOff, Check, X } from 'lucide-react';
 
 type Step = 'email' | 'verify' | 'register';
+
+// Password validation helper
+const validatePassword = (password: string) => ({
+  minLength: password.length >= 8,
+  hasUppercase: /[A-Z]/.test(password),
+  hasNumber: /[0-9]/.test(password),
+  hasSymbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+});
+
+const PasswordRequirement: React.FC<{ met: boolean; text: string }> = ({ met, text }) => (
+  <div className={`flex items-center gap-2 text-sm transition-colors duration-200 ${met ? 'text-green-600' : 'text-gray-400'}`}>
+    {met ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+    <span>{text}</span>
+  </div>
+);
 
 const Signup: React.FC = () => {
   const [step, setStep] = useState<Step>('email');
@@ -23,6 +38,12 @@ const Signup: React.FC = () => {
   const [showAdmin, setShowAdmin] = useState(false);
   const [adminKey, setAdminKey] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // Password validation state
+  const passwordValidation = validatePassword(formData.password);
+  const isPasswordValid = Object.values(passwordValidation).every(Boolean);
   
   const { signup, user } = useAuth();
   const navigate = useNavigate();
@@ -221,6 +242,13 @@ const Signup: React.FC = () => {
     setLoading(true);
     setError('');
 
+    // Validate password requirements
+    if (!isPasswordValid) {
+      setError('Please ensure your password meets all requirements');
+      setLoading(false);
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       setLoading(false);
@@ -292,7 +320,7 @@ const Signup: React.FC = () => {
                 School Email
               </label>
               <input
-                type="email"
+                type="text"
                 id="email"
                 name="email"
                 value={email}
@@ -516,34 +544,74 @@ const Signup: React.FC = () => {
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                className="w-full px-3 py-2 bg-gray-100 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all duration-300 placeholder-gray-500 text-gray-900 shadow-inner input-enhanced"
-                placeholder="Create a strong password"
-                required
-                disabled={loading}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 pr-10 bg-gray-100 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all duration-300 placeholder-gray-500 text-gray-900 shadow-inner input-enhanced"
+                  placeholder="Create a strong password"
+                  required
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                  disabled={loading}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              
+              {/* Password Requirements Checklist */}
+              {formData.password && (
+                <div className="mt-3 p-3 bg-gray-50 rounded-lg space-y-1.5">
+                  <PasswordRequirement met={passwordValidation.minLength} text="At least 8 characters" />
+                  <PasswordRequirement met={passwordValidation.hasUppercase} text="One uppercase letter" />
+                  <PasswordRequirement met={passwordValidation.hasNumber} text="One number" />
+                  <PasswordRequirement met={passwordValidation.hasSymbol} text="One special character (!@#$%^&*)" />
+                </div>
+              )}
             </div>
 
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
                 Confirm Password
               </label>
-              <input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="w-full px-3 py-2 bg-gray-100 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all duration-300 placeholder-gray-500 text-gray-900 shadow-inner input-enhanced"
-                placeholder="Confirm your password"
-                required
-                disabled={loading}
-              />
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 pr-10 bg-gray-100 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all duration-300 placeholder-gray-500 text-gray-900 shadow-inner input-enhanced"
+                  placeholder="Confirm your password"
+                  required
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                  disabled={loading}
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              
+              {/* Password Match Check */}
+              {formData.confirmPassword && (
+                <div className="mt-2">
+                  <PasswordRequirement 
+                    met={formData.password === formData.confirmPassword} 
+                    text="Passwords match" 
+                  />
+                </div>
+              )}
             </div>
 
             {error && (
@@ -552,10 +620,10 @@ const Signup: React.FC = () => {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !isPasswordValid || formData.password !== formData.confirmPassword}
               className={`w-full py-2 px-4 rounded-lg font-medium transition-all duration-300 btn-enhanced ${
-                loading 
-                  ? 'bg-gray-400 cursor-not-allowed btn-loading' 
+                loading || !isPasswordValid || formData.password !== formData.confirmPassword
+                  ? 'bg-gray-400 cursor-not-allowed text-gray-200 btn-loading' 
                   : 'bg-gray-900 text-white hover:bg-gray-800 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2'
               }`}
             >
