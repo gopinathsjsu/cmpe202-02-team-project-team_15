@@ -1,9 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Github } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
+  const { user } = useAuth();
 
   return (
     <footer className="bg-white border-t border-gray-200">
@@ -12,12 +14,16 @@ const Footer: React.FC = () => {
         <div className="py-8 flex flex-col md:flex-row justify-between items-center gap-6">
           {/* Navigation Links - Left */}
           <div className="flex flex-wrap justify-center md:justify-start gap-6">
-            <Link to="/login" className="text-gray-600 hover:text-gray-900 text-sm transition-colors">
-              Login
-            </Link>
-            <Link to="/signup" className="text-gray-600 hover:text-gray-900 text-sm transition-colors">
-              Sign Up
-            </Link>
+            {!user && (
+              <>
+                <Link to="/login" className="text-gray-600 hover:text-gray-900 text-sm transition-colors">
+                  Login
+                </Link>
+                <Link to="/signup" className="text-gray-600 hover:text-gray-900 text-sm transition-colors">
+                  Sign Up
+                </Link>
+              </>
+            )}
             <Link to="/search" className="text-gray-600 hover:text-gray-900 text-sm transition-colors">
               Shop
             </Link>
