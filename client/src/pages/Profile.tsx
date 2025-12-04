@@ -48,8 +48,6 @@ const Profile: React.FC = () => {
       }
     }
   });
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [listings, setListings] = useState<IListing[]>([]);
   const [loadingListings, setLoadingListings] = useState(true);
   const [listingFilter, setListingFilter] = useState<'ACTIVE' | 'SOLD'>('ACTIVE');
@@ -69,7 +67,7 @@ const Profile: React.FC = () => {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [savedListingIds, setSavedListingIds] = useState<Set<string>>(new Set());
-  const { showSuccess } = useToast();
+  const { showSuccess, showError } = useToast();
 
   // Helper function to update minimal profile picture cache in localStorage
   const updateProfilePictureCache = (profileData: any, photoUrlWithTimestamp?: string | null) => {
@@ -91,7 +89,7 @@ const Profile: React.FC = () => {
         setFormData(data);
         setOriginalData(data); // Store original data
       } catch (err) {
-        setError('Failed to load profile');
+        showError('Load Failed', 'Failed to load profile');
         console.error('Profile load error:', err);
       }
     };
@@ -155,7 +153,6 @@ const Profile: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setSuccess('');
 
     // Validate social media URLs before submitting
@@ -180,7 +177,7 @@ const Profile: React.FC = () => {
     // Check if there are any validation errors
     if (errors.linkedin || errors.twitter || errors.instagram) {
       setSocialMediaErrors(errors);
-      setError('Please fix the social media URL errors before saving');
+      showError('Validation Error', 'Please fix the social media URL errors before saving');
       return;
     }
 
@@ -194,7 +191,7 @@ const Profile: React.FC = () => {
       setOriginalData(formData); // Update original data after successful save
       setIsEditing(false);
     } catch (err) {
-      setError('Failed to update profile');
+      showError('Update Failed', 'Failed to update profile');
       console.error('Profile update error:', err);
     }
   };
@@ -203,7 +200,6 @@ const Profile: React.FC = () => {
     // Deep copy to ensure proper reset, handling null/undefined values
     setFormData(JSON.parse(JSON.stringify(originalData)));
     setIsEditing(false);
-    setError('');
     setSuccess('');
     setSocialMediaErrors({ linkedin: '', twitter: '', instagram: '' });
   };
@@ -319,7 +315,6 @@ const Profile: React.FC = () => {
     setUploadingPhoto(false);
     setUploadProgress(0);
     setUploadStage('idle');
-    setError('');
     // Keep preview and pending file for retry
   };
 
@@ -335,21 +330,20 @@ const Profile: React.FC = () => {
     // 1) Client validation - Security: File type whitelist
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      setError('Invalid file type. Please upload JPG, PNG, or WebP images only.');
+      showError('Invalid File', 'Please upload JPG, PNG, or WebP images only.');
       return;
     }
 
     // Security: Max file size validation (10MB server limit, validate client-side too)
     const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
     if (file.size > MAX_FILE_SIZE) {
-      setError(`File size exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit`);
+      showError('File Too Large', `File size exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit`);
       return;
     }
 
     // Store file for potential retry
     setPendingFile(file);
     setUploadingPhoto(true);
-    setError('');
     setSuccess('');
     setUploadProgress(0);
     setUploadStage('resizing');
@@ -466,14 +460,14 @@ const Profile: React.FC = () => {
     } catch (err: any) {
       // Check if error is due to abort
       if (err.name === 'AbortError' || abortController.signal.aborted) {
-        setError('Upload cancelled');
+        showError('Upload Cancelled', 'Upload cancelled');
         setPhotoPreview(null);
         setPendingFile(null);
         return;
       }
 
       console.error('Photo upload error:', err);
-      setError(err.message || 'Failed to upload photo. Please try again.');
+      showError('Upload Failed', err.message || 'Failed to upload photo. Please try again.');
       // Keep preview and pending file for retry
     } finally {
       setUploadingPhoto(false);
@@ -521,7 +515,7 @@ const Profile: React.FC = () => {
       showSuccess('Profile photo removed', 'Your profile picture has been deleted.');
     } catch (error: any) {
       console.error('Failed to delete profile photo:', error);
-      alert(error.response?.data?.message || 'Failed to delete profile photo');
+      showError('Delete Failed', error.response?.data?.message || 'Failed to delete profile photo');
     }
   };
 
@@ -582,7 +576,7 @@ const Profile: React.FC = () => {
       console.log("Profile image updated!");
     } catch (err) {
       console.error("Upload failed:", err);
-      setError("Failed to upload profile image. Please try again.");
+      showError("Upload Failed", "Failed to upload profile image. Please try again.");
     } finally {
       setIsUploading(false);
     }
@@ -604,48 +598,6 @@ const Profile: React.FC = () => {
 
         {/* Main Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Notification Messages */}
-          {error && (
-            <div className="mb-6 rounded-md bg-red-50 p-4">
-              <div className="flex items-start">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3 flex-1">
-                  <h3 className="text-sm font-medium text-red-800">Error</h3>
-                  <div className="mt-2 text-sm text-red-700">{error}</div>
-                  {pendingFile && error !== 'Upload cancelled' && (
-                    <button
-                      type="button"
-                      onClick={retryUpload}
-                      className="mt-3 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                    >
-                      Retry Upload
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {success && (
-            <div className="mb-6 rounded-md bg-green-50 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-green-800">Success</h3>
-                  <div className="mt-2 text-sm text-green-700">{success}</div>
-                </div>
-              </div>
-            </div>
-          )}
-
         <div className="space-y-8">
           {/* Main Card */}
           <div className="bg-white shadow rounded-lg overflow-hidden">

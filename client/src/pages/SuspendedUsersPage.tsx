@@ -6,6 +6,7 @@ import Footer from '../components/Footer';
 import BackButton from '../components/BackButton';
 import Pagination from '../components/Pagination';
 import { apiService } from '../services/api';
+import { useToast } from '../contexts/ToastContext';
 
 interface SuspendedUser {
   _id: string;
@@ -19,9 +20,9 @@ interface SuspendedUser {
 
 const SuspendedUsersPage: React.FC = () => {
   const navigate = useNavigate();
+  const { showError, showSuccess } = useToast();
   const [users, setUsers] = useState<SuspendedUser[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
@@ -35,7 +36,6 @@ const SuspendedUsersPage: React.FC = () => {
 
   const fetchSuspendedUsers = async (page: number = 1) => {
     setLoading(true);
-    setError(null);
 
     try {
       const response = await apiService.getSuspendedUsers({
@@ -49,7 +49,7 @@ const SuspendedUsersPage: React.FC = () => {
       setCurrentPage(page);
     } catch (err: any) {
       console.error('Failed to fetch suspended users:', err);
-      setError('Failed to load suspended users');
+      showError('Load Failed', 'Failed to load suspended users');
     } finally {
       setLoading(false);
     }
@@ -131,13 +131,6 @@ const SuspendedUsersPage: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-100 text-red-800 px-4 py-3 rounded-lg border border-red-200 mb-4">
-            {error}
-          </div>
-        )}
 
         {/* Users List */}
         {loading ? (

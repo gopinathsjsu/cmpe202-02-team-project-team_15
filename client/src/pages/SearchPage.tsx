@@ -8,17 +8,18 @@ import Navbar from '../components/Navbar';
 import ChatbotButton from '../components/ChatbotButton';
 import Footer from '../components/Footer';
 import { apiService, IListing, ICategory, SearchParams } from "../services/api";
+import { useToast } from "../contexts/ToastContext";
 
 const SearchPage: React.FC = () => {
   // URL search params
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { showError } = useToast();
 
   // State management
   const [listings, setListings] = useState<IListing[]>([]);
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [savedListingIds, setSavedListingIds] = useState<Set<string>>(
     new Set()
   );
@@ -131,7 +132,7 @@ const SearchPage: React.FC = () => {
         setCategories(categoriesData);
       } catch (err) {
         console.error("Failed to load categories:", err);
-        setError("Failed to load categories");
+        showError("Load Failed", "Failed to load categories");
       }
     };
 
@@ -157,7 +158,6 @@ const SearchPage: React.FC = () => {
       query?: string
     ) => {
       setLoading(true);
-      setError(null);
 
       try {
         const params = searchParamsRef.current;
@@ -202,7 +202,7 @@ const SearchPage: React.FC = () => {
         console.error("Search failed:", err);
         // Display the specific error message from the backend
         const errorMessage = err.response?.data?.error || "Failed to search listings";
-        setError(errorMessage);
+        showError("Search Failed", errorMessage);
         setListings([]);
       } finally {
         setLoading(false);
@@ -517,12 +517,6 @@ const SearchPage: React.FC = () => {
               onSearchChange={handleSearchQueryChange}
               onSearch={handleSearch}
             />
-
-            {error && (
-              <div className="bg-red-100 text-red-800 px-4 py-3 rounded-lg border border-red-200">
-                {error}
-              </div>
-            )}
 
             <div className="text-gray-600 text-sm">
               {!loading && <p>{totalItems} products found</p>}
