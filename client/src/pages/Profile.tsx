@@ -6,10 +6,11 @@ import api from '../services/api';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ProductCard from '../components/ProductCard';
-import { Camera, Loader2, Trash2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Avatar } from '../components/Avatar';
 import ProfileImageMenu from '../components/ProfileImageMenu';
 import ImageViewerModal from '../components/ImageViewerModal';
+import { useToast } from '../contexts/ToastContext';
 //
 const Profile: React.FC = () => {
   const { user, setUser } = useAuth();
@@ -68,6 +69,7 @@ const Profile: React.FC = () => {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [savedListingIds, setSavedListingIds] = useState<Set<string>>(new Set());
+  const { showSuccess } = useToast();
 
   // Helper function to update minimal profile picture cache in localStorage
   const updateProfilePictureCache = (profileData: any, photoUrlWithTimestamp?: string | null) => {
@@ -415,7 +417,7 @@ const Profile: React.FC = () => {
       // 4) Tell API to attach this photo to profile
       setUploadStage('updating');
       setUploadProgress(90);
-      const updateResponse = await apiService.updateProfilePhoto(key, publicUrl);
+      await apiService.updateProfilePhoto(key, publicUrl);
 
       // Check if cancelled
       if (abortController.signal.aborted) {
@@ -453,7 +455,7 @@ const Profile: React.FC = () => {
       }));
 
       setUploadProgress(100);
-      setSuccess('Profile photo updated successfully');
+      showSuccess('Profile photo updated', 'Your profile picture has been changed successfully.');
       setPhotoPreview(null);
       setPendingFile(null);
 
@@ -513,8 +515,10 @@ const Profile: React.FC = () => {
       const data = await apiService.getProfile();
       setFormData(data);
       setOriginalData(data);
-      
+
       setMenuOpen(false);
+
+      showSuccess('Profile photo removed', 'Your profile picture has been deleted.');
     } catch (error: any) {
       console.error('Failed to delete profile photo:', error);
       alert(error.response?.data?.message || 'Failed to delete profile photo');
