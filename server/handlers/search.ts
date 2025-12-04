@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import Listing, { IListing } from '../models/Listing';
 import Category from '../models/Category';
+import { validateAndSanitizeSearchQuery } from '../utils/searchSanitizer';
 
 // API Request/Response types for search functionality
 export interface SearchQuery {
@@ -49,15 +50,15 @@ const resolveCategoryId = async (category: string): Promise<string | null> => {
 // US-SEARCH-1: Supports query `q`, category, min/max price, pagination, sorting
 export const searchListings = async (req: Request<{}, SearchResponse, {}, SearchQuery>, res: Response<SearchResponse | ErrorResponse>): Promise<void> => {
   try {
-    const { 
-      q, 
-      category, 
-      minPrice, 
-      maxPrice, 
-      sort = 'createdAt_desc', 
-      page = '1', 
-      pageSize = '20'
-    } = req.query;
+    // Validate and sanitize all input parameters
+    const validationResult = validateAndSanitizeSearchQuery(req.query);
+    
+    if (!validationResult.isValid) {
+      res.status(400).json({ error: validationResult.error || 'Invalid search parameters' });
+      return;
+    }
+
+    const { q, category, minPrice, maxPrice, sort, page, pageSize } = validationResult.sanitized!;
 
     // Build filter object - only show ACTIVE listings (unless admin)
     const filter: any = { status: 'ACTIVE' };
@@ -66,14 +67,28 @@ export const searchListings = async (req: Request<{}, SearchResponse, {}, Search
     const authUser = (req as any).user;
     const isAdmin = authUser?.roles?.includes('admin');
     
+    // Filter by university for non-admin users
+    if (!isAdmin && authUser) {
+      // Get user's university from the authenticated user object
+      // The auth middleware already fetches the full user from DB
+      const userUniversity = authUser.university;
+      if (userUniversity) {
+        filter.university = userUniversity;
+        console.log(`[Search] Filtering by university: ${userUniversity}`);
+      } else {
+        console.log(`[Search] WARNING: User ${authUser._id} has no university set`);
+      }
+    }
+    
     // Hide hidden listings from non-admin users
     if (!isAdmin) {
       filter.isHidden = { $ne: true };
     }
 
-    // Text search on title and description - partial matching
+    // Text search on title and description - using sanitized query
     if (q && q.trim()) {
-      const searchRegex = new RegExp(q.trim(), 'i'); // Case-insensitive partial matching
+      // Query is already escaped in sanitizer, safe to use in regex
+      const searchRegex = new RegExp(q.trim(), 'i');
       filter.$or = [
         { title: { $regex: searchRegex } },
         { description: { $regex: searchRegex } }
@@ -92,15 +107,15 @@ export const searchListings = async (req: Request<{}, SearchResponse, {}, Search
       }
     }
 
-    // Price range filter
-    if (minPrice || maxPrice) {
+    // Price range filter - using sanitized values
+    if (minPrice !== undefined || maxPrice !== undefined) {
       filter.price = {
-        ...(minPrice && { $gte: Number(minPrice) }),
-        ...(maxPrice && { $lte: Number(maxPrice) })
+        ...(minPrice !== undefined && { $gte: minPrice }),
+        ...(maxPrice !== undefined && { $lte: maxPrice })
       };
     }
 
-    // Sorting options - createdAt (default desc) or price
+    // Sorting options - using sanitized sort value
     const sortMap = {
       'price_asc': { price: 1 },
       'price_desc': { price: -1 },
@@ -108,11 +123,11 @@ export const searchListings = async (req: Request<{}, SearchResponse, {}, Search
       'createdAt_desc': { createdAt: -1 }
     } as const;
     
-    const sortObj = sortMap[sort as keyof typeof sortMap] || sortMap.createdAt_desc;
+    const sortObj = sortMap[sort];
 
-    // Pagination with page/pageSize
-    const skip = (Number(page) - 1) * Number(pageSize);
-    const limit = Number(pageSize);
+    // Pagination with sanitized values
+    const skip = (page - 1) * pageSize;
+    const limit = pageSize;
 
     // Execute query with population
     const [items, total] = await Promise.all([
@@ -129,16 +144,16 @@ export const searchListings = async (req: Request<{}, SearchResponse, {}, Search
     res.json({
       items,
       page: {
-        current: Number(page),
-        pageSize: Number(pageSize),
+        current: page,
+        pageSize: pageSize,
         total,
-        totalPages: Math.ceil(total / Number(pageSize))
+        totalPages: Math.ceil(total / pageSize)
       }
     });
 
   } catch (err: any) {
     console.error('Search error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'An error occurred while searching listings' });
   }
 };
 
@@ -183,6 +198,23 @@ export const getListingById = async (req: Request<{ id: string }>, res: Response
     if (!listing) {
       res.status(404).json({ error: 'Listing not found' });
       return;
+    }
+
+    // Check university access - non-admin users can only view listings from their university
+    const authUser = (req as any).user;
+    if (authUser) {
+      const isAdmin = authUser?.roles?.includes('admin');
+      
+      if (!isAdmin) {
+        // Get user's university from the authenticated user object
+        const userUniversity = authUser.university;
+        
+        if (userUniversity && listing.university && listing.university !== userUniversity) {
+          console.log(`[GetListing] Access denied: User university ${userUniversity} != Listing university ${listing.university}`);
+          res.status(403).json({ error: 'Access denied: Listing belongs to a different university' });
+          return;
+        }
+      }
     }
 
     // Allow both ACTIVE and SOLD listings to be viewed

@@ -167,7 +167,23 @@ export const createListing = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    // Create new listing
+    // Get user's university (populate if needed)
+    let userUniversity = (authUser as any).university;
+    if (!userUniversity) {
+      // If university is not already on the user object, fetch it
+      const User = (await import('../models/User')).User;
+      const fullUser = await User.findById(authUser._id);
+      if (!fullUser || !fullUser.university) {
+        res.status(400).json({
+          success: false,
+          error: 'User university information is missing'
+        });
+        return;
+      }
+      userUniversity = fullUser.university;
+    }
+
+    // Create new listing with university auto-injected
     const newListing = new Listing({
       userId: authUser._id,
       categoryId: validation.data.categoryId,
@@ -178,7 +194,8 @@ export const createListing = async (req: Request, res: Response): Promise<void> 
         url: photo.url,
         alt: photo.alt || validation.data.title || `Photo ${index + 1}`
       })),
-      status: 'ACTIVE'
+      status: 'ACTIVE',
+      university: userUniversity
     });
 
     const savedListing = await newListing.save();
@@ -215,6 +232,33 @@ export const getListingsByUserId = async (req: Request, res: Response): Promise<
         error: 'Invalid user ID format' 
       });
       return;
+    }
+
+    // Check if requesting user is admin
+    const authUser = (req as any).user;
+    const isAdmin = authUser?.roles?.includes('admin');
+
+    // Get the target user's university
+    const User = (await import('../models/User')).User;
+    const targetUser = await User.findById(userId);
+    if (!targetUser) {
+      res.status(404).json({ 
+        success: false, 
+        error: 'User not found' 
+      });
+      return;
+    }
+
+    // Non-admin users can only view listings from users in their university
+    if (!isAdmin && authUser) {
+      const fullUser = await User.findById(authUser._id);
+      if (fullUser && fullUser.university && targetUser.university !== fullUser.university) {
+        res.status(403).json({ 
+          success: false, 
+          error: 'Access denied: User belongs to a different university' 
+        });
+        return;
+      }
     }
 
     const filter: any = { userId };
@@ -269,6 +313,19 @@ export const getListings = async (req: Request, res: Response): Promise<void> =>
     // Check if user is admin
     const authUser = (req as any).user;
     const isAdmin = authUser?.roles?.includes('admin');
+    
+    // Filter by university for non-admin users
+    if (!isAdmin && authUser) {
+      // Get user's university from the authenticated user object
+      // The auth middleware already fetches the full user from DB
+      const userUniversity = authUser.university;
+      if (userUniversity) {
+        filter.university = userUniversity;
+        console.log(`[Listings] Filtering by university: ${userUniversity}`);
+      } else {
+        console.log(`[Listings] WARNING: User ${authUser._id} has no university set`);
+      }
+    }
     
     // Hide hidden listings from non-admin users
     if (!isAdmin) {
