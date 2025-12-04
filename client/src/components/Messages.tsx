@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Send, AlertTriangle, ChevronDown, ChevronRight, ArrowLeft } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
-import { useToast } from "../contexts/ToastContext";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import { ListingPreview } from "./ListingPreview";
@@ -95,7 +94,6 @@ export const Messages: React.FC<MessagesProps> = ({
   initialConversationId,
 }) => {
   const { user } = useAuth();
-  const { showError } = useToast();
   const navigate = useNavigate();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] =
@@ -103,6 +101,7 @@ export const Messages: React.FC<MessagesProps> = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [adminConversationsExpanded, setAdminConversationsExpanded] = useState(true);
 
   // Load conversations on component mount
@@ -208,7 +207,7 @@ export const Messages: React.FC<MessagesProps> = ({
       }
     } catch (err) {
       console.error("Error loading conversations:", err);
-      showError("Load Failed", "Failed to load conversations");
+      setError("Failed to load conversations");
     } finally {
       if (showLoading) setLoading(false);
     }
@@ -218,6 +217,7 @@ export const Messages: React.FC<MessagesProps> = ({
     try {
       const response = await api.get(`/api/chats/${conversationId}/messages`);
       setMessages(response.data.messages || []);
+      setError(null); // Clear any previous errors
 
       // Mark conversation as read locally
       setConversations((prev) => {
@@ -238,8 +238,9 @@ export const Messages: React.FC<MessagesProps> = ({
       // Don't show error for new conversations that might not have messages yet
       if (messages.length === 0) {
         setMessages([]); // Just show empty messages
+        setError(null);
       } else {
-        showError("Load Failed", "Failed to load messages");
+        setError("Failed to load messages");
       }
     }
   };
@@ -285,9 +286,9 @@ export const Messages: React.FC<MessagesProps> = ({
         return updated;
       });
       setNewMessage("");
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error sending message:", err);
-      showError("Send Failed", err.response?.data?.message || "Failed to send message");
+      setError("Failed to send message");
     }
   };
 
@@ -507,6 +508,12 @@ export const Messages: React.FC<MessagesProps> = ({
           <div className={`mb-4 sm:mb-6 ${showMobileChat ? 'hidden sm:block' : ''}`}>
             <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">Messages</h1>
           </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4 sm:mb-6">
+              {error}
+            </div>
+          )}
 
           {/* Main container - responsive layout */}
           <div className="flex-1 flex flex-col lg:grid lg:grid-cols-12 gap-4 sm:gap-6 min-h-0 h-[calc(100vh-180px)] sm:h-[calc(100vh-240px)]">

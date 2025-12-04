@@ -5,14 +5,13 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ProductCard from '../components/ProductCard';
 import { apiService, IListing } from '../services/api';
-import { useToast } from '../contexts/ToastContext';
 
 const MyListings = () => {
   const navigate = useNavigate();
-  const { showError } = useToast();
   const [searchParams] = useSearchParams();
   const [allListings, setAllListings] = useState<IListing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Get initial filter from URL query parameter
   const initialFilter = (searchParams.get('filter') as 'ALL' | 'ACTIVE' | 'SOLD') || 'ALL';
@@ -33,11 +32,12 @@ const MyListings = () => {
   const fetchMyListings = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await apiService.getMyListings();
       setAllListings(response.listings);
     } catch (err: any) {
       console.error('Failed to fetch my listings:', err);
-      showError('Load Failed', 'Failed to load your listings. Please try again.');
+      setError('Failed to load your listings. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -88,6 +88,28 @@ const MyListings = () => {
         <div className="flex-1 flex items-center justify-center">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <Loader2 className="w-8 h-8 animate-spin text-gray-600" />
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Navbar />
+        <div className="flex-1">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="mt-8 text-center">
+              <div className="text-red-600 mb-4">{error}</div>
+              <button 
+                onClick={fetchMyListings}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Try Again
+              </button>
+            </div>
           </div>
         </div>
         <Footer />
