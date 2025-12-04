@@ -4,6 +4,7 @@ import Pagination from '../components/Pagination';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { apiService } from '../services/api';
+import { useToast } from '../contexts/ToastContext';
 
 const REPORT_CATEGORIES = [
   { label: 'Fraud', value: 'FRAUD' },
@@ -22,10 +23,10 @@ const REPORT_STATUSES = [
 const AdminReportsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { showError, showSuccess } = useToast();
 
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Filter states
   const [selectedStatus, setSelectedStatus] = useState(searchParams.get('status') || '');
@@ -94,7 +95,6 @@ const AdminReportsPage: React.FC = () => {
   // Fetch reports
   const performSearch = useCallback(async (page: number = 1) => {
     setLoading(true);
-    setError(null);
 
     try {
       const params = searchParamsRef.current;
@@ -118,12 +118,12 @@ const AdminReportsPage: React.FC = () => {
       setTotalItems(data?.pagination?.total_reports || 0);
     } catch (err: any) {
       console.error('Failed to load reports:', err);
-      setError(err.response?.data?.message || 'Failed to load reports');
+      showError('Load Failed', err.response?.data?.message || 'Failed to load reports');
       setReports([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showError]);
 
   // Load reports on mount and filter change
   useEffect(() => {
@@ -367,12 +367,6 @@ const AdminReportsPage: React.FC = () => {
 
           {/* Main content */}
           <main className="flex-1 flex flex-col gap-5">
-            {error && (
-              <div className="bg-red-100 text-red-800 px-4 py-3 rounded-lg border border-red-200">
-                {error}
-              </div>
-            )}
-
             {/* Listing Filter Badge */}
             {filterByListingId && reports.length > 0 && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

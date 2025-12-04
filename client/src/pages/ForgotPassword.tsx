@@ -15,8 +15,6 @@ const ForgotPassword: React.FC = () => {
     confirmPassword: ''
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -51,8 +49,7 @@ const ForgotPassword: React.FC = () => {
       // Automatically advance to reset step since link was verified
       setTimeout(() => {
         setStep('reset');
-        setSuccess('Reset link verified successfully! You can now set your new password.');
-        setError('');
+        showSuccess('Verified', 'You can now set your new password.');
       }, 500);
     }
   }, [searchParams]);
@@ -68,22 +65,20 @@ const ForgotPassword: React.FC = () => {
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    setSuccess('');
 
     if (!email) {
-      setError('Email is required');
+      showError('Email Required', 'Email is required');
       setLoading(false);
       return;
     }
 
     try {
       await authAPI.forgotPassword(email.toLowerCase().trim());
-      setSuccess('Password reset email sent! Check your inbox for the code or click the reset link.');
+      showSuccess('Email Sent', 'Check your inbox for the code or click the reset link.');
       setStep('verify');
       setResendCooldown(60); // 60 second cooldown
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to send reset email. Please try again.');
+      showError('Send Failed', err.response?.data?.message || 'Failed to send reset email. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -92,11 +87,9 @@ const ForgotPassword: React.FC = () => {
   const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    setSuccess('');
 
     if (!resetCode || resetCode.length !== 6) {
-      setError('Please enter a valid 6-digit code');
+      showError('Invalid Code', 'Please enter a valid 6-digit code');
       setLoading(false);
       return;
     }
@@ -106,10 +99,10 @@ const ForgotPassword: React.FC = () => {
       if (response.data.success) {
         setVerifiedCode(resetCode);
         setStep('reset');
-        setSuccess('Reset code verified successfully! You can now set your new password.');
+        showSuccess('Code Verified', 'You can now set your new password.');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Invalid or expired reset code. Please try again.');
+      showError('Verification Failed', err.response?.data?.message || 'Invalid or expired reset code. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -122,10 +115,10 @@ const ForgotPassword: React.FC = () => {
     setError('');
     try {
       await authAPI.forgotPassword(email.toLowerCase().trim());
-      setSuccess('Reset email sent again! Check your inbox.');
+      showSuccess('Email Sent', 'Check your inbox.');
       setResendCooldown(60);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to resend reset email.');
+      showError('Resend Failed', err.response?.data?.message || 'Failed to resend reset email.');
     } finally {
       setLoading(false);
     }
@@ -134,17 +127,15 @@ const ForgotPassword: React.FC = () => {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    setSuccess('');
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      showError('Password Mismatch', 'Passwords do not match');
       setLoading(false);
       return;
     }
 
     if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+      showError('Invalid Password', 'Password must be at least 6 characters long');
       setLoading(false);
       return;
     }
@@ -168,14 +159,14 @@ const ForgotPassword: React.FC = () => {
       // Show success toast
       showSuccess('Password Reset Successful', 'Redirecting to login page...');
       
-      setSuccess('Password reset successfully! Redirecting to login...');
+      showSuccess('Success', 'Password reset successfully! Redirecting to login...');
       setTimeout(() => {
         navigate('/login');
       }, 2000);
     } catch (err: any) {
       console.error('Reset password error:', err);
       const errorMessage = err.response?.data?.message || 'Failed to reset password. Please try again.';
-      setError(errorMessage);
+      showError('Reset Failed', errorMessage);
       showError('Password Reset Failed', errorMessage);
     } finally {
       setLoading(false);
@@ -224,18 +215,6 @@ const ForgotPassword: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Error/Success Messages */}
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-            {error}
-          </div>
-        )}
-        {success && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
-            {success}
-          </div>
-        )}
 
         {/* Step 1: Email */}
         {step === 'email' && (

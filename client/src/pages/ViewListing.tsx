@@ -32,7 +32,6 @@ const ViewListing = () => {
   const { showLoading, showSuccess, showError, hideToast } = useToast();
   const [listing, setListing] = useState<IListing | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [contacting, setContacting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -52,26 +51,25 @@ const ViewListing = () => {
   useEffect(() => {
     const fetchListing = async () => {
       if (!id) {
-        setError("Listing ID is missing");
+        showError("Invalid Listing", "Listing ID is missing");
         setLoading(false);
         return;
       }
 
       try {
         setLoading(true);
-        setError(null);
         const fetchedListing = await apiService.getListingById(id);
         setListing(fetchedListing);
       } catch (err) {
         console.error("Failed to fetch listing:", err);
-        setError("Failed to fetch listing. Please try again.");
+        showError("Load Failed", "Failed to fetch listing. Please try again.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchListing();
-  }, [id]);
+  }, [id, showError]);
 
   useEffect(() => {
     const fetchCategories = async () => {

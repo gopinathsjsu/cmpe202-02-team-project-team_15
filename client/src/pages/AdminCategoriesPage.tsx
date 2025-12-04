@@ -18,7 +18,6 @@ const AdminCategoriesPage: React.FC = () => {
   const { showLoading, showSuccess, showError, hideToast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -30,7 +29,6 @@ const AdminCategoriesPage: React.FC = () => {
   const [categoryName, setCategoryName] = useState('');
   const [categoryDescription, setCategoryDescription] = useState('');
   const [formLoading, setFormLoading] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCategories();
@@ -39,12 +37,11 @@ const AdminCategoriesPage: React.FC = () => {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      setError(null);
       const response = await api.get('/api/admin/categories');
       setCategories(response.data.data.categories || []);
     } catch (err: any) {
       console.error('Failed to fetch categories:', err);
-      setError('Failed to load categories. Please try again.');
+      showError('Load Failed', 'Failed to load categories. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -54,7 +51,7 @@ const AdminCategoriesPage: React.FC = () => {
     e.preventDefault();
     
     if (!categoryName.trim()) {
-      setFormError('Category name is required');
+      showError('Validation Error', 'Category name is required');
       return;
     }
 
@@ -65,7 +62,6 @@ const AdminCategoriesPage: React.FC = () => {
 
     try {
       setFormLoading(true);
-      setFormError(null);
       
       await api.post('/api/admin/categories', {
         name: categoryName.trim(),
@@ -92,7 +88,6 @@ const AdminCategoriesPage: React.FC = () => {
       // Hide loading and show error
       hideToast(loadingToastId);
       const errorMsg = err.response?.data?.message || 'Failed to create category';
-      setFormError(errorMsg);
       showError(
         "Failed to Create Category",
         errorMsg
@@ -106,7 +101,7 @@ const AdminCategoriesPage: React.FC = () => {
     e.preventDefault();
     
     if (!selectedCategory || !categoryName.trim()) {
-      setFormError('Category name is required');
+      showError('Validation Error', 'Category name is required');
       return;
     }
 
@@ -117,7 +112,6 @@ const AdminCategoriesPage: React.FC = () => {
 
     try {
       setFormLoading(true);
-      setFormError(null);
       
       await api.put(`/api/admin/categories/${selectedCategory._id}`, {
         name: categoryName.trim(),
@@ -145,7 +139,6 @@ const AdminCategoriesPage: React.FC = () => {
       // Hide loading and show error
       hideToast(loadingToastId);
       const errorMsg = err.response?.data?.message || 'Failed to update category';
-      setFormError(errorMsg);
       showError(
         "Failed to Update Category",
         errorMsg
@@ -165,7 +158,6 @@ const AdminCategoriesPage: React.FC = () => {
 
     try {
       setFormLoading(true);
-      setFormError(null);
       
       await api.delete(`/api/admin/categories/${selectedCategory._id}`);
       
@@ -190,7 +182,6 @@ const AdminCategoriesPage: React.FC = () => {
       // Hide loading and show error
       hideToast(loadingToastId);
       const errorMsg = err.response?.data?.message || 'Failed to delete category';
-      setFormError(errorMsg);
       showError(
         "Failed to Delete Category",
         errorMsg
@@ -203,7 +194,6 @@ const AdminCategoriesPage: React.FC = () => {
   const openCreateModal = () => {
     setCategoryName('');
     setCategoryDescription('');
-    setFormError(null);
     setShowCreateModal(true);
   };
 
@@ -211,13 +201,11 @@ const AdminCategoriesPage: React.FC = () => {
     setSelectedCategory(category);
     setCategoryName(category.name);
     setCategoryDescription(category.description || '');
-    setFormError(null);
     setShowEditModal(true);
   };
 
   const openDeleteModal = (category: Category) => {
     setSelectedCategory(category);
-    setFormError(null);
     setShowDeleteModal(true);
   };
 
@@ -228,7 +216,6 @@ const AdminCategoriesPage: React.FC = () => {
     setSelectedCategory(null);
     setCategoryName('');
     setCategoryDescription('');
-    setFormError(null);
   };
 
   return (
@@ -251,12 +238,6 @@ const AdminCategoriesPage: React.FC = () => {
               <span>Add Category</span>
             </button>
           </div>
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-              {error}
-            </div>
-          )}
 
           {loading ? (
             <div className="flex items-center justify-center h-64">
@@ -337,12 +318,6 @@ const AdminCategoriesPage: React.FC = () => {
               </button>
             </div>
 
-            {formError && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
-                {formError}
-              </div>
-            )}
-
             <form onSubmit={handleCreateCategory}>
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -403,12 +378,6 @@ const AdminCategoriesPage: React.FC = () => {
               </button>
             </div>
 
-            {formError && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
-                {formError}
-              </div>
-            )}
-
             <form onSubmit={handleUpdateCategory}>
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -466,12 +435,6 @@ const AdminCategoriesPage: React.FC = () => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-
-            {formError && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
-                {formError}
-              </div>
-            )}
 
             <div className="mb-6">
               <p className="text-gray-700 mb-2">
