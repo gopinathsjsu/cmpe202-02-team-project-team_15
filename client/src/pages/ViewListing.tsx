@@ -510,9 +510,9 @@ const ViewListing = () => {
                     {sellerName}
                   </div>
                 )}
-                {sellerEmail && (
+                {/* {sellerEmail && (
                   <div className="text-sm text-gray-500">{sellerEmail}</div>
-                )}
+                )} */}
               </div>
             </div>
 
